@@ -1,5 +1,7 @@
 # The Filament Storage System
 
+*Deutsch | [English](README.en.md)*
+
 Eigenstaendiges Lagerverwaltungs-System fuer 3D-Druck-Filament: [Spoolman](https://github.com/Donkie/Spoolman) fuer die Spulenverwaltung, plus ein eigenes Lagerplatz-Modul, das Spulen konkreten physischen Plaetzen (Drucker, ACE-Einheit, Drybox, ...) zuordnet - inklusive Drag & Drop, Einkaufsliste bei leeren Rollen, visueller Lager-Ansicht, einem eigenen Label-Designer fuer Etiketten (mit QR/Barcode-Export als PNG/PDF) und einem scan-gestuetzten Workflow fuer Wareneingang und Lagerplatz-Zuordnung (Hardware-Scanner oder Handykamera).
 
 Laeuft bei uns produktiv seit mehreren Wochen. Ruerckmeldungen, Bugs und Verbesserungsvorschlaege sind sehr willkommen - gerne als Issue in diesem Repo.

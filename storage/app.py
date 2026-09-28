@@ -113,6 +113,8 @@ class UnitUpdate(BaseModel):
     ace_feed_slot: Optional[int] = None
     clear_ace_feed_slot: Optional[bool] = None
     rows_per_level: Optional[int] = None
+    levels: Optional[int] = None
+    slots_per_level: Optional[int] = None
 
 
 class SlotAssign(BaseModel):
@@ -231,6 +233,69 @@ def update_unit(unit_id: int, u: UnitUpdate):
             conn.execute(
                 "UPDATE storage_units SET rows_per_level=? WHERE id=?",
                 (u.rows_per_level, unit_id),
+            )
+
+        if u.slots_per_level is not None:
+            if u.slots_per_level < 1:
+                raise HTTPException(400, "Plätze pro Ebene müssen mindestens 1 sein")
+            new_rows_per_level = u.rows_per_level if u.rows_per_level is not None else existing["rows_per_level"]
+            if u.slots_per_level % new_rows_per_level != 0:
+                raise HTTPException(400, "Plätze pro Ebene müssen durch Reihen pro Ebene teilbar sein")
+            old_slots_per_level = existing["slots_per_level"]
+            if u.slots_per_level < old_slots_per_level:
+                occupied = conn.execute(
+                    "SELECT COUNT(*) AS n FROM slots WHERE unit_id=? AND position>=? AND spool_id IS NOT NULL",
+                    (unit_id, u.slots_per_level),
+                ).fetchone()["n"]
+                if occupied > 0:
+                    raise HTTPException(400, "Es befinden sich noch belegte Spulen auf Plätzen, die entfernt würden")
+                conn.execute(
+                    "DELETE FROM slots WHERE unit_id=? AND position>=?",
+                    (unit_id, u.slots_per_level),
+                )
+            elif u.slots_per_level > old_slots_per_level:
+                for level in range(existing["levels"]):
+                    for pos in range(old_slots_per_level, u.slots_per_level):
+                        conn.execute(
+                            "INSERT INTO slots (unit_id, level, position, spool_id) VALUES (?,?,?,NULL)",
+                            (unit_id, level, pos),
+                        )
+            conn.execute(
+                "UPDATE storage_units SET slots_per_level=? WHERE id=?",
+                (u.slots_per_level, unit_id),
+            )
+            if existing["ace_feed_slot"] is not None and existing["ace_feed_slot"] > u.slots_per_level:
+                conn.execute(
+                    "UPDATE storage_units SET ace_feed_slot=NULL WHERE id=?",
+                    (unit_id,),
+                )
+
+        if u.levels is not None:
+            if u.levels < 1:
+                raise HTTPException(400, "Ebenen müssen mindestens 1 sein")
+            old_levels = existing["levels"]
+            current_slots_per_level = u.slots_per_level if u.slots_per_level is not None else existing["slots_per_level"]
+            if u.levels < old_levels:
+                occupied = conn.execute(
+                    "SELECT COUNT(*) AS n FROM slots WHERE unit_id=? AND level>=? AND spool_id IS NOT NULL",
+                    (unit_id, u.levels),
+                ).fetchone()["n"]
+                if occupied > 0:
+                    raise HTTPException(400, "Es befinden sich noch belegte Spulen auf Ebenen, die entfernt würden")
+                conn.execute(
+                    "DELETE FROM slots WHERE unit_id=? AND level>=?",
+                    (unit_id, u.levels),
+                )
+            elif u.levels > old_levels:
+                for level in range(old_levels, u.levels):
+                    for pos in range(current_slots_per_level):
+                        conn.execute(
+                            "INSERT INTO slots (unit_id, level, position, spool_id) VALUES (?,?,?,NULL)",
+                            (unit_id, level, pos),
+                        )
+            conn.execute(
+                "UPDATE storage_units SET levels=? WHERE id=?",
+                (u.levels, unit_id),
             )
         return {"ok": True}
 

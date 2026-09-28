@@ -832,6 +832,10 @@ const I18N = {
   'sl.levels': 'Ebenen',
   'sl.slotsPerLevel': 'Plätze/Ebene',
   'sl.rowsPerLevel': 'Reihen/Ebene',
+  'sl.levels': 'Ebenen',
+  'sl.slotsPerLevel': 'Plätze/Ebene',
+  'sl.gridSaved': 'Größe gespeichert',
+  'sl.confirmShrinkGrid': 'Verkleinern kann leere Plätze entfernen. Fortfahren?',
   'sl.aceFeedSlotLabel': 'ACE-Zuführung Platz',
   'sl.add': 'Anlegen',
   'sl.occupied': 'belegt',
@@ -1110,6 +1114,10 @@ const I18N = {
   'sl.levels': 'Levels',
   'sl.slotsPerLevel': 'Slots/level',
   'sl.rowsPerLevel': 'Rows/level',
+  'sl.levels': 'Levels',
+  'sl.slotsPerLevel': 'Slots/level',
+  'sl.gridSaved': 'Size saved',
+  'sl.confirmShrinkGrid': 'Shrinking may remove empty slots. Continue?',
   'sl.aceFeedSlotLabel': 'ACE feed slot',
   'sl.add': 'Create',
   'sl.occupied': 'occupied',
@@ -1752,10 +1760,15 @@ function renderDeviceCard(unit) {
 }
 
 function renderDeviceSettings(unit) {
-  let html = '<div class="device-settings" data-unit-id="' + unit.id + '">' +
+  let html = '<div class="device-settings" data-unit-id="' + unit.id + '" data-levels="' + unit.levels + '" data-slots-per-level="' + unit.slots_per_level + '">' +
     '<label>' + t('sl.rowsPerLevel') + '</label>' +
     '<input type="number" class="dev-rows-input" min="1" step="1" value="' + (unit.rows_per_level || 1) + '">' +
-    '<button class="btn secondary dev-rows-save">' + t('common.save') + '</button>';
+    '<button class="btn secondary dev-rows-save">' + t('common.save') + '</button>' +
+    '<label>' + t('sl.levels') + '</label>' +
+    '<input type="number" class="dev-levels-input" min="1" step="1" value="' + unit.levels + '">' +
+    '<label>' + t('sl.slotsPerLevel') + '</label>' +
+    '<input type="number" class="dev-slots-input" min="1" step="1" value="' + unit.slots_per_level + '">' +
+    '<button class="btn secondary dev-grid-save">' + t('common.save') + '</button>';
   if (unit.type === 'printer') {
     html += '<label>' + t('sl.aceFeedSlotLabel') + '</label>' +
       '<input type="number" class="dev-ace-input" min="1" max="' + unit.slots_per_level + '" placeholder="keine" value="' + (unit.ace_feed_slot || '') + '">' +
@@ -1806,6 +1819,23 @@ async function loadDevices() {
           try {
             await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify({ rows_per_level: rowsPerLevel }) });
             toast(t('sl.rowsPerLevelSaved'), 'ok');
+            loadDevices();
+          } catch (e) {
+            toast(t('common.error') + ': ' + e.message, 'err');
+          }
+        });
+      }
+      const gridSave = row.querySelector('.dev-grid-save');
+      if (gridSave) {
+        gridSave.addEventListener('click', async () => {
+          const newLevels = parseInt(row.querySelector('.dev-levels-input').value, 10);
+          const newSlots = parseInt(row.querySelector('.dev-slots-input').value, 10);
+          const oldLevels = parseInt(row.dataset.levels, 10);
+          const oldSlots = parseInt(row.dataset.slotsPerLevel, 10);
+          if ((newLevels < oldLevels || newSlots < oldSlots) && !confirm(t('sl.confirmShrinkGrid'))) return;
+          try {
+            await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify({ levels: newLevels, slots_per_level: newSlots }) });
+            toast(t('sl.gridSaved'), 'ok');
             loadDevices();
           } catch (e) {
             toast(t('common.error') + ': ' + e.message, 'err');

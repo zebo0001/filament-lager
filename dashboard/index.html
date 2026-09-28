@@ -859,6 +859,7 @@ const I18N = {
     'assign.checkoutPrinter': 'Auf Drucker/ACE auschecken',
     'sd.archivedSuffix': 'archiviert',
     'ns.existingFilamentTypeBtn': 'Bestehenden Filament-Typ wählen',
+    'ns.customValues': 'Individuelle Werte',
     'scan.spoolDetectedShort': 'Spule erkannt.',
     'scan.slotDetectedShort': 'Platz erkannt.',
     'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
@@ -1136,6 +1137,7 @@ const I18N = {
     'assign.checkoutPrinter': 'Check out to printer/ACE',
     'sd.archivedSuffix': 'archived',
     'ns.existingFilamentTypeBtn': 'Choose existing filament type',
+    'ns.customValues': 'Custom values',
     'scan.spoolDetectedShort': 'Spool detected.',
     'scan.slotDetectedShort': 'Slot detected.',
     'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
@@ -2353,6 +2355,10 @@ function encodeExtraValue(fieldType, rawValue) {
   return JSON.stringify(String(rawValue));
 }
 
+const CUSTOM_FIELD_LABEL_EN = {
+  'print_temp_override': 'Print temp override',
+  'bed_temp_override': 'Bed temp override'
+};
 function renderExtraFieldInputs(defs, currentExtra, idPrefix) {
   if (!defs || !defs.length) return '';
   currentExtra = currentExtra || {};
@@ -2373,7 +2379,7 @@ function renderExtraFieldInputs(defs, currentExtra, idPrefix) {
       const safeVal = val === '' ? '' : String(val).replace(/"/g, '&quot;');
       inputHtml = '<input type="text" id="' + inputId + '" value="' + safeVal + '">';
     }
-    return '<div><label for="' + inputId + '">' + f.name + unit + '</label>' + inputHtml + '</div>';
+    return '<div><label for="' + inputId + '">' + ((currentLang === 'en' && CUSTOM_FIELD_LABEL_EN[f.key]) ? CUSTOM_FIELD_LABEL_EN[f.key] : f.name) + unit + '</label>' + inputHtml + '</div>';
   }).join('');
   return '<div class="field-grid">' + rows + '</div>';
 }
@@ -2449,7 +2455,7 @@ async function openSpoolDetail(spoolId) {
 
   document.getElementById('sd-extra-fields').innerHTML =
     (spoolFieldDefs && spoolFieldDefs.length)
-      ? '<div class="section-label">Individuelle Werte</div>' + renderExtraFieldInputs(spoolFieldDefs, spool.extra, 'sd')
+      ? '<div class="section-label">' + t('ns.customValues') + '</div>' + renderExtraFieldInputs(spoolFieldDefs, spool.extra, 'sd')
       : '';
 
   document.getElementById('spool-detail-overlay').classList.add('show');
@@ -2707,7 +2713,7 @@ async function openNewSpoolDialog() {
 
   document.getElementById('ns-extra-fields').innerHTML =
     (spoolFieldDefs && spoolFieldDefs.length)
-      ? '<div class="section-label">Individuelle Werte</div>' + renderExtraFieldInputs(spoolFieldDefs, {}, 'ns')
+      ? '<div class="section-label">' + t('ns.customValues') + '</div>' + renderExtraFieldInputs(spoolFieldDefs, {}, 'ns')
       : '';
 
   document.getElementById('new-spool-overlay').classList.add('show');

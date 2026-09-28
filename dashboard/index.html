@@ -301,8 +301,17 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 #ns-multicolor-block label, #sd-multicolor-block label { display: block; font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin: .5rem 0 .25rem 0; }
 #ns-multicolor-block select, #sd-multicolor-block select { margin-bottom: .5rem; width: 100%; }
 .hero-top { display: flex; align-items: center; justify-content: center; gap: .75rem; flex-wrap: wrap; position: relative; }
-.settings-btn { position: absolute; right: 0; top: 50%; transform: translateY(-50%); }
-@media (max-width: 640px) { .settings-btn { position: static; transform: none; margin-top: .5rem; } }
+.header-actions { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: .5rem; }
+.lang-switch { position: absolute; left: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: .35rem; }
+.lang-switch button { background: none; border: 1px solid transparent; border-radius: 6px; padding: .2rem .3rem; cursor: pointer; line-height: 1; opacity: .55; transition: opacity .15s, border-color .15s; display: flex; align-items: center; }
+.lang-switch button svg { display: block; width: 22px; height: 15px; border-radius: 2px; }
+.lang-switch button:hover { opacity: .85; }
+.lang-switch button.active { opacity: 1; border-color: rgba(255,255,255,.35); }
+.info-box { max-width: 640px; max-height: 80vh; overflow-y: auto; }
+.info-box h4 { margin: 1rem 0 .35rem; }
+.info-box h4:first-child { margin-top: 0; }
+.info-box p { margin: 0 0 .6rem; line-height: 1.5; }
+@media (max-width: 640px) { .header-actions { position: static; transform: none; margin-top: .5rem; justify-content: center; } .lang-switch { position: static; transform: none; justify-content: center; margin-bottom: .35rem; } }
 .panel[data-panel="overview"] .stats { margin: 0; max-width: none; }
 .new-spool-panel { border: 1px solid rgba(56,189,248,.4); background: linear-gradient(135deg, rgba(56,189,248,.12), rgba(167,139,250,.12)); }
 .new-spool-panel-header { cursor: pointer; user-select: none; margin: 0; }
@@ -361,35 +370,42 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 <div class="hero">
 <div class="hero-top">
 <div class='brand'><svg class='brand-logo' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg' aria-hidden='true'><defs><linearGradient id='logoGrad' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#38bdf8'/><stop offset='100%' stop-color='#a78bfa'/></linearGradient></defs><circle cx='24' cy='24' r='21' fill='#e2e8f0' opacity='.10'/><circle cx='24' cy='24' r='21' fill='none' stroke='url(#logoGrad)' stroke-width='3'/><circle cx='24' cy='24' r='14' fill='none' stroke='url(#logoGrad)' stroke-width='2' opacity='.6'/><circle cx='24' cy='24' r='7' fill='#5f5e5a'/><circle cx='24' cy='24' r='2.6' fill='#0f172a'/></svg><h1>The Filament Storage System</h1></div>
-<button class="btn secondary settings-btn" id="settings-btn" type="button">&#9881; Einstellungen</button>
+<div class="lang-switch" id="lang-switch">
+<button class="lang-btn" data-lang="de" title="Deutsch"><svg viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg"><rect width="5" height="1" y="0" fill="#000000"/><rect width="5" height="1" y="1" fill="#DD0000"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg></button>
+<button class="lang-btn" data-lang="en" title="English"><svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="30" fill="#00247d"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#cf142b" stroke-width="2"/><path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/><path d="M30,0 V30 M0,15 H60" stroke="#cf142b" stroke-width="6"/></svg></button>
 </div>
-<p>Spulen im Blick &mdash; einchecken, auschecken, Verbrauch buchen, Lagerplätze visualisieren</p>
+<div class="header-actions">
+<button class="btn secondary settings-btn" id="settings-btn" type="button">&#9881; <span data-i18n="nav.settings">Einstellungen</span></button>
+<button class="btn secondary info-btn" id="info-btn" type="button">&#8505; <span data-i18n="nav.info">Info</span></button>
+</div>
+</div>
+<p data-i18n="hero.subtitle">Spulen im Blick &mdash; einchecken, auschecken, Verbrauch buchen, Lagerplätze visualisieren</p>
 </div>
 
 <main>
 <div class="panel" data-panel="overview">
-<h2>Gesamtübersicht</h2>
+<h2 data-i18n="panel.overview">Gesamtübersicht</h2>
 <div class="stats" id="stats">
-<div class="stat"><div class="num" id="stat-count">&ndash;</div><div class="label">Spulen</div></div>
-<div class="stat"><div class="num" id="stat-weight">&ndash;</div><div class="label">Rest gesamt</div></div>
-<div class="stat"><div class="num warn-color" id="stat-low">&ndash;</div><div class="label">Fast leer (&lt;100g)</div></div>
+<div class="stat"><div class="num" id="stat-count">&ndash;</div><div class="label" data-i18n="ov.spools">Spulen</div></div>
+<div class="stat"><div class="num" id="stat-weight">&ndash;</div><div class="label" data-i18n="ov.remainingTotal">Rest gesamt</div></div>
+<div class="stat"><div class="num warn-color" id="stat-low">&ndash;</div><div class="label" data-i18n="ov.almostEmpty">Fast leer (&lt;100g)</div></div>
 </div>
 </div>
 
 <div class="panel new-spool-panel" data-panel="new-spool" id="new-spool-panel">
-<h2 class="new-spool-panel-header" id="new-spool-panel-toggle"><span>&#10024; Neue Spule</span><span class="chevron" id="new-spool-chevron">&#9662;</span></h2>
+<h2 class="new-spool-panel-header" id="new-spool-panel-toggle"><span data-i18n="panel.newSpool">&#10024; Neue Spule</span><span class="chevron" id="new-spool-chevron">&#9662;</span></h2>
 <div class="new-spool-panel-body" id="new-spool-panel-body">
-<p class="hint">Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.</p>
+<p class="hint" data-i18n="ns.hint">Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.</p>
 <div class="row-actions">
-<button class="btn" id="new-spool-btn" type="button">+ Neue Spule</button>
-<button class="btn secondary" id="spoolman-open-btn" type="button">Spoolman öffnen &rarr;</button>
+<button class="btn" id="new-spool-btn" type="button" data-i18n="ns.newSpoolBtn">+ Neue Spule</button>
+<button class="btn secondary" id="spoolman-open-btn" type="button" data-i18n="ns.spoolmanOpen">Spoolman öffnen &rarr;</button>
 </div>
 </div>
 </div>
 
 <div class="panel" data-panel="spools">
-<h2>Spulen</h2>
-    <p class="hint">Standort kommt direkt aus den Lagerplätzen &mdash; kein manuelles Eintippen mehr. Über &bdquo;Auf Drucker/ACE&ldquo; bzw. &bdquo;In Drybox&ldquo; wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert &bdquo;Rolle leer&ldquo; sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.</p>
+<h2 data-i18n="panel.spools">Spulen</h2>
+    <p class="hint" data-i18n="sp.hint">Standort kommt direkt aus den Lagerplätzen &mdash; kein manuelles Eintippen mehr. Über &bdquo;Auf Drucker/ACE&ldquo; bzw. &bdquo;In Drybox&ldquo; wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert &bdquo;Rolle leer&ldquo; sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.</p>
     <div class="spool-toolbar">
       <input type="text" id="spool-search" class="spool-search-input" placeholder="Suche: Name, Material, Hersteller, Farbe...">
     </div>
@@ -409,41 +425,41 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
   </div>
 
   <div class="panel" data-panel="units">
-<h2>Lagerplätze</h2>
-    <p class="hint">Geräte anlegen (Drybox, ACE, Drucker, &hellip;), bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Bei Druckern mit ACE-Zuführung kann ein Platz als reserviert markiert werden (bleibt auch bei mehreren gekoppelten ACE-Einheiten über einen Hub an derselben Position). Der Standort wird automatisch zu Spoolman zurückgeschrieben.</p>
+<h2 data-i18n="panel.locations">Lagerplätze</h2>
+    <p class="hint" data-i18n="sl.hint">Geräte anlegen (Drybox, ACE, Drucker, &hellip;), bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Bei Druckern mit ACE-Zuführung kann ein Platz als reserviert markiert werden (bleibt auch bei mehreren gekoppelten ACE-Einheiten über einen Hub an derselben Position). Der Standort wird automatisch zu Spoolman zurückgeschrieben.</p>
 
     <div class="add-device-form">
       <div>
-        <label for="dev-name">Name</label>
+        <label for="dev-name" data-i18n="sl.name">Name</label>
         <input type="text" id="dev-name" placeholder="z.B. Drybox">
       </div>
       <div>
-        <label for="dev-type">Typ</label>
+        <label for="dev-type" data-i18n="sl.type">Typ</label>
         <select id="dev-type">
-          <option value="drybox">Drybox</option>
-          <option value="ace">ACE</option>
-          <option value="printer">Drucker</option>
-          <option value="custom">Sonstiges</option>
+          <option value="drybox" data-i18n="sl.typeDrybox">Drybox</option>
+          <option value="ace" data-i18n="sl.typeAce">ACE</option>
+          <option value="printer" data-i18n="sl.typePrinter">Drucker</option>
+          <option value="custom" data-i18n="sl.typeCustom">Sonstiges</option>
         </select>
       </div>
       <div>
-        <label for="dev-levels">Ebenen</label>
+        <label for="dev-levels" data-i18n="sl.levels">Ebenen</label>
         <input type="number" id="dev-levels" value="1" min="1" step="1">
       </div>
       <div>
-        <label for="dev-slots">Plätze/Ebene</label>
+        <label for="dev-slots" data-i18n="sl.slotsPerLevel">Plätze/Ebene</label>
         <input type="number" id="dev-slots" value="4" min="1" step="1">
       </div>
       <div>
-        <label for="dev-rows">Reihen/Ebene</label>
+        <label for="dev-rows" data-i18n="sl.rowsPerLevel">Reihen/Ebene</label>
         <input type="number" id="dev-rows" value="1" min="1" step="1">
       </div>
       <div id="dev-ace-slot-wrap" style="display:none">
-        <label for="dev-ace-slot">ACE-Zuführung Platz</label>
+        <label for="dev-ace-slot" data-i18n="sl.aceFeedSlotLabel">ACE-Zuführung Platz</label>
         <input type="number" id="dev-ace-slot" placeholder="z.B. 4" min="1" step="1">
       </div>
       <div class="btn-wrap">
-        <button class="btn" id="dev-add-btn">Anlegen</button>
+        <button class="btn" id="dev-add-btn" data-i18n="sl.add">Anlegen</button>
       </div>
     </div>
 
@@ -451,51 +467,51 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
   </div>
 
   <div class="panel" data-panel="shopping">
-<h2>Einkaufsliste</h2>
-    <p class="hint">Wird automatisch befüllt, wenn eine leere Spule über &bdquo;Rolle leer&ldquo; aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.</p>
+<h2 data-i18n="panel.shopping">Einkaufsliste</h2>
+    <p class="hint" data-i18n="shop.hint">Wird automatisch befüllt, wenn eine leere Spule über &bdquo;Rolle leer&ldquo; aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.</p>
 
     <div class="add-device-form">
       <div>
-        <label for="shop-material">Material</label>
+        <label for="shop-material" data-i18n="shop.material">Material</label>
         <input type="text" id="shop-material" placeholder="z.B. PLA">
       </div>
       <div>
-        <label for="shop-color">Farbe</label>
+        <label for="shop-color" data-i18n="shop.color">Farbe</label>
         <input type="text" id="shop-color" placeholder="z.B. Schwarz">
       </div>
       <div>
-        <label for="shop-vendor">Hersteller</label>
-        <input type="text" id="shop-vendor" placeholder="z.B. Prusament"></div><div><label for="shop-article">Artikelnr.</label><input type="text" id="shop-article" placeholder="optional">
+        <label for="shop-vendor" data-i18n="shop.vendor">Hersteller</label>
+        <input type="text" id="shop-vendor" placeholder="z.B. Prusament"></div><div><label for="shop-article" data-i18n="shop.article">Artikelnr.</label><input type="text" id="shop-article" placeholder="optional">
       </div>
       <div style="flex:2 1 220px">
-        <label for="shop-note">Notiz</label>
+        <label for="shop-note" data-i18n="shop.note">Notiz</label>
         <input type="text" id="shop-note" placeholder="optional">
       </div>
       <div class="btn-wrap">
-        <button class="btn" id="shop-add-btn">Hinzufügen</button>
+        <button class="btn" id="shop-add-btn" data-i18n="shop.add">Hinzufügen</button>
       </div>
     </div>
 
     <div id="shopping-content"><div class="empty">Lade&hellip;</div></div>
   </div>
 <div class="panel" data-panel="labels">
-  <h2>Label-Designer</h2>
-  <p class="hint">Eigene Layouts fuer Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und fuer den Kartendruck exportieren.</p>
+  <h2 data-i18n="panel.labelDesigner">Label-Designer</h2>
+  <p class="hint" data-i18n="ld.description">Eigene Layouts fuer Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und fuer den Kartendruck exportieren.</p>
   <div class="labels-layout">
     <div class="labels-sidebar">
-      <button class="btn" id="ld-new-btn" type="button" style="width:100%;margin-bottom:.6rem;">+ Neue Vorlage</button>
+      <button class="btn" id="ld-new-btn" type="button" style="width:100%;margin-bottom:.6rem;" data-i18n="ld.newTemplate">+ Neue Vorlage</button>
       <ul class="labels-template-list" id="ld-template-list"></ul>
     </div>
     <div style="flex:1;min-width:320px;">
       <div class="labels-toolbar">
-        <input type="text" id="ld-name-input" placeholder="Name der Vorlage">
+        <input type="text" id="ld-name-input" placeholder="Name der Vorlage" data-i18n-placeholder="ld.namePlaceholder">
         <div class="labels-side-toggle">
-          <button type="button" id="ld-side-front" class="active">Vorderseite</button>
-          <button type="button" id="ld-side-back">Rueckseite</button>
+          <button type="button" id="ld-side-front" class="active" data-i18n="ld.sideFront">Vorderseite</button>
+          <button type="button" id="ld-side-back" data-i18n="ld.sideBack">Rueckseite</button>
         </div>
         <div class="labels-side-toggle" id="ld-type-toggle">
-          <button type="button" id="ld-type-spool" class="active">Spule</button>
-          <button type="button" id="ld-type-filament">Filament</button>
+          <button type="button" id="ld-type-spool" class="active" data-i18n="ld.typeSpool">Spule</button>
+          <button type="button" id="ld-type-filament" data-i18n="ld.typeFilament">Filament</button>
         </div>
         <div class="labels-size-fields">
           <span>B</span><input type="number" id="ld-width-input" value="85" step="0.5" min="10">
@@ -504,48 +520,48 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
         </div>
       </div>
       <div class="labels-side-toggle" id="ld-main-tab-toggle">
-        <button type="button" id="ld-tab-btn-design" class="active">Design</button>
-        <button type="button" id="ld-tab-btn-print">Druck</button>
+        <button type="button" id="ld-tab-btn-design" class="active" data-i18n="ld.tabDesign">Design</button>
+        <button type="button" id="ld-tab-btn-print" data-i18n="ld.tabPrint">Druck</button>
       </div>
       <div id="ld-tab-design">
 <div class="labels-toolbar">
         <select id="ld-spool-picker" style="flex:1;min-width:10rem;padding:.4rem .6rem;border-radius:.35rem;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);color:inherit;">
-          <option value="">Vorschau: Beispieldaten</option>
+          <option value="" data-i18n="ld.previewSample">Vorschau: Beispieldaten</option>
         </select>
-        <button class="btn secondary" id="ld-duplicate-btn" type="button">Duplizieren</button>
-        <button class="btn secondary danger" id="ld-delete-btn" type="button">Loeschen</button>
-        <button class="btn" id="ld-save-btn" type="button">Speichern</button>
-        <button class="btn secondary" id="ld-export-png-btn" type="button">Export PNG</button>
-        <button class="btn secondary" id="ld-export-pdf-btn" type="button">Export PDF</button>
+        <button class="btn secondary" id="ld-duplicate-btn" type="button" data-i18n="ld.duplicate">Duplizieren</button>
+        <button class="btn secondary danger" id="ld-delete-btn" type="button" data-i18n="ld.delete">Loeschen</button>
+        <button class="btn" id="ld-save-btn" type="button" data-i18n="ld.save">Speichern</button>
+        <button class="btn secondary" id="ld-export-png-btn" type="button" data-i18n="ld.exportPng">Export PNG</button>
+        <button class="btn secondary" id="ld-export-pdf-btn" type="button" data-i18n="ld.exportPdf">Export PDF</button>
       </div>
       <div class="labels-add-row">
-        <button class="btn secondary" type="button" data-add="text">+ Text/Feld</button>
-        <button class="btn secondary" type="button" data-add="qr">+ QR-Code</button>
-        <button class="btn secondary" type="button" data-add="color">+ Farbfeld</button>
-        <button class="btn secondary" type="button" data-add="rect">+ Rechteck</button>
-        <button class="btn secondary" type="button" data-add="icon">+ Spulen-Icon</button>
+        <button class="btn secondary" type="button" data-add="text" data-i18n="ld.addText">+ Text/Feld</button>
+        <button class="btn secondary" type="button" data-add="qr" data-i18n="ld.addQr">+ QR-Code</button>
+        <button class="btn secondary" type="button" data-add="color" data-i18n="ld.addColor">+ Farbfeld</button>
+        <button class="btn secondary" type="button" data-add="rect" data-i18n="ld.addRect">+ Rechteck</button>
+        <button class="btn secondary" type="button" data-add="icon" data-i18n="ld.addIcon">+ Spulen-Icon</button>
       </div>
       <div class="labels-workspace">
         <div class="labels-canvas-wrap">
           <div id="label-canvas"></div>
         </div>
         <div class="label-props" id="ld-props">
-          <div class="label-props-empty">Element auswaehlen, um Eigenschaften zu bearbeiten.</div>
+          <div class="label-props-empty" data-i18n="ld.propsEmpty">Element auswaehlen, um Eigenschaften zu bearbeiten.</div>
         </div>
       </div>
       </div>
       <div id="ld-tab-print" style="display:none;">
         <div class="labels-toolbar">
           <select id="ld-print-add-select" style="flex:1;min-width:14rem;">
-            <option value="">Spule/Filament zur Druckliste hinzufuegen...</option>
+            <option value="" data-i18n="ld.printAddSelectDefault">Spule/Filament zur Druckliste hinzufuegen...</option>
           </select>
-          <button class="btn secondary" id="ld-print-add-btn" type="button">+ Hinzufuegen</button>
+          <button class="btn secondary" id="ld-print-add-btn" type="button" data-i18n="ld.printAdd">+ Hinzufuegen</button>
           <select id="ld-print-format" style="min-width:8rem;">
             <option value="A4" selected>A4</option>
             <option value="Letter">Letter</option>
           </select>
-          <button class="btn secondary danger" id="ld-print-clear-btn" type="button">Liste leeren</button>
-          <button class="btn" id="ld-print-export-btn" type="button">Bogen exportieren (PDF)</button>
+          <button class="btn secondary danger" id="ld-print-clear-btn" type="button" data-i18n="ld.printClear">Liste leeren</button>
+          <button class="btn" id="ld-print-export-btn" type="button" data-i18n="ld.printExport">Bogen exportieren (PDF)</button>
         </div>
         <div class="labels-workspace">
           <div style="flex:1;min-width:260px;">
@@ -563,148 +579,147 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 </main>
 
 <div class="links">
-  <a class="link-card spoolman" href="#" id="spoolman-link" target="_blank"><span class="dot"></span>Spoolman (vollständige Oberfläche)</a>
+  <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
 <footer>Spoolman</footer>
-<script>(function(){var l=document.getElementById("spoolman-link");if(l){l.href=window.location.protocol+"//"+window.location.hostname+":8091";}})();</script>
 
 <div class="toast" id="toast"></div>
 
 <div class="assign-overlay" id="assign-overlay">
   <div class="assign-box">
-    <h3 id="assign-title">Platz zuweisen</h3>
+    <h3 id="assign-title" data-i18n="assign.title">Platz zuweisen</h3>
     <p class="slot-label" id="assign-slot-label"></p>
     <select id="assign-select"></select>
     <div class="row-actions">
-      <button class="btn secondary" id="assign-cancel">Abbrechen</button>
-      <button class="btn danger" id="assign-clear">Freimachen</button>
-      <button class="btn" id="assign-save">Speichern</button>
+      <button class="btn secondary" id="assign-cancel" data-i18n="common.cancel">Abbrechen</button>
+      <button class="btn danger" id="assign-clear" data-i18n="assign.clear">Freimachen</button>
+      <button class="btn" id="assign-save" data-i18n="common.save">Speichern</button>
     </div>
   </div>
 </div>
 
 <div class="assign-overlay" id="spool-assign-overlay">
   <div class="assign-box">
-    <h3 id="spool-assign-title">Platz zuweisen</h3>
+    <h3 id="spool-assign-title" data-i18n="assign.title">Platz zuweisen</h3>
     <p class="slot-label" id="spool-assign-spool-label"></p>
     <select id="spool-assign-select"></select>
     <div class="row-actions">
-      <button class="btn secondary" id="spool-assign-cancel">Abbrechen</button>
-      <button class="btn" id="spool-assign-save">Speichern</button>
+      <button class="btn secondary" id="spool-assign-cancel" data-i18n="common.cancel">Abbrechen</button>
+      <button class="btn" id="spool-assign-save" data-i18n="common.save">Speichern</button>
     </div>
   </div>
 </div>
 
 <div class="assign-overlay" id="spool-detail-overlay">
 <div class="assign-box wide scrollable">
-<h3 id="spool-detail-title">Spule bearbeiten</h3>
+<h3 id="spool-detail-title" data-i18n="sd.title">Spule bearbeiten</h3>
 <p class="slot-label" id="spool-detail-subtitle"></p>
 
-<div class="section-label">Diese Spule</div>
+<div class="section-label" data-i18n="sd.thisSpool">Diese Spule</div>
 <div class="field-grid">
-<div><label for="sd-price">Preis (&euro;)</label><input type="number" id="sd-price" step="0.01" min="0"></div>
-<div><label for="sd-initial-weight">Anfangsgewicht (g)</label><input type="number" id="sd-initial-weight" step="1" min="0"></div>
-<div><label for="sd-spool-weight">Leerspulengewicht (g)</label><input type="number" id="sd-spool-weight" step="1" min="0"></div>
-<div><label for="sd-lot-nr">Lot-Nr.</label><input type="text" id="sd-lot-nr"></div>
-<div class="full"><label for="sd-comment">Kommentar</label><input type="text" id="sd-comment"></div>
+<div><label for="sd-price" data-i18n="sd.price">Preis (&euro;)</label><input type="number" id="sd-price" step="0.01" min="0"></div>
+<div><label for="sd-initial-weight" data-i18n="sd.initialWeight">Anfangsgewicht (g)</label><input type="number" id="sd-initial-weight" step="1" min="0"></div>
+<div><label for="sd-spool-weight" data-i18n="sd.spoolWeight">Leerspulengewicht (g)</label><input type="number" id="sd-spool-weight" step="1" min="0"></div>
+<div><label for="sd-lot-nr" data-i18n="sd.lotNr">Lot-Nr.</label><input type="text" id="sd-lot-nr"></div>
+<div class="full"><label for="sd-comment" data-i18n="sd.comment">Kommentar</label><input type="text" id="sd-comment"></div>
 </div>
 <div id="sd-extra-fields"></div>
 
 <div class="section-label">
-Filament-Typ
-<button type="button" class="new-spool-toggle" id="sd-filament-toggle">Filament-Typ bearbeiten</button>
+<span data-i18n="sd.filamentType">Filament-Typ</span>
+<button type="button" class="new-spool-toggle" id="sd-filament-toggle" data-i18n="sd.editFilamentType">Filament-Typ bearbeiten</button>
 </div>
-<p class="section-note warn">Änderungen hier gelten für <strong>alle</strong> Spulen dieses Filament-Typs, nicht nur diese eine.</p>
+<p class="section-note warn" data-i18n-html="sd.filamentChangeWarnHtml">Änderungen hier gelten für <strong>alle</strong> Spulen dieses Filament-Typs, nicht nur diese eine.</p>
 <div class="field-grid" id="sd-filament-fields">
-<div><label for="sd-fil-name">Name</label><input type="text" id="sd-fil-name" disabled></div>
-<div><label for="sd-fil-material">Material</label><input type="text" id="sd-fil-material" disabled></div>
-<div><label for="sd-fil-vendor">Hersteller</label><input type="text" id="sd-fil-vendor" disabled></div><div><label for="sd-fil-article">Hersteller-Artikelnr.</label><input type="text" id="sd-fil-article" disabled></div>
-<div><label for="sd-fil-color">Farbe (Hex)</label><input type="text" id="sd-fil-color" disabled></div>
+<div><label for="sd-fil-name" data-i18n="fil.name">Name</label><input type="text" id="sd-fil-name" disabled></div>
+<div><label for="sd-fil-material" data-i18n="fil.material">Material</label><input type="text" id="sd-fil-material" disabled></div>
+<div><label for="sd-fil-vendor" data-i18n="fil.vendor">Hersteller</label><input type="text" id="sd-fil-vendor" disabled></div><div><label for="sd-fil-article" data-i18n="fil.articleNr">Hersteller-Artikelnr.</label><input type="text" id="sd-fil-article" disabled></div>
+<div><label for="sd-fil-color" data-i18n="fil.colorHex">Farbe (Hex)</label><input type="text" id="sd-fil-color" disabled></div>
 <div class="full">
-<button type="button" class="new-spool-toggle" id="sd-color-mode-toggle" data-mode="single" disabled>Mehrfarbig?</button>
+<button type="button" class="new-spool-toggle" id="sd-color-mode-toggle" data-mode="single" disabled data-i18n="fil.multicolor">Mehrfarbig?</button>
 <div id="sd-multicolor-block" style="display:none">
-<label for="sd-fil-multi-direction">Ausrichtung</label>
+<label for="sd-fil-multi-direction" data-i18n="fil.direction">Ausrichtung</label>
 <select id="sd-fil-multi-direction" disabled>
-<option value="longitudinal">L&auml;ngsstreifen (nebeneinander)</option>
-<option value="coaxial">Radial (Ringe/Schichten)</option>
+<option value="longitudinal" data-i18n="fil.longitudinal">L&auml;ngsstreifen (nebeneinander)</option>
+<option value="coaxial" data-i18n="fil.radial">Radial (Ringe/Schichten)</option>
 </select>
 <div id="sd-multicolor-rows"></div>
-<button type="button" class="new-spool-toggle" id="sd-multicolor-add" disabled>+ Farbe hinzuf&uuml;gen</button>
+<button type="button" class="new-spool-toggle" id="sd-multicolor-add" disabled data-i18n="fil.addColor">+ Farbe hinzuf&uuml;gen</button>
 </div>
 </div>
-<div><label for="sd-fil-diameter">Durchmesser (mm)</label><input type="number" id="sd-fil-diameter" step="0.01" disabled></div>
-<div><label for="sd-fil-density">Dichte (g/cm&sup3;)</label><input type="number" id="sd-fil-density" step="0.01" disabled></div>
-<div><label for="sd-fil-extruder-temp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-extruder-temp" step="1" disabled></div>
-<div><label for="sd-fil-bed-temp">Betttemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-bed-temp" step="1" disabled></div>
+<div><label for="sd-fil-diameter" data-i18n="fil.diameter">Durchmesser (mm)</label><input type="number" id="sd-fil-diameter" step="0.01" disabled></div>
+<div><label for="sd-fil-density" data-i18n="fil.density">Dichte (g/cm&sup3;)</label><input type="number" id="sd-fil-density" step="0.01" disabled></div>
+<div><label for="sd-fil-extruder-temp" data-i18n="fil.extruderTemp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-extruder-temp" step="1" disabled></div>
+<div><label for="sd-fil-bed-temp" data-i18n="fil.bedTemp">Betttemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-bed-temp" step="1" disabled></div>
 </div>
 
 <div class="row-actions">
-<button class="btn secondary" id="spool-detail-cancel">Abbrechen</button>
-<button class="btn" id="spool-detail-save">Speichern</button>
+<button class="btn secondary" id="spool-detail-cancel" data-i18n="common.cancel">Abbrechen</button>
+<button class="btn" id="spool-detail-save" data-i18n="common.save">Speichern</button>
 </div>
 </div>
 </div>
 
 <div class="assign-overlay" id="new-spool-overlay">
 <div class="assign-box wide scrollable">
-<h3>Neue Spule</h3>
-<p class="slot-label">Bestehenden Filament-Typ w&auml;hlen oder einen neuen anlegen.</p>
+<h3 data-i18n="ns.title">Neue Spule</h3>
+<p class="slot-label" data-i18n="ns.subtitle">Bestehenden Filament-Typ w&auml;hlen oder einen neuen anlegen.</p>
 
-<button type="button" class="new-spool-toggle" id="ns-mode-toggle">Neuen Filament-Typ anlegen</button>
+<button type="button" class="new-spool-toggle" id="ns-mode-toggle" data-i18n="ns.newFilamentTypeBtn">Neuen Filament-Typ anlegen</button>
 
 <div id="ns-existing-block">
-<div class="section-label">Filament-Typ w&auml;hlen</div>
-<input type="text" class="filament-pick-search" id="ns-filament-search" placeholder="Suche nach Hersteller, Material, Name&hellip;">
+<div class="section-label" data-i18n="ns.chooseFilamentType">Filament-Typ w&auml;hlen</div>
+<input type="text" class="filament-pick-search" id="ns-filament-search" data-i18n-placeholder="ns.searchPlaceholder" placeholder="Suche nach Hersteller, Material, Name&hellip;">
 <select id="ns-filament-select" class="filament-pick-select" size="6"></select>
 </div>
 
 <div id="ns-new-block" style="display:none">
-<div class="section-label">Neuer Filament-Typ</div>
+<div class="section-label" data-i18n="ns.newFilamentTypeLabel">Neuer Filament-Typ</div>
 <div class="filament-pick-search">
-<input type="text" id="ns-db-search" placeholder="SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA+&hellip;)">
+<input type="text" id="ns-db-search" data-i18n-placeholder="ns.dbSearchPlaceholder" placeholder="SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA+&hellip;)">
 <div id="ns-db-results" class="db-results" style="display:none"></div>
 </div>
 <div class="field-grid">
-<div><label for="ns-fil-name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div>
-<div><label for="ns-fil-material">Material</label><input type="text" id="ns-fil-material" placeholder="z.B. PLA"></div>
+<div><label for="ns-fil-name" data-i18n="fil.name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div>
+<div><label for="ns-fil-material" data-i18n="fil.material">Material</label><input type="text" id="ns-fil-material" placeholder="z.B. PLA"></div>
 <div>
-<label for="ns-fil-vendor-select">Hersteller</label>
+<label for="ns-fil-vendor-select" data-i18n="fil.vendor">Hersteller</label>
 <select id="ns-fil-vendor-select"></select>
 </div>
-<div id="ns-fil-vendor-new-wrap" style="display:none"><label for="ns-fil-vendor-new">Neuer Hersteller</label><input type="text" id="ns-fil-vendor-new" placeholder="Name"></div>
-<div><label for="ns-fil-color">Farbe (Hex, ohne #)</label><input type="text" id="ns-fil-color" placeholder="z.B. FF0000"></div><div><label for="ns-fil-article">Hersteller-Artikelnr.</label><input type="text" id="ns-fil-article" placeholder="z.B. 03560422A"></div>
+<div id="ns-fil-vendor-new-wrap" style="display:none"><label for="ns-fil-vendor-new" data-i18n="fil.vendorNew">Neuer Hersteller</label><input type="text" id="ns-fil-vendor-new" placeholder="Name"></div>
+<div><label for="ns-fil-color" data-i18n="fil.colorHexNoHash">Farbe (Hex, ohne #)</label><input type="text" id="ns-fil-color" placeholder="z.B. FF0000"></div><div><label for="ns-fil-article" data-i18n="fil.articleNr">Hersteller-Artikelnr.</label><input type="text" id="ns-fil-article" placeholder="z.B. 03560422A"></div>
 <div class="full">
-<button type="button" class="new-spool-toggle" id="ns-color-mode-toggle" data-mode="single">Mehrfarbig?</button>
+<button type="button" class="new-spool-toggle" id="ns-color-mode-toggle" data-mode="single" data-i18n="fil.multicolor">Mehrfarbig?</button>
 <div id="ns-multicolor-block" style="display:none">
-<label for="ns-fil-multi-direction">Ausrichtung</label>
+<label for="ns-fil-multi-direction" data-i18n="fil.direction">Ausrichtung</label>
 <select id="ns-fil-multi-direction">
-<option value="longitudinal">L&auml;ngsstreifen (nebeneinander)</option>
-<option value="coaxial">Radial (Ringe/Schichten)</option>
+<option value="longitudinal" data-i18n="fil.longitudinal">L&auml;ngsstreifen (nebeneinander)</option>
+<option value="coaxial" data-i18n="fil.radial">Radial (Ringe/Schichten)</option>
 </select>
 <div id="ns-multicolor-rows"></div>
-<button type="button" class="new-spool-toggle" id="ns-multicolor-add">+ Farbe hinzuf&uuml;gen</button>
+<button type="button" class="new-spool-toggle" id="ns-multicolor-add" data-i18n="fil.addColor">+ Farbe hinzuf&uuml;gen</button>
 </div>
 </div>
-<div><label for="ns-fil-diameter">Durchmesser (mm)</label><input type="number" id="ns-fil-diameter" step="0.01" value="1.75"></div>
-<div><label for="ns-fil-density">Dichte (g/cm&sup3;)</label><input type="number" id="ns-fil-density" step="0.01" placeholder="z.B. 1.24"></div>
-<div><label for="ns-fil-extruder-temp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-extruder-temp" step="1"></div>
-<div><label for="ns-fil-bed-temp">Betttemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-bed-temp" step="1"></div>
+<div><label for="ns-fil-diameter" data-i18n="fil.diameter">Durchmesser (mm)</label><input type="number" id="ns-fil-diameter" step="0.01" value="1.75"></div>
+<div><label for="ns-fil-density" data-i18n="fil.density">Dichte (g/cm&sup3;)</label><input type="number" id="ns-fil-density" step="0.01" placeholder="z.B. 1.24"></div>
+<div><label for="ns-fil-extruder-temp" data-i18n="fil.extruderTemp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-extruder-temp" step="1"></div>
+<div><label for="ns-fil-bed-temp" data-i18n="fil.bedTemp">Betttemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-bed-temp" step="1"></div>
 </div>
 </div>
 
-<div class="section-label">Diese Spule</div>
+<div class="section-label" data-i18n="sd.thisSpool">Diese Spule</div>
 <div class="field-grid">
-<div><label for="ns-price">Preis (&euro;)</label><input type="number" id="ns-price" step="0.01" min="0"></div>
-<div><label for="ns-initial-weight">Anfangsgewicht (g)</label><input type="number" id="ns-initial-weight" step="1" min="0" value="1000"></div>
-<div><label for="ns-spool-weight">Leerspulengewicht (g)</label><input type="number" id="ns-spool-weight" step="1" min="0"></div>
-<div><label for="ns-lot-nr">Lot-Nr.</label><input type="text" id="ns-lot-nr"></div>
+<div><label for="ns-price" data-i18n="sd.price">Preis (&euro;)</label><input type="number" id="ns-price" step="0.01" min="0"></div>
+<div><label for="ns-initial-weight" data-i18n="sd.initialWeight">Anfangsgewicht (g)</label><input type="number" id="ns-initial-weight" step="1" min="0" value="1000"></div>
+<div><label for="ns-spool-weight" data-i18n="sd.spoolWeight">Leerspulengewicht (g)</label><input type="number" id="ns-spool-weight" step="1" min="0"></div>
+<div><label for="ns-lot-nr" data-i18n="sd.lotNr">Lot-Nr.</label><input type="text" id="ns-lot-nr"></div>
 </div>
 <div id="ns-extra-fields"></div>
 
 <div class="row-actions">
-<button class="btn secondary" id="new-spool-cancel">Abbrechen</button>
-<button class="btn" id="new-spool-save">Spule anlegen</button>
+<button class="btn secondary" id="new-spool-cancel" data-i18n="common.cancel">Abbrechen</button>
+<button class="btn" id="new-spool-save" data-i18n="ns.createSpool">Spule anlegen</button>
 </div>
 </div>
 </div>
@@ -712,6 +727,609 @@ Filament-Typ
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 const SP = '/api/spoolman';
+
+const I18N = {
+  de: {
+    'nav.settings': 'Einstellungen',
+    'nav.info': 'Info',
+    'hero.subtitle': 'Spulen im Blick — einchecken, auschecken, Verbrauch buchen, Lagerplätze visualisieren',
+    'panel.overview': 'Gesamtübersicht',
+    'panel.newSpool': '✨ Neue Spule',
+    'panel.spools': 'Spulen',
+    'panel.locations': 'Lagerplätze',
+    'panel.shopping': 'Einkaufsliste',
+    'panel.labelDesigner': 'Label-Designer',
+    'scan.fabTitle': 'Scan-Modus (Wareneingang)',
+    'scan.title': 'Scan-Modus',
+    'info.title': 'Anleitung',
+    'info.close': 'Schließen',
+    'ld.newTemplate': '+ Neue Vorlage',
+    'ld.namePlaceholder': 'Name der Vorlage',
+    'ld.sideFront': 'Vorderseite',
+    'ld.dataSource': 'Datenquelle',
+    'ld.sideBack': 'Rueckseite',
+    'ld.typeSpool': 'Spule',
+    'ld.typeFilament': 'Filament',
+    'ld.tabDesign': 'Design',
+    'ld.tabPrint': 'Druck',
+    'ld.previewSample': 'Vorschau: Beispieldaten',
+    'ld.duplicate': 'Duplizieren',
+    'ld.delete': 'Loeschen',
+    'ld.save': 'Speichern',
+    'ld.exportPng': 'Export PNG',
+    'ld.exportPdf': 'Export PDF',
+    'ld.addText': '+ Text/Feld',
+    'ld.addQr': '+ QR-Code',
+    'ld.addColor': '+ Farbfeld',
+    'ld.addRect': '+ Rechteck',
+    'ld.addIcon': '+ Spulen-Icon',
+    'ld.propsEmpty': 'Element auswaehlen, um Eigenschaften zu bearbeiten.',
+    'ld.printAddSelectDefault': 'Spule/Filament zur Druckliste hinzufuegen...',
+    'ld.printAdd': '+ Hinzufuegen',
+    'ld.printClear': 'Liste leeren',
+    'ld.printExport': 'Bogen exportieren (PDF)',
+    'ld.propStaticText': 'Statischer Text (falls kein Feld)',
+    'ld.propFontSize': 'Schriftgroesse (mm)',
+    'ld.propAlign': 'Ausrichtung',
+    'ld.alignLeft': 'Links',
+    'ld.alignCenter': 'Mitte',
+    'ld.alignRight': 'Rechts',
+    'ld.propBold': 'Fett',
+    'ld.propTextColor': 'Textfarbe',
+    'ld.propQrContent': 'Inhalt des QR-Codes',
+    'ld.hintQrLogo': 'Das App-Logo wird beim Export automatisch im Zentrum des QR-Codes eingebettet.',
+    'ld.propFillColor': 'Fuellfarbe',
+    'ld.propBorder': 'Rahmen',
+    'ld.hintColorField': 'Zeigt automatisch die Filamentfarbe der gewaehlten Spule.',
+    'ld.hintIconField': 'Spulen-Icon in der Filamentfarbe.',
+    'ld.propX': 'X (mm)',
+    'ld.propY': 'Y (mm)',
+    'ld.propWidth': 'Breite (mm)',
+    'ld.propHeight': 'Hoehe (mm)',
+    'ld.deleteElement': 'Element loeschen',
+    'ld.freetextOption': '-- Freitext --',
+    'ld.typeLabelText': 'Text / Feld',
+    'ld.typeLabelQr': 'QR-Code',
+    'ld.typeLabelColor': 'Farbfeld',
+    'ld.typeLabelRect': 'Rechteck',
+    'ld.typeLabelIcon': 'Spulen-Icon',
+    'ld.selectSpoolFilament': 'Bitte Spule/Filament waehlen',
+    'ld.selectSpoolFilamentFirst': 'Bitte zuerst Spule/Filament waehlen',
+    'ld.saveTemplateFirst': 'Vorlage zuerst speichern',
+    'ld.printListEmpty': 'Druckliste ist leer',
+    'ld.sheetExportFailed': 'Bogen-Export fehlgeschlagen: ',
+    'ld.exportFailed': 'Export fehlgeschlagen: ',
+    'ld.templateSaved': 'Vorlage gespeichert',
+    'ld.saveFailed': 'Fehler beim Speichern: ',
+    'ld.templateDuplicated': 'Vorlage dupliziert',
+    'ld.genericError': 'Fehler: ',
+    'ld.confirmDeletePrefix': 'Vorlage ',
+    'ld.confirmDeleteSuffix': ' wirklich loeschen?',
+    'ld.templateDeleted': 'Vorlage geloescht',
+    'ld.noLabelsInPrintList': 'Keine Etiketten in der Druckliste.',
+    'ld.labelsCountUnit': ' Etikett(en), ',
+    'ld.perPage': ' pro Seite, ',
+    'ld.pagesUnit': ' Seite(n) (',
+    'ld.pagesClose': ')',
+    'info.html': `
+      <h4>Spulen verwalten</h4>
+      <p>Im Abschnitt "Neue Spule" legst du eine neue Filamentrolle an: Hersteller, Farbe (auch mehrfarbig) und optional eine Artikelnummer für die Einkaufsliste. In der Tabelle "Spulen" siehst du alle aktiven Rollen; ein Klick auf eine Zeile öffnet das Detail-/Bearbeiten-Fenster, dort lassen sich Werte auch nachträglich ändern. Ist eine Rolle leer, markierst du sie als "leer" - sie landet automatisch auf der Einkaufsliste. Über das Suchfeld findest du Spulen schnell, auch bei vielen Einträgen.</p>
+      <h4>Lagerplätze</h4>
+      <p>Im Bereich "Lagerplätze" siehst du eine visuelle Übersicht deiner Drucker, ACE-/AMS-Einheiten und Dryboxen. Spulen weist du per Drag&amp;Drop oder über den Zuweisungsdialog einem Platz zu. Welche Geräte/Plätze es gibt, konfigurierst du einmalig im Bereich Lagerplätze.</p>
+      <h4>Label-Designer</h4>
+      <p>Im Label-Designer baust du eigene Etiketten mit Text- und Variablenfeldern (z. B. Material, Farbe, Spulen-ID). Jede Vorlage ist entweder für Spule oder Filament typisiert, der QR-Code-Inhalt folgt automatisch dem gewählten Typ und zeigt eine Live-Vorschau während der Bearbeitung. Im Druck-Tab wählst du mehrere Spulen/Filamente aus und druckst sie als Bogen.</p>
+      <h4>Scan-Workflow (Wareneingang)</h4>
+      <p>Über den runden Scan-Button unten rechts öffnest du den Scan-Modus. Er funktioniert mit einem Hardware-Barcode-/QR-Scanner (HID-Tastatur-Emulation, kein Treiber nötig) oder über die Geräte-Kamera. Die Kamera funktioniert nur über HTTPS. Scannst du zuerst einen Filament-QR-Code, dann einen Lagerplatz-Code, wird die Spule automatisch angelegt und zugewiesen. Alternativ kannst du im "Neue Spule"-Dialog ein gedrucktes Filament-QR-Label scannen, um Material/Hersteller/Farbe automatisch vorzubefüllen.</p>
+      <h4>Sprache &amp; weitere Hinweise</h4>
+      <p>Oben links kannst du jederzeit zwischen Deutsch und Englisch wechseln - die Auswahl wird pro Gerät im Browser gespeichert. Rückmeldungen, Bugs und Verbesserungsvorschläge sind sehr willkommen.</p>
+    `,
+  'sl.name': 'Name',
+  'sl.type': 'Typ',
+  'sl.typeDrybox': 'Drybox',
+  'sl.typeAce': 'ACE',
+  'sl.typePrinter': 'Drucker',
+  'sl.typeCustom': 'Sonstiges',
+  'sl.levels': 'Ebenen',
+  'sl.slotsPerLevel': 'Plätze/Ebene',
+  'sl.rowsPerLevel': 'Reihen/Ebene',
+  'sl.aceFeedSlotLabel': 'ACE-Zuführung Platz',
+  'sl.add': 'Anlegen',
+  'sl.occupied': 'belegt',
+  'sl.aceAtSlot': 'ACE an Platz',
+  'sl.deleteDeviceTitle': 'Gerät löschen',
+  'sl.aceFeedNotePrefix': 'Platz',
+  'sl.aceFeedNoteSuffix': 'ist für die ACE-Zuführung reserviert und nicht belegbar — bleibt auch bei mehreren über einen Hub gekoppelten ACE-Einheiten an dieser einen Position.',
+  'sl.confirmDeleteDevice': 'Gerät wirklich löschen? Alle Platzzuordnungen gehen verloren (Spulen selbst bleiben in Spoolman erhalten).',
+  'sl.slotFreed': 'Platz freigemacht',
+  'sl.slotSaved': 'Platz gespeichert',
+  'sl.slotReservedAce': 'Dieser Platz ist für die ACE-Zuführung reserviert',
+  'sl.slotOccupied': 'Platz ist bereits belegt',
+  'sl.noFreeSlotOn': 'Kein freier Platz auf',
+  'sl.thisDevice': 'diesem Gerät',
+  'sl.slotReleased': 'Platz freigegeben',
+  'sl.deviceDeleted': 'Gerät gelöscht',
+  'sl.rowsPerLevelSaved': 'Reihen/Ebene gespeichert',
+  'sl.aceFeedSaved': 'ACE-Zuführung gespeichert',
+  'sl.needName': 'Bitte Namen angeben',
+  'sl.slotsDivisibleByRows': 'Plätze/Ebene müssen durch Reihen/Ebene teilbar sein',
+  'sl.deviceCreated': 'Gerät angelegt',
+  'common.save': 'Speichern',
+    'common.cancel': 'Abbrechen',
+    'assign.checkinDrybox': 'In Drybox einchecken',
+    'assign.checkoutPrinter': 'Auf Drucker/ACE auschecken',
+    'sd.archivedSuffix': 'archiviert',
+    'ns.existingFilamentTypeBtn': 'Bestehenden Filament-Typ wählen',
+    'scan.spoolDetectedShort': 'Spule erkannt.',
+    'scan.slotDetectedShort': 'Platz erkannt.',
+    'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
+    'assign.title': 'Platz zuweisen',
+    'assign.clear': 'Freimachen',
+    'footer.spoolmanLink': 'Spoolman (vollständige Oberfläche)',
+    'sd.title': 'Spule bearbeiten',
+    'sd.thisSpool': 'Diese Spule',
+    'sd.price': 'Preis (€)',
+    'sd.initialWeight': 'Anfangsgewicht (g)',
+    'sd.spoolWeight': 'Leerspulengewicht (g)',
+    'sd.lotNr': 'Lot-Nr.',
+    'sd.comment': 'Kommentar',
+    'sd.filamentType': 'Filament-Typ',
+    'sd.editFilamentType': 'Filament-Typ bearbeiten',
+    'sd.filamentChangeWarnHtml': 'Änderungen hier gelten für <strong>alle</strong> Spulen dieses Filament-Typs, nicht nur diese eine.',
+    'fil.name': 'Name',
+    'fil.material': 'Material',
+    'fil.vendor': 'Hersteller',
+    'fil.articleNr': 'Hersteller-Artikelnr.',
+    'fil.colorHex': 'Farbe (Hex)',
+    'fil.multicolor': 'Mehrfarbig?',
+    'fil.direction': 'Ausrichtung',
+    'fil.longitudinal': 'Längsstreifen (nebeneinander)',
+    'fil.radial': 'Radial (Ringe/Schichten)',
+    'fil.addColor': '+ Farbe hinzufügen',
+    'fil.diameter': 'Durchmesser (mm)',
+    'fil.density': 'Dichte (g/cm³)',
+    'fil.extruderTemp': 'Drucktemperatur Standard (°C)',
+    'fil.bedTemp': 'Betttemperatur Standard (°C)',
+    'fil.colorHexNoHash': 'Farbe (Hex, ohne #)',
+    'fil.vendorNew': 'Neuer Hersteller',
+    'ns.title': 'Neue Spule',
+    'ns.subtitle': 'Bestehenden Filament-Typ wählen oder einen neuen anlegen.',
+    'ns.newFilamentTypeBtn': 'Neuen Filament-Typ anlegen',
+    'ns.chooseFilamentType': 'Filament-Typ wählen',
+    'ns.searchPlaceholder': 'Suche nach Hersteller, Material, Name…',
+    'ns.newFilamentTypeLabel': 'Neuer Filament-Typ',
+    'ns.dbSearchPlaceholder': 'SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA…)',
+  'common.error': 'Fehler',
+  'common.undone': 'Rückgängig gemacht',
+  'common.errorUndo': 'Fehler beim Rückgängigmachen',
+  'common.errorLoading': 'Fehler beim Laden',
+  'common.saved': 'Gespeichert',
+  'sp.colId': 'ID',
+  'sp.colFilament': 'Filament',
+  'sp.colRemaining': 'Rest',
+  'sp.colLocation': 'Standort',
+  'sp.colCheck': 'Ein-/Auschecken',
+  'sp.colUsage': 'Verbrauch',
+  'sp.assignPrinter': 'Auf Drucker/ACE',
+  'sp.assignPrinterTitle': 'Auf freien Drucker- oder ACE-Platz legen',
+  'sp.assignDrybox': 'In Drybox',
+  'sp.assignDryboxTitle': 'Zurück in eine Drybox legen',
+  'sp.clearSlotTitle': 'Vom aktuellen Platz entfernen',
+  'sp.retire': 'Rolle leer',
+  'sp.retireTitle': 'Rolle ist leer — archivieren & auf Einkaufsliste',
+  'sp.bookUsage': 'Verbrauch buchen',
+  'sp.prev': 'Zurück',
+  'sp.next': 'Weiter',
+  'sp.spoolsWord': 'Spulen',
+  'sp.page': 'Seite',
+  'sp.confirmRetire': 'Spule wirklich als leer markieren? Sie wird in Spoolman archiviert, der Lagerplatz freigegeben und ein Eintrag auf die Einkaufsliste gesetzt.',
+  'sp.noSlotSelected': 'Kein Platz ausgewählt',
+  'sp.slotAssigned': 'Platz zugewiesen',
+  'sp.needGrams': 'Bitte Grammzahl angeben',
+  'sp.usageBooked': 'Verbrauch gebucht',
+  'sp.retiredToList': 'Rolle als leer markiert & auf Einkaufsliste gesetzt',
+  'shop.material': 'Material',
+  'shop.color': 'Farbe',
+  'shop.vendor': 'Hersteller',
+  'shop.article': 'Artikelnr.',
+  'shop.note': 'Notiz',
+  'shop.add': 'Hinzufügen',
+  'shop.remove': 'Entfernen',
+  'shop.colMaterialColor': 'Material/Farbe',
+  'shop.entryRemoved': 'Eintrag entfernt',
+  'shop.needOneField': 'Bitte mindestens Material, Farbe oder Notiz angeben',
+  'shop.addedToList': 'Zur Einkaufsliste hinzugefügt',
+  'ns.createSpool': 'Spule anlegen',
+    'ov.spools': 'Spulen',
+    'ov.remainingTotal': 'Rest gesamt',
+    'ov.almostEmpty': 'Fast leer (<100g)',
+    'ns.hint': 'Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.',
+    'ns.newSpoolBtn': '+ Neue Spule',
+    'ns.spoolmanOpen': 'Spoolman öffnen →',
+    'sp.hint': 'Standort kommt direkt aus den Lagerplätzen – kein manuelles Eintippen mehr. Über „Auf Drucker/ACE" bzw. „In Drybox" wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert „Rolle leer" sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.',
+    'sl.hint': 'Geräte anlegen (Drybox, ACE, Drucker, …), bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Bei Druckern mit ACE-Zuführung kann ein Platz als reserviert markiert werden (bleibt auch bei mehreren gekoppelten ACE-Einheiten über einen Hub an derselben Position). Der Standort wird automatisch zu Spoolman zurückgeschrieben.',
+    'shop.hint': 'Wird automatisch befüllt, wenn eine leere Spule über „Rolle leer" aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.',
+    'sl.level': 'Ebene',
+    'sl.slot': 'Platz',
+    'settings.reorderTitle': 'Reihenfolge anpassen',
+    'settings.reorderHint': 'Abschnitte mit den Pfeilen nach oben/unten verschieben.',
+    'settings.cancel': 'Abbrechen',
+    'settings.save': 'Speichern',
+    'settings.saved': 'Reihenfolge gespeichert',
+    'common.error': 'Fehler: ',
+    'common.saved': 'Gespeichert',
+    'common.needTwoColors': 'Mindestens 2 Farben nötig',
+    'sd.loadError': 'Fehler beim Laden: ',
+    'ns.dbImported': 'Werte aus SpoolmanDB übernommen',
+    'ns.needTwoColorsCustom': 'Bitte mindestens 2 Farben angeben',
+    'ns.filamentNotFoundPrefix': 'Filament #',
+    'ns.filamentNotFoundSuffix': ' nicht gefunden',
+    'ns.filamentDetected': 'Filament erkannt: ',
+    'ns.needVendorName': 'Bitte Herstellername angeben',
+    'ns.needBasicFields': 'Bitte Name, Material, Durchmesser und Dichte angeben',
+    'ns.needFilamentType': 'Bitte einen Filament-Typ wählen',
+    'ns.spoolCreated': 'Spule angelegt',
+    'scan.spoolNotFoundPrefix': 'Spule #',
+    'scan.spoolNotFoundSuffix': ' nicht gefunden.',
+    'scan.spoolDetected': 'Spule erkannt: ',
+    'scan.slotNotFoundPrefix': 'Platz #',
+    'scan.slotNotFoundSuffix': ' nicht gefunden.',
+    'scan.slotReservedHint': 'Dieser Platz ist fuer die ACE-Zufuehrung reserviert.',
+    'scan.slotReserved': 'Platz ist fuer die ACE-Zufuehrung reserviert.',
+    'scan.slotDetected': 'Platz erkannt: ',
+    'scan.unknownQrPrefix': 'Unbekannter QR-Code: ',
+    'scan.unknownQr': 'Unbekannter QR-Code.',
+    'scan.alreadyPrepared': 'Bereits eine Spule vorbereitet - zuerst Platz scannen oder zuruecksetzen.',
+    'scan.filamentNotFoundPrefix': 'Filament #',
+    'scan.filamentNotFoundSuffix': ' nicht gefunden.',
+    'scan.filamentCreatedGo': 'Filament erkannt - lege Spule an ...',
+    'scan.spoolCreatedPrefix': 'Spule angelegt: ',
+    'scan.createSpoolErrorPrefix': 'Fehler beim Anlegen der Spule: ',
+    'scan.slotGoneAgain': 'Platz nicht mehr gefunden.',
+    'scan.slotOccupied': 'Platz ist bereits belegt.',
+    'scan.slotOccupiedRescan': 'Platz ist bereits belegt - bitte anderen Platz scannen.',
+    'scan.assignedPrefix': 'Zugewiesen: ',
+    'scan.assignedArrow': ' -> ',
+    'scan.spoolAlreadyOnSlot': 'Spule liegt bereits auf diesem Platz.',
+    'scan.cameraLibMissing': 'Kamera-Bibliothek nicht verfuegbar.',
+    'scan.cameraStop': 'Kamera stoppen',
+    'scan.cameraStart': 'Kamera scannen',
+    'scan.cameraStartErrorPrefix': 'Kamera konnte nicht gestartet werden: ',
+    'scan.httpsRequired': 'Kamera-Scan benoetigt eine HTTPS-Verbindung und ist auf dieser Seite nicht verfuegbar.',
+    'scan.cameraDesc': 'Scannt QR-Codes direkt mit der Kamera dieses Geraets, als Alternative zu einem externen Scanner.',
+    'scan.slotLabelDesc': 'Spule und Lagerplatz in beliebiger Reihenfolge scannen.',
+    'scan.newFilamentNote': 'Neuer Filament-QR: Spule wird automatisch angelegt und beim naechsten Platz-Scan automatisch zugewiesen (kein Klick noetig). Vorhandene Spule (Spulen-QR): Zuweisung muss ueber den Button unten bestaetigt werden.',
+    'scan.cameraActivate': 'Kamera-Scan aktivieren',
+    'scan.spoolLabel2': 'Spule:',
+    'scan.slotLabel2': 'Platz:',
+    'scan.notScannedYet': '– noch nicht gescannt –',
+    'scan.close': 'Schließen',
+    'scan.reset': 'Zurücksetzen',
+    'scan.confirmAssign': 'Zuweisen bestätigen',
+  },
+  en: {
+    'nav.settings': 'Settings',
+    'nav.info': 'Info',
+    'hero.subtitle': 'Keep track of your spools — check in, check out, log usage, visualize storage locations',
+    'panel.overview': 'Overview',
+    'panel.newSpool': '✨ New spool',
+    'panel.spools': 'Spools',
+    'panel.locations': 'Storage locations',
+    'panel.shopping': 'Shopping list',
+    'panel.labelDesigner': 'Label designer',
+    'scan.fabTitle': 'Scan mode (receiving)',
+    'scan.title': 'Scan mode',
+    'info.title': 'Guide',
+    'info.close': 'Close',
+    'ld.newTemplate': '+ New Template',
+    'ld.namePlaceholder': 'Template name',
+    'ld.sideFront': 'Front',
+    'ld.dataSource': 'Data source',
+    'ld.sideBack': 'Back',
+    'ld.typeSpool': 'Spool',
+    'ld.typeFilament': 'Filament',
+    'ld.tabDesign': 'Design',
+    'ld.tabPrint': 'Print',
+    'ld.previewSample': 'Preview: Sample data',
+    'ld.duplicate': 'Duplicate',
+    'ld.delete': 'Delete',
+    'ld.save': 'Save',
+    'ld.exportPng': 'Export PNG',
+    'ld.exportPdf': 'Export PDF',
+    'ld.addText': '+ Text/Field',
+    'ld.addQr': '+ QR Code',
+    'ld.addColor': '+ Color Field',
+    'ld.addRect': '+ Rectangle',
+    'ld.addIcon': '+ Spool Icon',
+    'ld.propsEmpty': 'Select an element to edit its properties.',
+    'ld.printAddSelectDefault': 'Add spool/filament to print list...',
+    'ld.printAdd': '+ Add',
+    'ld.printClear': 'Clear list',
+    'ld.printExport': 'Export sheet (PDF)',
+    'ld.propStaticText': 'Static text (if no field)',
+    'ld.propFontSize': 'Font size (mm)',
+    'ld.propAlign': 'Alignment',
+    'ld.alignLeft': 'Left',
+    'ld.alignCenter': 'Center',
+    'ld.alignRight': 'Right',
+    'ld.propBold': 'Bold',
+    'ld.propTextColor': 'Text color',
+    'ld.propQrContent': 'QR code content',
+    'ld.hintQrLogo': 'The app logo is automatically embedded in the center of the QR code on export.',
+    'ld.propFillColor': 'Fill color',
+    'ld.propBorder': 'Border',
+    'ld.hintColorField': 'Automatically shows the filament color of the selected spool.',
+    'ld.hintIconField': 'Spool icon in the filament color.',
+    'ld.propX': 'X (mm)',
+    'ld.propY': 'Y (mm)',
+    'ld.propWidth': 'Width (mm)',
+    'ld.propHeight': 'Height (mm)',
+    'ld.deleteElement': 'Delete element',
+    'ld.freetextOption': '-- Free text --',
+    'ld.typeLabelText': 'Text / Field',
+    'ld.typeLabelQr': 'QR Code',
+    'ld.typeLabelColor': 'Color Field',
+    'ld.typeLabelRect': 'Rectangle',
+    'ld.typeLabelIcon': 'Spool Icon',
+    'ld.selectSpoolFilament': 'Please select a spool/filament',
+    'ld.selectSpoolFilamentFirst': 'Please select a spool/filament first',
+    'ld.saveTemplateFirst': 'Save template first',
+    'ld.printListEmpty': 'Print list is empty',
+    'ld.sheetExportFailed': 'Sheet export failed: ',
+    'ld.exportFailed': 'Export failed: ',
+    'ld.templateSaved': 'Template saved',
+    'ld.saveFailed': 'Save failed: ',
+    'ld.templateDuplicated': 'Template duplicated',
+    'ld.genericError': 'Error: ',
+    'ld.confirmDeletePrefix': 'Delete template ',
+    'ld.confirmDeleteSuffix': '?',
+    'ld.templateDeleted': 'Template deleted',
+    'ld.noLabelsInPrintList': 'No labels in the print list.',
+    'ld.labelsCountUnit': ' label(s), ',
+    'ld.perPage': ' per page, ',
+    'ld.pagesUnit': ' page(s) (',
+    'ld.pagesClose': ')',
+    'info.html': `
+      <h4>Managing spools</h4>
+      <p>In the "New spool" section you add a new filament roll: manufacturer, color (including multi-color), and optionally an article number for the shopping list. The "Spools" table lists all active rolls; clicking a row opens the detail/edit dialog, where values can be changed later too. When a roll is empty, mark it as "empty" - it is automatically added to the shopping list. Use the search field to find spools quickly, even with many entries.</p>
+      <h4>Storage locations</h4>
+      <p>The "Storage locations" section gives you a visual overview of your printers, ACE/AMS units and dry boxes. Assign spools to a slot via drag &amp; drop or the assignment dialog. Which devices/slots exist is configured once in the Storage locations section.</p>
+      <h4>Label designer</h4>
+      <p>In the Label designer you build your own labels with text and variable fields (e.g. material, color, spool ID). Each template is typed for either spool or filament; the QR code content automatically follows the chosen type and shows a live preview while editing. In the Print tab you select multiple spools/filaments and print them as a sheet.</p>
+      <h4>Scan workflow (receiving)</h4>
+      <p>The round scan button in the bottom right opens scan mode. It works with a hardware barcode/QR scanner (HID keyboard emulation, no driver needed) or the device camera. The camera only works over HTTPS. Scan a filament QR code first, then a storage location code, and the spool is created and assigned automatically. Alternatively, in the "New spool" dialog you can scan a printed filament QR label to auto-fill material/manufacturer/color.</p>
+      <h4>Language &amp; other notes</h4>
+      <p>You can switch between German and English at any time in the top left - the choice is stored per device in the browser. Feedback, bug reports and suggestions are very welcome.</p>
+    `,
+  'sl.name': 'Name',
+  'sl.type': 'Type',
+  'sl.typeDrybox': 'Drybox',
+  'sl.typeAce': 'ACE',
+  'sl.typePrinter': 'Printer',
+  'sl.typeCustom': 'Other',
+  'sl.levels': 'Levels',
+  'sl.slotsPerLevel': 'Slots/level',
+  'sl.rowsPerLevel': 'Rows/level',
+  'sl.aceFeedSlotLabel': 'ACE feed slot',
+  'sl.add': 'Create',
+  'sl.occupied': 'occupied',
+  'sl.aceAtSlot': 'ACE at slot',
+  'sl.deleteDeviceTitle': 'Delete device',
+  'sl.aceFeedNotePrefix': 'Slot',
+  'sl.aceFeedNoteSuffix': 'is reserved for the ACE feed and cannot be assigned — stays reserved at this one position even with multiple ACE units coupled through a hub.',
+  'sl.confirmDeleteDevice': 'Really delete this device? All slot assignments will be lost (the spools themselves remain in Spoolman).',
+  'sl.slotFreed': 'Slot freed',
+  'sl.slotSaved': 'Slot saved',
+  'sl.slotReservedAce': 'This slot is reserved for the ACE feed',
+  'sl.slotOccupied': 'Slot is already occupied',
+  'sl.noFreeSlotOn': 'No free slot on',
+  'sl.thisDevice': 'this device',
+  'sl.slotReleased': 'Slot released',
+  'sl.deviceDeleted': 'Device deleted',
+  'sl.rowsPerLevelSaved': 'Rows/level saved',
+  'sl.aceFeedSaved': 'ACE feed saved',
+  'sl.needName': 'Please enter a name',
+  'sl.slotsDivisibleByRows': 'Slots/level must be divisible by rows/level',
+  'sl.deviceCreated': 'Device created',
+  'common.save': 'Save',
+    'common.cancel': 'Cancel',
+    'assign.checkinDrybox': 'Check into drybox',
+    'assign.checkoutPrinter': 'Check out to printer/ACE',
+    'sd.archivedSuffix': 'archived',
+    'ns.existingFilamentTypeBtn': 'Choose existing filament type',
+    'scan.spoolDetectedShort': 'Spool detected.',
+    'scan.slotDetectedShort': 'Slot detected.',
+    'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
+    'assign.title': 'Assign slot',
+    'assign.clear': 'Clear',
+    'footer.spoolmanLink': 'Spoolman (full interface)',
+    'sd.title': 'Edit spool',
+    'sd.thisSpool': 'This spool',
+    'sd.price': 'Price (€)',
+    'sd.initialWeight': 'Initial weight (g)',
+    'sd.spoolWeight': 'Empty spool weight (g)',
+    'sd.lotNr': 'Lot no.',
+    'sd.comment': 'Comment',
+    'sd.filamentType': 'Filament type',
+    'sd.editFilamentType': 'Edit filament type',
+    'sd.filamentChangeWarnHtml': 'Changes here apply to <strong>all</strong> spools of this filament type, not just this one.',
+    'fil.name': 'Name',
+    'fil.material': 'Material',
+    'fil.vendor': 'Vendor',
+    'fil.articleNr': 'Vendor article no.',
+    'fil.colorHex': 'Color (hex)',
+    'fil.multicolor': 'Multicolor?',
+    'fil.direction': 'Direction',
+    'fil.longitudinal': 'Longitudinal stripes (side by side)',
+    'fil.radial': 'Radial (rings/layers)',
+    'fil.addColor': '+ Add color',
+    'fil.diameter': 'Diameter (mm)',
+    'fil.density': 'Density (g/cm³)',
+    'fil.extruderTemp': 'Print temperature default (°C)',
+    'fil.bedTemp': 'Bed temperature default (°C)',
+    'fil.colorHexNoHash': 'Color (hex, without #)',
+    'fil.vendorNew': 'New vendor',
+    'ns.title': 'New spool',
+    'ns.subtitle': 'Choose an existing filament type or create a new one.',
+    'ns.newFilamentTypeBtn': 'Create new filament type',
+    'ns.chooseFilamentType': 'Choose filament type',
+    'ns.searchPlaceholder': 'Search by vendor, material, name…',
+    'ns.newFilamentTypeLabel': 'New filament type',
+    'ns.dbSearchPlaceholder': 'Search SpoolmanDB (e.g. Prusament, eSun PLA…)',
+  'common.error': 'Error',
+  'common.undone': 'Undone',
+  'common.errorUndo': 'Error while undoing',
+  'common.errorLoading': 'Error while loading',
+  'common.saved': 'Saved',
+  'sp.colId': 'ID',
+  'sp.colFilament': 'Filament',
+  'sp.colRemaining': 'Remaining',
+  'sp.colLocation': 'Location',
+  'sp.colCheck': 'Check in/out',
+  'sp.colUsage': 'Usage',
+  'sp.assignPrinter': 'To printer/ACE',
+  'sp.assignPrinterTitle': 'Place on a free printer or ACE slot',
+  'sp.assignDrybox': 'To drybox',
+  'sp.assignDryboxTitle': 'Put back in a drybox',
+  'sp.clearSlotTitle': 'Remove from current slot',
+  'sp.retire': 'Spool empty',
+  'sp.retireTitle': 'Spool is empty — archive & add to shopping list',
+  'sp.bookUsage': 'Book usage',
+  'sp.prev': 'Back',
+  'sp.next': 'Next',
+  'sp.spoolsWord': 'spools',
+  'sp.page': 'Page',
+  'sp.confirmRetire': 'Really mark this spool as empty? It will be archived in Spoolman, the storage slot freed, and an entry added to the shopping list.',
+  'sp.noSlotSelected': 'No slot selected',
+  'sp.slotAssigned': 'Slot assigned',
+  'sp.needGrams': 'Please enter a gram amount',
+  'sp.usageBooked': 'Usage booked',
+  'sp.retiredToList': 'Marked as empty & added to shopping list',
+  'shop.material': 'Material',
+  'shop.color': 'Color',
+  'shop.vendor': 'Vendor',
+  'shop.article': 'Item no.',
+  'shop.note': 'Note',
+  'shop.add': 'Add',
+  'shop.remove': 'Remove',
+  'shop.colMaterialColor': 'Material/Color',
+  'shop.entryRemoved': 'Entry removed',
+  'shop.needOneField': 'Please provide at least material, color or a note',
+  'shop.addedToList': 'Added to shopping list',
+  'ns.createSpool': 'Create spool',
+    'ov.spools': 'Spools',
+    'ov.remainingTotal': 'Remaining total',
+    'ov.almostEmpty': 'Almost empty (<100g)',
+    'ns.hint': 'Create a new spool or open the full Spoolman interface.',
+    'ns.newSpoolBtn': '+ New spool',
+    'ns.spoolmanOpen': 'Open Spoolman →',
+    'sp.hint': 'Location comes directly from the storage locations — no more manual typing. Using "On printer/ACE" or "In drybox" assigns a free slot (the Spoolman location updates automatically). When a spool is empty, marking it "Spool empty" archives it in Spoolman, frees the slot and adds an entry to the shopping list.',
+    'sl.hint': 'Create devices (drybox, ACE, printer, …), specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. For printers with ACE feed, a slot can be marked as reserved (this persists even with several coupled ACE units on the same position via a hub). The location is written back to Spoolman automatically.',
+    'shop.hint': 'Filled automatically when an empty spool is removed from the system via "Spool empty". Entries can also be added or removed manually here.',
+    'sl.level': 'Level',
+    'sl.slot': 'Slot',
+    'settings.reorderTitle': 'Reorder sections',
+    'settings.reorderHint': 'Move sections up/down with the arrows.',
+    'settings.cancel': 'Cancel',
+    'settings.save': 'Save',
+    'settings.saved': 'Order saved',
+    'common.error': 'Error: ',
+    'common.saved': 'Saved',
+    'common.needTwoColors': 'At least 2 colors required',
+    'sd.loadError': 'Error loading: ',
+    'ns.dbImported': 'Values taken from SpoolmanDB',
+    'ns.needTwoColorsCustom': 'Please provide at least 2 colors',
+    'ns.filamentNotFoundPrefix': 'Filament #',
+    'ns.filamentNotFoundSuffix': ' not found',
+    'ns.filamentDetected': 'Filament detected: ',
+    'ns.needVendorName': 'Please enter a manufacturer name',
+    'ns.needBasicFields': 'Please provide name, material, diameter and density',
+    'ns.needFilamentType': 'Please choose a filament type',
+    'ns.spoolCreated': 'Spool created',
+    'scan.spoolNotFoundPrefix': 'Spool #',
+    'scan.spoolNotFoundSuffix': ' not found.',
+    'scan.spoolDetected': 'Spool detected: ',
+    'scan.slotNotFoundPrefix': 'Slot #',
+    'scan.slotNotFoundSuffix': ' not found.',
+    'scan.slotReservedHint': 'This slot is reserved for the ACE feed.',
+    'scan.slotReserved': 'Slot is reserved for the ACE feed.',
+    'scan.slotDetected': 'Slot detected: ',
+    'scan.unknownQrPrefix': 'Unknown QR code: ',
+    'scan.unknownQr': 'Unknown QR code.',
+    'scan.alreadyPrepared': 'A spool is already prepared - scan a slot first or reset.',
+    'scan.filamentNotFoundPrefix': 'Filament #',
+    'scan.filamentNotFoundSuffix': ' not found.',
+    'scan.filamentCreatedGo': 'Filament detected - creating spool ...',
+    'scan.spoolCreatedPrefix': 'Spool created: ',
+    'scan.createSpoolErrorPrefix': 'Error creating the spool: ',
+    'scan.slotGoneAgain': 'Slot no longer found.',
+    'scan.slotOccupied': 'Slot is already occupied.',
+    'scan.slotOccupiedRescan': 'Slot is already occupied - please scan a different slot.',
+    'scan.assignedPrefix': 'Assigned: ',
+    'scan.assignedArrow': ' -> ',
+    'scan.spoolAlreadyOnSlot': 'Spool is already on this slot.',
+    'scan.cameraLibMissing': 'Camera library not available.',
+    'scan.cameraStop': 'Stop camera',
+    'scan.cameraStart': 'Scan with camera',
+    'scan.cameraStartErrorPrefix': 'Camera could not be started: ',
+    'scan.httpsRequired': 'Camera scanning requires an HTTPS connection and is not available on this page.',
+    'scan.cameraDesc': "Scans QR codes directly with this device's camera, as an alternative to an external scanner.",
+    'scan.slotLabelDesc': 'Scan spool and storage slot in any order.',
+    'scan.newFilamentNote': 'New filament QR: the spool is created automatically and assigned on the next slot scan (no click needed). Existing spool (spool QR): assignment must be confirmed with the button below.',
+    'scan.cameraActivate': 'Enable camera scan',
+    'scan.spoolLabel2': 'Spool:',
+    'scan.slotLabel2': 'Slot:',
+    'scan.notScannedYet': '– not scanned yet –',
+    'scan.close': 'Close',
+    'scan.reset': 'Reset',
+    'scan.confirmAssign': 'Confirm assignment',
+  }
+};
+
+let currentLang = localStorage.getItem('lager_lang') || 'de';
+
+function t(key) {
+  const dict = I18N[currentLang] || I18N.de;
+  return dict[key] || (I18N.de[key] || key);
+}
+
+function applyTranslations() {
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+    const key = el.getAttribute('data-i18n-title');
+    el.title = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+      const key = el.getAttribute('data-i18n-html');
+      el.innerHTML = t(key);
+    });
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-lang') === currentLang);
+  });
+}
+
+function setLang(lang) {
+  if (lang !== 'de' && lang !== 'en') return;
+  currentLang = lang;
+  localStorage.setItem('lager_lang', lang);
+  applyTranslations();
+  const infoOverlayEl = document.getElementById('info-overlay');
+  const infoContent = document.getElementById('info-content');
+  if (infoContent && infoOverlayEl && infoOverlayEl.classList.contains('show')) {
+    infoContent.innerHTML = t('info.html');
+    document.getElementById('info-title').textContent = t('info.title');
+  }
+}
+
+applyTranslations();
+
 const ST = '/api/storage';
 
 
@@ -755,8 +1373,8 @@ let allUnits = [];
 
 function unitSlotLabel(unit, slot) {
   return unit.levels > 1
-    ? unit.name + ' · Ebene ' + (slot.level + 1) + ' · Platz ' + (slot.position + 1)
-    : unit.name + ' · Platz ' + (slot.position + 1);
+    ? unit.name + ' · ' + t('sl.level') + ' ' + (slot.level + 1) + ' · ' + t('sl.slot') + ' ' + (slot.position + 1)
+    : unit.name + ' · ' + t('sl.slot') + ' ' + (slot.position + 1);
 }
 
 function findSlotForSpool(spoolId) {
@@ -844,22 +1462,22 @@ function renderSpoolTable() {
       '<td>' + (locLabel ? locLabel : '<span class="muted">&ndash;</span>') + '</td>' +
       '<td>' +
         '<div class="row-actions">' +
-          '<button class="btn secondary chk-printer" title="Auf freien Drucker- oder ACE-Platz legen">Auf Drucker/ACE</button>' +
-          '<button class="btn secondary chk-drybox" title="Zurück in eine Drybox legen">In Drybox</button>' +
-          (found ? '<button class="btn secondary danger icon-only chk-clear" title="Vom aktuellen Platz entfernen">&#9167;</button>' : '') +
-          '<button class="btn secondary danger chk-retire" title="Rolle ist leer &mdash; archivieren &amp; auf Einkaufsliste">Rolle leer</button>' +
+          '<button class="btn secondary chk-printer" title="' + t('sp.assignPrinterTitle') + '">' + t('sp.assignPrinter') + '</button>' +
+          '<button class="btn secondary chk-drybox" title="' + t('sp.assignDryboxTitle') + '">' + t('sp.assignDrybox') + '</button>' +
+          (found ? '<button class="btn secondary danger icon-only chk-clear" title="' + t('sp.clearSlotTitle') + '">&#9167;</button>' : '') +
+          '<button class="btn secondary danger chk-retire" title="' + t('sp.retireTitle') + '">' + t('sp.retire') + '</button>' +
         '</div>' +
       '</td>' +
       '<td>' +
         '<div class="row-actions">' +
           '<input type="number" class="amount-input use-amount" placeholder="g" min="0" step="0.1">' +
-          '<button class="btn use-save">Verbrauch buchen</button>' +
+          '<button class="btn use-save">' + t('sp.bookUsage') + '</button>' +
         '</div>' +
       '</td>' +
       '</tr>';
   }).join('');
 
-  el.innerHTML = '<table><thead><tr><th>ID</th><th>Filament</th><th>Rest</th><th>Standort</th><th>Ein-/Auschecken</th><th>Verbrauch</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  el.innerHTML = '<table><thead><tr><th>' + t('sp.colId') + '</th><th>' + t('sp.colFilament') + '</th><th>' + t('sp.colRemaining') + '</th><th>' + t('sp.colLocation') + '</th><th>' + t('sp.colCheck') + '</th><th>' + t('sp.colUsage') + '</th></tr></thead><tbody>' + rows + '</tbody></table>';
 
   el.querySelectorAll('tbody tr').forEach(tr => {
     const id = parseInt(tr.dataset.id, 10);
@@ -881,7 +1499,7 @@ function renderSpoolPagination(pagEl, page, totalPages, totalItems) {
   if (!pagEl) return;
   if (totalPages <= 1) { pagEl.innerHTML = ''; return; }
   let html = '';
-  html += '<button class="pg-prev" ' + (page <= 1 ? 'disabled' : '') + '>&larr; Zurück</button>';
+  html += '<button class="pg-prev" ' + (page <= 1 ? 'disabled' : '') + '>&larr; ' + t('sp.prev') + '</button>';
   const maxButtons = 7;
   let startP = Math.max(1, page - 3);
   let endP = Math.min(totalPages, startP + maxButtons - 1);
@@ -889,8 +1507,8 @@ function renderSpoolPagination(pagEl, page, totalPages, totalItems) {
   for (let p = startP; p <= endP; p++) {
     html += '<button class="pg-num' + (p === page ? ' active' : '') + '" data-page="' + p + '">' + p + '</button>';
   }
-  html += '<button class="pg-next" ' + (page >= totalPages ? 'disabled' : '') + '>Weiter &rarr;</button>';
-  html += '<span class="pg-info">' + totalItems + ' Spule' + (totalItems === 1 ? '' : 'n') + ', Seite ' + page + '/' + totalPages + '</span>';
+  html += '<button class="pg-next" ' + (page >= totalPages ? 'disabled' : '') + '>' + t('sp.next') + ' &rarr;</button>';
+  html += '<span class="pg-info">' + totalItems + ' ' + t('sp.spoolsWord') + ', ' + t('sp.page') + ' ' + page + '/' + totalPages + '</span>';
   pagEl.innerHTML = html;
 
   const prevBtn = pagEl.querySelector('.pg-prev');
@@ -904,13 +1522,13 @@ function renderSpoolPagination(pagEl, page, totalPages, totalItems) {
 
 async function bookUsage(id, grams) {
   const g = parseFloat(grams);
-  if (!g || g <= 0) { toast('Bitte Grammzahl angeben', 'err'); return; }
+  if (!g || g <= 0) { toast(t('sp.needGrams'), 'err'); return; }
   try {
     await api(SP + '/spool/' + id + '/use', { method: 'PUT', body: JSON.stringify({ use_weight: g }) });
-    toast('Verbrauch gebucht: ' + g + ' g', 'ok');
+    toast(t('sp.usageBooked') + ': ' + g + ' g', 'ok');
     loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 }
 
@@ -919,16 +1537,16 @@ async function clearSpoolSlot(spoolId) {
   if (!found) return;
   try {
     await api(ST + '/slots/' + found.slot.id, { method: 'PUT', body: JSON.stringify({ spool_id: null }) });
-    toast('Platz freigegeben', 'ok');
+    toast(t('sl.slotReleased'), 'ok');
     await loadDevices();
     await loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 }
 
 async function retireSpool(id) {
-  if (!confirm('Spule wirklich als leer markieren? Sie wird in Spoolman archiviert, der Lagerplatz freigegeben und ein Eintrag auf die Einkaufsliste gesetzt.')) return;
+  if (!confirm(t('sp.confirmRetire'))) return;
   const spool = spoolById(id);
   try {
     const found = findSlotForSpool(id);
@@ -949,12 +1567,12 @@ async function retireSpool(id) {
         note: null
       })
     });
-    toast('Rolle als leer markiert & auf Einkaufsliste gesetzt', 'ok');
+    toast(t('sp.retiredToList'), 'ok');
     await loadDevices();
     await loadSpools();
     await loadShoppingList();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 }
 
@@ -1118,13 +1736,13 @@ function renderDeviceCard(unit) {
 
   const svg = frame.svgOpen + frame.bg + slotEls.join('') + '</svg>';
   const occupied = unit.slots.filter(s => s.spool_id).length;
-  const rowsTag = dims.rows > 1 ? ' &middot; ' + dims.rows + ' Reihen/Ebene' : '';
-  const aceTag = (unit.type === 'printer' && unit.ace_feed_slot) ? (' &middot; ACE an Platz ' + unit.ace_feed_slot) : '';
+  const rowsTag = dims.rows > 1 ? ' &middot; ' + dims.rows + ' ' + t('sl.rowsPerLevel') : '';
+  const aceTag = (unit.type === 'printer' && unit.ace_feed_slot) ? (' &middot; ' + t('sl.aceAtSlot') + ' ' + unit.ace_feed_slot) : '';
 
   return '<div class="device-card" data-unit-id="' + unit.id + '">' +
     '<div class="device-card-head">' +
-      '<div><div class="name">' + unit.name + ' <a class="unitLabelsPrintBtn" href="/api/storage/units/' + unit.id + '/labels-print" target="_blank" title="Slot-Labels drucken" style="font-size:12px;font-weight:normal;text-decoration:none;">\uD83D\uDDA8\uFE0F</a>' + '<\/div><div class="type">' + unit.type + ' &middot; ' + occupied + '/' + unit.slots.length + ' belegt' + rowsTag + aceTag + '</div></div>' +
-      '<button class="btn secondary danger dev-delete" data-unit-id="' + unit.id + '" title="Gerät löschen">&times;</button>' +
+      '<div><div class="name">' + unit.name + ' <a class="unitLabelsPrintBtn" href="/api/storage/units/' + unit.id + '/labels-print" target="_blank" title="Slot-Labels drucken" style="font-size:12px;font-weight:normal;text-decoration:none;">\uD83D\uDDA8\uFE0F</a>' + '<\/div><div class="type">' + unit.type + ' &middot; ' + occupied + '/' + unit.slots.length + ' ' + t('sl.occupied') + rowsTag + aceTag + '</div></div>' +
+      '<button class="btn secondary danger dev-delete" data-unit-id="' + unit.id + '" title="' + t('sl.deleteDeviceTitle') + '">&times;</button>' +
     '</div>' +
     svg +
     renderDeviceSettings(unit) +
@@ -1133,17 +1751,17 @@ function renderDeviceCard(unit) {
 
 function renderDeviceSettings(unit) {
   let html = '<div class="device-settings" data-unit-id="' + unit.id + '">' +
-    '<label>Reihen/Ebene</label>' +
+    '<label>' + t('sl.rowsPerLevel') + '</label>' +
     '<input type="number" class="dev-rows-input" min="1" step="1" value="' + (unit.rows_per_level || 1) + '">' +
-    '<button class="btn secondary dev-rows-save">Speichern</button>';
+    '<button class="btn secondary dev-rows-save">' + t('common.save') + '</button>';
   if (unit.type === 'printer') {
-    html += '<label>ACE-Zuführung Platz</label>' +
+    html += '<label>' + t('sl.aceFeedSlotLabel') + '</label>' +
       '<input type="number" class="dev-ace-input" min="1" max="' + unit.slots_per_level + '" placeholder="keine" value="' + (unit.ace_feed_slot || '') + '">' +
-      '<button class="btn secondary dev-ace-save">Speichern</button>';
+      '<button class="btn secondary dev-ace-save">' + t('common.save') + '</button>';
   }
   html += '</div>';
   if (unit.type === 'printer' && unit.ace_feed_slot) {
-    html += '<div class="ace-feed-note">Platz ' + unit.ace_feed_slot + ' ist für die ACE-Zuführung reserviert und nicht belegbar &mdash; bleibt auch bei mehreren über einen Hub gekoppelten ACE-Einheiten an dieser einen Position.</div>';
+    html += '<div class="ace-feed-note">' + t('sl.aceFeedNotePrefix') + ' ' + unit.ace_feed_slot + ' ' + t('sl.aceFeedNoteSuffix') + '</div>';
   }
   return html;
 }
@@ -1163,17 +1781,17 @@ async function loadDevices() {
       g.addEventListener('click', () => openAssignDialog(parseInt(g.dataset.slotId, 10), units));
     });
     el.querySelectorAll('.slot-reserved').forEach(g => {
-      g.addEventListener('click', () => toast('Dieser Platz ist für die ACE-Zuführung reserviert', 'err'));
+      g.addEventListener('click', () => toast(t('sl.slotReservedAce'), 'err'));
     });
     el.querySelectorAll('.dev-delete').forEach(b => {
       b.addEventListener('click', async () => {
-        if (!confirm('Gerät wirklich löschen? Alle Platzzuordnungen gehen verloren (Spulen selbst bleiben in Spoolman erhalten).')) return;
+        if (!confirm(t('sl.confirmDeleteDevice'))) return;
         try {
           await api(ST + '/units/' + b.dataset.unitId, { method: 'DELETE' });
-          toast('Gerät gelöscht', 'ok');
+          toast(t('sl.deviceDeleted'), 'ok');
           loadDevices();
         } catch (e) {
-          toast('Fehler: ' + e.message, 'err');
+          toast(t('common.error') + ': ' + e.message, 'err');
         }
       });
     });
@@ -1185,10 +1803,10 @@ async function loadDevices() {
           const rowsPerLevel = parseInt(row.querySelector('.dev-rows-input').value, 10) || 1;
           try {
             await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify({ rows_per_level: rowsPerLevel }) });
-            toast('Reihen/Ebene gespeichert', 'ok');
+            toast(t('sl.rowsPerLevelSaved'), 'ok');
             loadDevices();
           } catch (e) {
-            toast('Fehler: ' + e.message, 'err');
+            toast(t('common.error') + ': ' + e.message, 'err');
           }
         });
       }
@@ -1199,10 +1817,10 @@ async function loadDevices() {
           const body = raw ? { ace_feed_slot: parseInt(raw, 10) } : { clear_ace_feed_slot: true };
           try {
             await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify(body) });
-            toast('ACE-Zuführung gespeichert', 'ok');
+            toast(t('sl.aceFeedSaved'), 'ok');
             loadDevices();
           } catch (e) {
-            toast('Fehler: ' + e.message, 'err');
+            toast(t('common.error') + ': ' + e.message, 'err');
           }
         });
       }
@@ -1228,16 +1846,16 @@ document.getElementById('dev-add-btn').addEventListener('click', async () => {
   const rowsPerLevel = parseInt(document.getElementById('dev-rows').value, 10) || 1;
   const aceSlotRaw = document.getElementById('dev-ace-slot').value;
   const aceFeedSlot = (type === 'printer' && aceSlotRaw) ? parseInt(aceSlotRaw, 10) : null;
-  if (!name) { toast('Bitte Namen angeben', 'err'); return; }
-  if (slots % rowsPerLevel !== 0) { toast('Plätze/Ebene müssen durch Reihen/Ebene teilbar sein', 'err'); return; }
+  if (!name) { toast(t('sl.needName'), 'err'); return; }
+  if (slots % rowsPerLevel !== 0) { toast(t('sl.slotsDivisibleByRows'), 'err'); return; }
   try {
     await api(ST + '/units', { method: 'POST', body: JSON.stringify({ name, type, levels, slots_per_level: slots, rows_per_level: rowsPerLevel, ace_feed_slot: aceFeedSlot }) });
     document.getElementById('dev-name').value = '';
     document.getElementById('dev-ace-slot').value = '';
-    toast('Gerät angelegt', 'ok');
+    toast(t('sl.deviceCreated'), 'ok');
     loadDevices();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 });
 
@@ -1280,12 +1898,12 @@ document.getElementById('assign-clear').addEventListener('click', async () => {
   if (currentSlotId == null) return;
   try {
     await api(ST + '/slots/' + currentSlotId, { method: 'PUT', body: JSON.stringify({ spool_id: null }) });
-    toast('Platz freigemacht', 'ok');
+    toast(t('sl.slotFreed'), 'ok');
     closeAssignDialog();
     loadDevices();
     loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 });
 
@@ -1295,12 +1913,12 @@ document.getElementById('assign-save').addEventListener('click', async () => {
   const spoolId = val ? parseInt(val, 10) : null;
   try {
     await api(ST + '/slots/' + currentSlotId, { method: 'PUT', body: JSON.stringify({ spool_id: spoolId }) });
-    toast('Platz gespeichert', 'ok');
+    toast(t('sl.slotSaved'), 'ok');
     closeAssignDialog();
     loadDevices();
     loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 });
 
@@ -1311,7 +1929,7 @@ function openSpoolAssignDialog(spoolId, filterTypes) {
   currentSpoolAssignId = spoolId;
   const spool = spoolById(spoolId);
   const isDrybox = filterTypes.includes('drybox');
-  document.getElementById('spool-assign-title').textContent = isDrybox ? 'In Drybox einchecken' : 'Auf Drucker/ACE auschecken';
+  document.getElementById('spool-assign-title').textContent = isDrybox ? t('assign.checkinDrybox') : t('assign.checkoutPrinter');
   document.getElementById('spool-assign-spool-label').textContent = spool ? spoolLabel(spool) : '';
 
   const options = [];
@@ -1520,11 +2138,11 @@ async function assignToSlot(spoolId, targetSlotId, sourceInfo, unitLabel) {
         }
         await loadDevices();
         await loadSpools();
-        toast('Rückgängig gemacht', 'ok');
-      } catch (e) { toast('Fehler beim Rückgängigmachen: ' + e.message, 'err'); }
+        toast(t('common.undone'), 'ok');
+      } catch (e) { toast(t('common.errorUndo') + ': ' + e.message, 'err'); }
     });
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 }
 
@@ -1538,11 +2156,11 @@ async function finishSpoolDrag(spoolId, sourceInfo, slotEl, targetCard, dropOnPa
     const { unit, slot } = found;
     if (sourceInfo && sourceInfo.slot.id === slot.id) return; // gleicher Platz, keine Aenderung
     if (slotIsReserved(unit, slot)) {
-      toast('Dieser Platz ist für die ACE-Zuführung reserviert', 'err');
+      toast(t('sl.slotReservedAce'), 'err');
       return;
     }
     if (slot.spool_id && slot.spool_id !== spoolId) {
-      toast('Platz ist bereits belegt', 'err');
+      toast(t('sl.slotOccupied'), 'err');
       return;
     }
     await assignToSlot(spoolId, slot.id, sourceInfo, unit.name || 'Gerät');
@@ -1556,7 +2174,7 @@ async function finishSpoolDrag(spoolId, sourceInfo, slotEl, targetCard, dropOnPa
     if (!unit) return;
     const freeSlot = firstFreeSlotForUnit(unit, spoolId);
     if (!freeSlot) {
-      toast('Kein freier Platz auf ' + (unit.name || 'diesem Gerät'), 'err');
+      toast(t('sl.noFreeSlotOn') + ' ' + (unit.name || t('sl.thisDevice')), 'err');
       return;
     }
     if (sourceInfo && sourceInfo.slot.id === freeSlot.id) return;
@@ -1573,16 +2191,16 @@ async function finishSpoolDrag(spoolId, sourceInfo, slotEl, targetCard, dropOnPa
       await api(ST + '/slots/' + slotId, { method: 'PUT', body: JSON.stringify({ spool_id: null }) });
       await loadDevices();
       await loadSpools();
-      toastUndo('Platz freigegeben', async () => {
+      toastUndo(t('sl.slotReleased'), async () => {
         try {
           await api(ST + '/slots/' + slotId, { method: 'PUT', body: JSON.stringify({ spool_id: spoolId }) });
           await loadDevices();
           await loadSpools();
-          toast('Rückgängig gemacht', 'ok');
-        } catch (e) { toast('Fehler beim Rückgängigmachen: ' + e.message, 'err'); }
+          toast(t('common.undone'), 'ok');
+        } catch (e) { toast(t('common.errorUndo') + ': ' + e.message, 'err'); }
       });
     } catch (e) {
-      toast('Fehler: ' + e.message, 'err');
+      toast(t('common.error') + ': ' + e.message, 'err');
     }
   }
 }
@@ -1612,15 +2230,15 @@ document.getElementById('spool-assign-cancel').addEventListener('click', closeSp
 document.getElementById('spool-assign-save').addEventListener('click', async () => {
   if (currentSpoolAssignId == null) return;
   const val = document.getElementById('spool-assign-select').value;
-  if (!val) { toast('Kein Platz ausgewählt', 'err'); return; }
+  if (!val) { toast(t('sp.noSlotSelected'), 'err'); return; }
   try {
     await api(ST + '/slots/' + val, { method: 'PUT', body: JSON.stringify({ spool_id: currentSpoolAssignId }) });
-    toast('Platz zugewiesen', 'ok');
+    toast(t('sp.slotAssigned'), 'ok');
     closeSpoolAssignDialog();
     await loadDevices();
     await loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 });
 
@@ -1644,24 +2262,24 @@ async function loadShoppingList() {
         '<td>' + (it.vendor || '<span class="muted">&ndash;</span>') + '</td>' +
         '<td>' + (it.article_number || '<span class="muted">&ndash;</span>') + '</td>' +
         '<td>' + (it.note || '<span class="muted">&ndash;</span>') + '</td>' +
-        '<td><button class="btn secondary danger shop-delete">Entfernen</button></td>' +
+        '<td><button class="btn secondary danger shop-delete">' + t('shop.remove') + '</button></td>' +
       '</tr>';
     }).join('');
-    el.innerHTML = '<table><thead><tr><th>Material/Farbe</th><th>Hersteller</th><th>Artikelnr.</th><th>Notiz</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
+    el.innerHTML = '<table><thead><tr><th>' + t('shop.colMaterialColor') + '</th><th>' + t('shop.vendor') + '</th><th>' + t('shop.article') + '</th><th>' + t('shop.note') + '</th><th></th></tr></thead><tbody>' + rows + '</tbody></table>';
     el.querySelectorAll('tbody tr').forEach(tr => {
       const id = tr.dataset.id;
       tr.querySelector('.shop-delete').addEventListener('click', async () => {
         try {
           await api(ST + '/shopping-list/' + id, { method: 'DELETE' });
-          toast('Eintrag entfernt', 'ok');
+          toast(t('shop.entryRemoved'), 'ok');
           loadShoppingList();
         } catch (e) {
-          toast('Fehler: ' + e.message, 'err');
+          toast(t('common.error') + ': ' + e.message, 'err');
         }
       });
     });
   } catch (e) {
-    el.innerHTML = '<div class="empty">Fehler beim Laden: ' + e.message + '</div>';
+    el.innerHTML = '<div class="empty">' + t('common.errorLoading') + ': ' + e.message + '</div>';
   }
 }
 
@@ -1671,7 +2289,7 @@ document.getElementById('shop-add-btn').addEventListener('click', async () => {
   const vendor = document.getElementById('shop-vendor').value.trim();
   const note = document.getElementById('shop-note').value.trim();
   const articleNumber = document.getElementById('shop-article').value.trim();
-  if (!material && !color_name && !note) { toast('Bitte mindestens Material, Farbe oder Notiz angeben', 'err'); return; }
+  if (!material && !color_name && !note) { toast(t('shop.needOneField'), 'err'); return; }
   try {
     await api(ST + '/shopping-list', {
       method: 'POST',
@@ -1682,10 +2300,10 @@ document.getElementById('shop-add-btn').addEventListener('click', async () => {
     document.getElementById('shop-vendor').value = '';
     document.getElementById('shop-note').value = '';
     document.getElementById('shop-article').value = '';
-    toast('Zur Einkaufsliste hinzugefüght', 'ok');
+    toast(t('shop.addedToList'), 'ok');
     loadShoppingList();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + ': ' + e.message, 'err');
   }
 });
 
@@ -1790,13 +2408,13 @@ async function openSpoolDetail(spoolId) {
   try {
     spool = await api(SP + '/spool/' + spoolId);
   } catch (e) {
-    toast('Fehler beim Laden: ' + e.message, 'err');
+    toast(t('sd.loadError') + e.message, 'err');
     return;
   }
   sdCurrentSpool = spool;
   const f = spool.filament || {};
   document.getElementById('spool-detail-title').textContent = spoolLabel(spool);
-  document.getElementById('spool-detail-subtitle').textContent = 'Spule #' + spool.id + (spool.archived ? ' · archiviert' : '');
+  document.getElementById('spool-detail-subtitle').textContent = 'Spule #' + spool.id + (spool.archived ? ' · ' + t('sd.archivedSuffix') : '');
 
   document.getElementById('sd-price').value = spool.price != null ? spool.price : '';
   document.getElementById('sd-initial-weight').value = spool.initial_weight != null ? spool.initial_weight : '';
@@ -1885,12 +2503,12 @@ document.getElementById('spool-detail-save').addEventListener('click', async () 
       };
       await api(SP + '/filament/' + spool.filament.id, { method: 'PATCH', body: JSON.stringify(filBody) });
     }
-    toast('Gespeichert', 'ok');
+    toast(t('common.saved'), 'ok');
     closeSpoolDetail();
     await loadSpools();
     await loadDevices();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + e.message, 'err');
   }
 });
 
@@ -1972,7 +2590,7 @@ function applyExternalFilament(item) {
 
   document.getElementById('ns-db-results').style.display = 'none';
   document.getElementById('ns-db-search').value = item.manufacturer ? (item.manufacturer + ' ' + item.name) : item.name;
-  toast('Werte aus SpoolmanDB übernommen', 'ok');
+  toast(t('ns.dbImported'), 'ok');
 }
 function mcRowHtml(value) {
   const v = value || '';
@@ -1983,7 +2601,7 @@ function wireMcRows(box) {
   box.querySelectorAll('.mc-remove-btn').forEach(btn => {
     btn.onclick = () => {
       if (box.querySelectorAll('.mc-row').length > 2) btn.closest('.mc-row').remove();
-      else toast('Mindestens 2 Farben nötig', 'err');
+      else toast(t('common.needTwoColors'), 'err');
     };
   });
   box.querySelectorAll('.mc-hex-input').forEach(inp => {
@@ -2071,7 +2689,7 @@ async function openNewSpoolDialog() {
   document.getElementById('ns-db-results').innerHTML = '';
   document.getElementById('ns-existing-block').style.display = '';
   document.getElementById('ns-new-block').style.display = 'none';
-  document.getElementById('ns-mode-toggle').textContent = 'Neuen Filament-Typ anlegen';
+  document.getElementById('ns-mode-toggle').textContent = t('ns.newFilamentTypeBtn');
   document.getElementById('ns-mode-toggle').dataset.mode = 'existing';
   document.getElementById('ns-fil-vendor-new-wrap').style.display = 'none';
 
@@ -2105,7 +2723,7 @@ document.getElementById('ns-mode-toggle').addEventListener('click', () => {
   document.getElementById('ns-existing-block').style.display = toNew ? 'none' : '';
   document.getElementById('ns-new-block').style.display = toNew ? '' : 'none';
   toggleEl.dataset.mode = toNew ? 'new' : 'existing';
-  toggleEl.textContent = toNew ? 'Bestehenden Filament-Typ wählen' : 'Neuen Filament-Typ anlegen';
+  toggleEl.textContent = toNew ? t('ns.existingFilamentTypeBtn') : t('ns.newFilamentTypeBtn');
 });
 
 document.getElementById('ns-filament-search').addEventListener('input', e => {
@@ -2117,11 +2735,11 @@ document.getElementById('ns-filament-search').addEventListener('input', e => {
     renderFilamentSelect('');
     const filament = allFilaments.find(f => f.id === filId);
     if (!filament) {
-      toast('Filament #' + filId + ' nicht gefunden', 'err');
+      toast(t('ns.filamentNotFoundPrefix') + filId + t('ns.filamentNotFoundSuffix'), 'err');
       return;
     }
     document.getElementById('ns-filament-select').value = String(filId);
-    toast('Filament erkannt: ' + filamentOptionLabel(filament), 'ok');
+    toast(t('ns.filamentDetected') + filamentOptionLabel(filament), 'ok');
     return;
   }
   renderFilamentSelect(raw);
@@ -2154,7 +2772,7 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
       let vendorId = document.getElementById('ns-fil-vendor-select').value;
       if (vendorId === '__new__') {
         const vendorName = document.getElementById('ns-fil-vendor-new').value.trim();
-        if (!vendorName) { toast('Bitte Herstellername angeben', 'err'); return; }
+        if (!vendorName) { toast(t('ns.needVendorName'), 'err'); return; }
         const v = await api(SP + '/vendor', { method: 'POST', body: JSON.stringify({ name: vendorName }) });
         vendorId = v.id;
         allVendors = null;
@@ -2166,12 +2784,12 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
       const diameter = parseFloat(document.getElementById('ns-fil-diameter').value);
       const density = parseFloat(document.getElementById('ns-fil-density').value);
       if (!name || !material || !diameter || !density) {
-        toast('Bitte Name, Material, Durchmesser und Dichte angeben', 'err');
+        toast(t('ns.needBasicFields'), 'err');
         return;
       }
       const nsColorMode = document.getElementById('ns-color-mode-toggle').dataset.mode;
       const nsMcHexesOut = nsColorMode === 'multi' ? collectMcHexes('ns') : [];
-      if (nsColorMode === 'multi' && nsMcHexesOut.length < 2) { toast('Bitte mindestens 2 Farben angeben', 'err'); return; }
+      if (nsColorMode === 'multi' && nsMcHexesOut.length < 2) { toast(t('ns.needTwoColorsCustom'), 'err'); return; }
       const filBody = {
         name: name,
         material: material,
@@ -2190,7 +2808,7 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
       allFilaments = null;
     } else {
       const val = document.getElementById('ns-filament-select').value;
-      if (!val) { toast('Bitte einen Filament-Typ wählen', 'err'); return; }
+      if (!val) { toast(t('ns.needFilamentType'), 'err'); return; }
       filamentId = parseInt(val, 10);
     }
 
@@ -2205,11 +2823,11 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
     if (Object.keys(extraPatch).length) spoolBody.extra = extraPatch;
 
     await api(SP + '/spool', { method: 'POST', body: JSON.stringify(spoolBody) });
-    toast('Spule angelegt', 'ok');
+    toast(t('ns.spoolCreated'), 'ok');
     closeNewSpoolDialog();
     await loadSpools();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(t('common.error') + e.message, 'err');
   }
 });
 
@@ -2233,7 +2851,7 @@ init();
 
 document.addEventListener('DOMContentLoaded', function() {
 const PANEL_IDS = ["overview", "new-spool", "units", "spools", "shopping", "labels"];
-const PANEL_TITLES = { overview: "Gesamtübersicht", "new-spool": "Neue Spule", units: "Lagerplätze", spools: "Spulen", shopping: "Einkaufsliste", labels: "Label-Designer" };
+const PANEL_TITLES = { overview: t('panel.overview'), "new-spool": t('panel.newSpool'), units: t('panel.locations'), spools: t('panel.spools'), shopping: t('panel.shopping'), labels: t('panel.labelDesigner') };
 
 function applyPanelOrder(order) {
 const mainEl = document.querySelector("main");
@@ -2318,16 +2936,34 @@ const order = Array.from(list.children).map(li => li.dataset.panel);
 try {
 await api(ST + "/layout", { method: "PUT", body: JSON.stringify({ order }) });
 applyPanelOrder(order);
-toast("Reihenfolge gespeichert", "ok");
+toast(t('settings.saved'), 'ok');
 closeSettingsModal();
 } catch (e) {
-toast("Fehler: " + e.message, "err");
+toast(t('common.error') + e.message, 'err');
 }
 }
 
 document.getElementById("settings-btn").addEventListener("click", openSettingsModal);
 document.getElementById("settings-cancel").addEventListener("click", closeSettingsModal);
 document.getElementById("settings-save").addEventListener("click", saveSettingsOrder);
+
+document.querySelectorAll('.lang-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { setLang(btn.getAttribute('data-lang')); });
+});
+
+function openInfoModal() {
+  document.getElementById('info-title').textContent = t('info.title');
+  document.getElementById('info-content').innerHTML = t('info.html');
+  document.getElementById('info-overlay').classList.add('show');
+}
+function closeInfoModal() {
+  document.getElementById('info-overlay').classList.remove('show');
+}
+document.getElementById('info-btn').addEventListener('click', openInfoModal);
+document.getElementById('info-close').addEventListener('click', closeInfoModal);
+
+applyTranslations();
+
 
 document.getElementById("new-spool-panel-toggle").addEventListener("click", () => {
 document.getElementById("new-spool-panel").classList.toggle("collapsed");
@@ -2420,7 +3056,7 @@ async function ldFillPrintAddSelect() {
   const sel = document.getElementById("ld-print-add-select");
   if (!sel) return;
   const isFilamentTpl = ldCurrentTemplate && ldCurrentTemplate.target_type === "filament";
-  const opts = ['<option value="">Spule/Filament zur Druckliste hinzufuegen...</option>'];
+  const opts = ['<option value="">' + t('ld.printAddSelectDefault') + '</option>'];
   if (isFilamentTpl) {
     await ensureFilamentAndVendorLists();
     (allFilaments || []).forEach((f) => {
@@ -2438,7 +3074,7 @@ async function ldFillPrintAddSelect() {
 
 function ldPrintAddItem() {
   const sel = document.getElementById("ld-print-add-select");
-  if (!sel || !sel.value) { toast("Bitte Spule/Filament waehlen", "error"); return; }
+  if (!sel || !sel.value) { toast(t('ld.selectSpoolFilament'), "error"); return; }
   const [kind, idStr] = sel.value.split(":");
   const id = parseInt(idStr, 10);
   const existing = ldPrintList.find((it) => it.kind === kind && it.id === id);
@@ -2506,7 +3142,7 @@ function ldRenderPrintPreview() {
   wrap.innerHTML = "";
   const totalQty = ldPrintList.reduce((s, it) => s + it.qty, 0);
   if (!totalQty) {
-    wrap.innerHTML = '<div style="opacity:.6;padding:1rem;">Keine Etiketten in der Druckliste.</div>';
+    wrap.innerHTML = '<div style="opacity:.6;padding:1rem;">' + t('ld.noLabelsInPrintList') + '</div>';
     return;
   }
   const [pageWmm, pageHmm] = ldPrintPageFormatMm();
@@ -2521,7 +3157,7 @@ function ldRenderPrintPreview() {
   info.style.marginBottom = ".5rem";
   info.style.fontSize = ".85rem";
   info.style.opacity = ".8";
-  info.textContent = totalQty + " Etikett(en), " + perPage + " pro Seite, " + pages + " Seite(n) (" + cols + "x" + rows + ")";
+  info.textContent = totalQty + t('ld.labelsCountUnit') + perPage + t('ld.perPage') + pages + t('ld.pagesUnit') + cols + "x" + rows + t('ld.pagesClose');
   wrap.appendChild(info);
   let remaining = totalQty;
   for (let p = 0; p < pages; p++) {
@@ -2552,8 +3188,8 @@ function ldRenderPrintPreview() {
 }
 
 async function ldPrintExportSheet() {
-  if (!ldCurrentTemplate || !ldCurrentTemplate.id) { toast("Vorlage zuerst speichern", "error"); return; }
-  if (!ldPrintList.length) { toast("Druckliste ist leer", "error"); return; }
+  if (!ldCurrentTemplate || !ldCurrentTemplate.id) { toast(t('ld.saveTemplateFirst'), "error"); return; }
+  if (!ldPrintList.length) { toast(t('ld.printListEmpty'), "error"); return; }
   const items = ldPrintList.map((it) => {
     const obj = { qty: it.qty };
     if (it.kind === "filament") obj.filament_id = it.id; else obj.spool_id = it.id;
@@ -2581,13 +3217,13 @@ async function ldPrintExportSheet() {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   } catch (e) {
-    toast("Bogen-Export fehlgeschlagen: " + e.message, "error");
+    toast(t('ld.sheetExportFailed') + e.message, "error");
   }
 }
 
 async function ldExportLabel(fmt) {
-  if (!ldCurrentTemplate || !ldCurrentTemplate.id) { toast("Vorlage zuerst speichern", "error"); return; }
-  if (!ldSelectedSpoolId) { toast("Bitte zuerst Spule/Filament waehlen", "error"); return; }
+  if (!ldCurrentTemplate || !ldCurrentTemplate.id) { toast(t('ld.saveTemplateFirst'), "error"); return; }
+  if (!ldSelectedSpoolId) { toast(t('ld.selectSpoolFilamentFirst'), "error"); return; }
   try {
     const ldIsFilamentExp = ldCurrentTemplate.target_type === "filament";
     const ldExpBody = ldIsFilamentExp ? { filament_ids: [ldSelectedSpoolId], format: fmt, dpi: 300 } : { spool_ids: [ldSelectedSpoolId], format: fmt, dpi: 300 };
@@ -2617,7 +3253,7 @@ async function ldExportLabel(fmt) {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
   } catch (e) {
-    toast("Export fehlgeschlagen: " + e.message, "error");
+    toast(t('ld.exportFailed') + e.message, "error");
   }
 }
 
@@ -2625,7 +3261,7 @@ async function ldFillSpoolPicker() {
   const sel = document.getElementById("ld-spool-picker");
   if (!sel) return;
   const ldIsFilamentTpl = ldCurrentTemplate && ldCurrentTemplate.target_type === "filament";
-  const opts = [ "<option value=\"\">Vorschau: Beispieldaten</option>" ];
+  const opts = [ "<option value=\"\">" + t('ld.previewSample') + "</option>" ];
   if (ldIsFilamentTpl) {
     await ensureFilamentAndVendorLists();
     (allFilaments || []).forEach((f) => {
@@ -2669,10 +3305,10 @@ function ldRenderTemplateList() {
     list.innerHTML = "<li class=\"labels-template-empty\">Noch keine Vorlagen gespeichert.</li>";
     return;
   }
-  list.innerHTML = ldTemplates.map((t) => {
-    const active = ldCurrentTemplate && ldCurrentTemplate.id === t.id ? " active" : "";
-    const sideLabel = t.side === "back" ? "Rueckseite" : "Vorderseite";
-    return "<li class=\"labels-template-item" + active + "\" data-id=\"" + t.id + "\"><span>" + ldEscapeHtml(t.name) + "</span><span class=\"side-tag\">" + sideLabel + "</span></li>";
+  list.innerHTML = ldTemplates.map((tpl) => {
+    const active = ldCurrentTemplate && ldCurrentTemplate.id === tpl.id ? " active" : "";
+    const sideLabel = tpl.side === "back" ? t('ld.sideBack') : t('ld.sideFront');
+    return "<li class=\"labels-template-item" + active + "\" data-id=\"" + tpl.id + "\"><span>" + ldEscapeHtml(tpl.name) + "</span><span class=\"side-tag\">" + sideLabel + "</span></li>";
   }).join("");
   list.querySelectorAll(".labels-template-item").forEach((el) => {
     el.addEventListener("click", () => ldSelectTemplate(Number(el.dataset.id)));
@@ -2721,23 +3357,23 @@ async function ldSaveTemplate() {
     }
     await ldLoadTemplates();
     ldSelectTemplate(saved.id);
-    toast("Vorlage gespeichert", "ok");
+    toast(t('ld.templateSaved'), "ok");
   } catch (e) {
-    toast("Fehler beim Speichern: " + e.message, "err");
+    toast(t('ld.saveFailed') + e.message, "err");
   }
 }
 async function ldDuplicateTemplate() {
   if (!ldCurrentTemplate || !ldCurrentTemplate.id) {
-    toast("Vorlage zuerst speichern", "err");
+    toast(t('ld.saveTemplateFirst'), "err");
     return;
   }
   try {
     const copy = await api(ST + "/label-templates/" + ldCurrentTemplate.id + "/duplicate", { method: "POST" });
     await ldLoadTemplates();
     ldSelectTemplate(copy.id);
-    toast("Vorlage dupliziert", "ok");
+    toast(t('ld.templateDuplicated'), "ok");
   } catch (e) {
-    toast("Fehler: " + e.message, "err");
+    toast(t('ld.genericError') + e.message, "err");
   }
 }
 
@@ -2746,13 +3382,13 @@ async function ldDeleteTemplate() {
     ldNewTemplate();
     return;
   }
-  if (!confirm("Vorlage " + ldCurrentTemplate.name + " wirklich loeschen?")) return;
+  if (!confirm(t('ld.confirmDeletePrefix') + ldCurrentTemplate.name + t('ld.confirmDeleteSuffix'))) return;
   try {
     await api(ST + "/label-templates/" + ldCurrentTemplate.id, { method: "DELETE" });
     await ldLoadTemplates();
-    toast("Vorlage geloescht", "ok");
+    toast(t('ld.templateDeleted'), "ok");
   } catch (e) {
-    toast("Fehler: " + e.message, "err");
+    toast(t('ld.genericError') + e.message, "err");
   }
 }
 function ldSetSide(side) {
@@ -3089,50 +3725,50 @@ function ldRenderProps() {
   const box = document.getElementById("ld-props");
   if (!box) return;
   if (!ldCurrentTemplate || !ldSelectedElId) {
-    box.innerHTML = "<div class=\"label-props-empty\">Element auswaehlen, um Eigenschaften zu bearbeiten.</div>";
+    box.innerHTML = "<div class=\"label-props-empty\">" + t('ld.propsEmpty') + "</div>";
     return;
   }
   const el = ldCurrentTemplate.elements.find((e) => e.id === ldSelectedElId);
   if (!el) {
-    box.innerHTML = "<div class=\"label-props-empty\">Element auswaehlen, um Eigenschaften zu bearbeiten.</div>";
+    box.innerHTML = "<div class=\"label-props-empty\">" + t('ld.propsEmpty') + "</div>";
     return;
   }
   let html = "<h4>" + ldTypeLabel(el.type) + "</h4>";
   if (el.type === "text") {
-    html += "<label>Datenquelle</label><select id=\"ld-p-field\">" + ldFieldOptions(el.field) + "</select>";
-    html += "<label>Statischer Text (falls kein Feld)</label><input type=\"text\" id=\"ld-p-static\" value=\"" + ldEscapeHtml(el.staticText || "") + "\">";
-    html += "<div class=\"prop-row\"><div><label>Schriftgroesse (mm)</label><input type=\"number\" id=\"ld-p-fontsize\" step=\"0.1\" value=\"" + el.fontSize + "\"></div>";
-    html += "<div><label>Ausrichtung</label><select id=\"ld-p-align\"><option value=\"left\"" + (el.align === "left" ? " selected" : "") + ">Links</option><option value=\"center\"" + (el.align === "center" ? " selected" : "") + ">Mitte</option><option value=\"right\"" + (el.align === "right" ? " selected" : "") + ">Rechts</option></select></div></div>";
-    html += "<div class=\"prop-check\"><input type=\"checkbox\" id=\"ld-p-bold\"" + (el.bold ? " checked" : "") + "><label style=\"margin:0\">Fett</label></div>";
-    html += "<label>Textfarbe</label><input type=\"text\" id=\"ld-p-color\" value=\"" + ldEscapeHtml(el.color || "#111111") + "\">";
+    html += "<label>" + t('ld.dataSource') + "</label><select id=\"ld-p-field\">" + ldFieldOptions(el.field) + "</select>";
+    html += "<label>" + t('ld.propStaticText') + "</label><input type=\"text\" id=\"ld-p-static\" value=\"" + ldEscapeHtml(el.staticText || "") + "\">";
+    html += "<div class=\"prop-row\"><div><label>" + t('ld.propFontSize') + "</label><input type=\"number\" id=\"ld-p-fontsize\" step=\"0.1\" value=\"" + el.fontSize + "\"></div>";
+    html += "<div><label>" + t('ld.propAlign') + "</label><select id=\"ld-p-align\"><option value=\"left\"" + (el.align === "left" ? " selected" : "") + ">" + t('ld.alignLeft') + "</option><option value=\"center\"" + (el.align === "center" ? " selected" : "") + ">" + t('ld.alignCenter') + "</option><option value=\"right\"" + (el.align === "right" ? " selected" : "") + ">" + t('ld.alignRight') + "</option></select></div></div>";
+    html += "<div class=\"prop-check\"><input type=\"checkbox\" id=\"ld-p-bold\"" + (el.bold ? " checked" : "") + "><label style=\"margin:0\">" + t('ld.propBold') + "</label></div>";
+    html += "<label>" + t('ld.propTextColor') + "</label><input type=\"text\" id=\"ld-p-color\" value=\"" + ldEscapeHtml(el.color || "#111111") + "\">";
   } else if (el.type === "qr") {
-    html += "<label>Inhalt des QR-Codes</label><select id=\"ld-p-field\">" + ldFieldOptions(el.field) + "</select>";
-    html += "<p class=\"labels-hint\">Das App-Logo wird beim Export automatisch im Zentrum des QR-Codes eingebettet.</p>";
+    html += "<label>" + t('ld.propQrContent') + "</label><select id=\"ld-p-field\">" + ldFieldOptions(el.field) + "</select>";
+    html += "<p class=\"labels-hint\">" + t('ld.hintQrLogo') + "</p>";
   } else if (el.type === "rect") {
-    html += "<label>Fuellfarbe</label><input type=\"text\" id=\"ld-p-fill\" value=\"" + ldEscapeHtml(el.fill || "#38bdf8") + "\">";
-    html += "<div class=\"prop-check\"><input type=\"checkbox\" id=\"ld-p-border\"" + (el.border ? " checked" : "") + "><label style=\"margin:0\">Rahmen</label></div>";
+    html += "<label>" + t('ld.propFillColor') + "</label><input type=\"text\" id=\"ld-p-fill\" value=\"" + ldEscapeHtml(el.fill || "#38bdf8") + "\">";
+    html += "<div class=\"prop-check\"><input type=\"checkbox\" id=\"ld-p-border\"" + (el.border ? " checked" : "") + "><label style=\"margin:0\">" + t('ld.propBorder') + "</label></div>";
   } else if (el.type === "color") {
-    html += "<p class=\"labels-hint\">Zeigt automatisch die Filamentfarbe der gewaehlten Spule.</p>";
+    html += "<p class=\"labels-hint\">" + t('ld.hintColorField') + "</p>";
   } else if (el.type === "icon") {
-    html += "<p class=\"labels-hint\">Spulen-Icon in der Filamentfarbe.</p>";
+    html += "<p class=\"labels-hint\">" + t('ld.hintIconField') + "</p>";
   }
-  html += "<div class=\"prop-row\"><div><label>X (mm)</label><input type=\"number\" id=\"ld-p-x\" step=\"0.5\" value=\"" + el.x + "\"></div><div><label>Y (mm)</label><input type=\"number\" id=\"ld-p-y\" step=\"0.5\" value=\"" + el.y + "\"></div></div>";
-  html += "<div class=\"prop-row\"><div><label>Breite (mm)</label><input type=\"number\" id=\"ld-p-w\" step=\"0.5\" value=\"" + el.w + "\"></div><div><label>Hoehe (mm)</label><input type=\"number\" id=\"ld-p-h\" step=\"0.5\" value=\"" + el.h + "\"></div></div>";
-  html += "<button class=\"btn secondary danger\" id=\"ld-p-delete\" type=\"button\" style=\"width:100%\">Element loeschen</button>";
+  html += "<div class=\"prop-row\"><div><label>" + t('ld.propX') + "</label><input type=\"number\" id=\"ld-p-x\" step=\"0.5\" value=\"" + el.x + "\"></div><div><label>" + t('ld.propY') + "</label><input type=\"number\" id=\"ld-p-y\" step=\"0.5\" value=\"" + el.y + "\"></div></div>";
+  html += "<div class=\"prop-row\"><div><label>" + t('ld.propWidth') + "</label><input type=\"number\" id=\"ld-p-w\" step=\"0.5\" value=\"" + el.w + "\"></div><div><label>" + t('ld.propHeight') + "</label><input type=\"number\" id=\"ld-p-h\" step=\"0.5\" value=\"" + el.h + "\"></div></div>";
+  html += "<button class=\"btn secondary danger\" id=\"ld-p-delete\" type=\"button\" style=\"width:100%\">" + t('ld.deleteElement') + "</button>";
   box.innerHTML = html;
   ldWireProps(el);
 }
 function ldTypeLabel(type) {
-  if (type === "text") return "Text / Feld";
-  if (type === "qr") return "QR-Code";
-  if (type === "color") return "Farbfeld";
-  if (type === "rect") return "Rechteck";
-  if (type === "icon") return "Spulen-Icon";
+  if (type === "text") return t('ld.typeLabelText');
+  if (type === "qr") return t('ld.typeLabelQr');
+  if (type === "color") return t('ld.typeLabelColor');
+  if (type === "rect") return t('ld.typeLabelRect');
+  if (type === "icon") return t('ld.typeLabelIcon');
   return type;
 }
 
 function ldFieldOptions(current) {
-  let opts = "<option value=\"static\"" + (!current || current === "static" ? " selected" : "") + ">-- Freitext --</option>";
+  let opts = "<option value=\"static\"" + (!current || current === "static" ? " selected" : "") + ">" + t('ld.freetextOption') + "</option>";
   const ldIsFilamentTpl2 = ldCurrentTemplate && ldCurrentTemplate.target_type === "filament";
   const ldFieldList = ldIsFilamentTpl2 ? ldFields.filter((f) => f.entity !== "spool") : ldFields;
   ldFieldList.forEach((f) => {
@@ -3173,12 +3809,22 @@ function ldWireProps(el) {
 
 <div class="assign-overlay" id="settings-overlay">
 <div class="assign-box">
-<h3>Reihenfolge anpassen</h3>
-<p class="slot-label">Abschnitte mit den Pfeilen nach oben/unten verschieben.</p>
+<h3 data-i18n="settings.reorderTitle">Reihenfolge anpassen</h3>
+<p class="slot-label" data-i18n="settings.reorderHint">Abschnitte mit den Pfeilen nach oben/unten verschieben.</p>
 <ul class="reorder-list" id="reorder-list"></ul>
 <div class="row-actions">
-<button class="btn secondary" id="settings-cancel">Abbrechen</button>
-<button class="btn" id="settings-save">Speichern</button>
+<button class="btn secondary" id="settings-cancel" data-i18n="settings.cancel">Abbrechen</button>
+<button class="btn" id="settings-save" data-i18n="settings.save">Speichern</button>
+</div>
+</div>
+</div>
+
+<div class="assign-overlay" id="info-overlay">
+<div class="assign-box info-box">
+<h3 id="info-title">Anleitung</h3>
+<div id="info-content"></div>
+<div class="row-actions">
+<button class="btn" id="info-close" data-i18n="info.close">Schließen</button>
 </div>
 </div>
 </div>
@@ -3209,14 +3855,14 @@ function ldWireProps(el) {
       spoolEl.textContent = scanState.spoolLabel;
       spoolEl.className = '';
     } else {
-      spoolEl.textContent = '– noch nicht gescannt –';
+      spoolEl.textContent = t('scan.notScannedYet');
       spoolEl.className = 'muted';
     }
     if (scanState.slotId) {
       slotEl.textContent = scanState.slotLabel;
       slotEl.className = '';
     } else {
-      slotEl.textContent = '– noch nicht gescannt –';
+      slotEl.textContent = t('scan.notScannedYet');
       slotEl.className = 'muted';
     }
     const ready = scanState.spoolId && scanState.slotId;
@@ -3239,12 +3885,12 @@ function ldWireProps(el) {
     if ((m = code.match(/^WEB\+SPOOLMAN:S-(\d+)$/i))) {
       const spoolId = parseInt(m[1], 10);
       const spool = allSpools.find(s => s.id === spoolId);
-      if (!spool) { setHint('Spule #' + spoolId + ' nicht gefunden.', 'err'); toast('Spule #' + spoolId + ' nicht gefunden.', 'err'); return; }
+      if (!spool) { setHint(t('scan.spoolNotFoundPrefix') + spoolId + t('scan.spoolNotFoundSuffix'), 'err'); toast(t('scan.spoolNotFoundPrefix') + spoolId + t('scan.spoolNotFoundSuffix'), 'err'); return; }
       scanState.spoolId = spoolId;
       scanState.spoolLabel = spoolDisplayName(spool);
       scanState.autoAssign = false;
-      setHint('Spule erkannt.');
-      toast('Spule erkannt: ' + scanState.spoolLabel, 'ok');
+      setHint(t('scan.spoolDetectedShort'));
+      toast(t('scan.spoolDetected') + scanState.spoolLabel, 'ok');
       updateScanDisplay();
       tryAutoAssign();
     } else if ((m = code.match(/^WEB\+SPOOLMAN:F-(\d+)$/i))) {
@@ -3252,35 +3898,35 @@ function ldWireProps(el) {
     } else if ((m = code.match(/^WEB\+LAGER:SLOT-(\d+)$/i))) {
       const slotId = parseInt(m[1], 10);
       const found = findUnitAndSlotBySlotId(slotId);
-      if (!found) { setHint('Platz #' + slotId + ' nicht gefunden.', 'err'); toast('Platz #' + slotId + ' nicht gefunden.', 'err'); return; }
-      if (slotIsReserved(found.unit, found.slot)) { setHint('Dieser Platz ist fuer die ACE-Zufuehrung reserviert.', 'err'); toast('Platz ist fuer die ACE-Zufuehrung reserviert.', 'err'); return; }
+      if (!found) { setHint(t('scan.slotNotFoundPrefix') + slotId + t('scan.slotNotFoundSuffix'), 'err'); toast(t('scan.slotNotFoundPrefix') + slotId + t('scan.slotNotFoundSuffix'), 'err'); return; }
+      if (slotIsReserved(found.unit, found.slot)) { setHint(t('scan.slotReservedHint'), 'err'); toast(t('scan.slotReserved'), 'err'); return; }
       scanState.slotId = slotId;
       scanState.slotLabel = unitSlotLabel(found.unit, found.slot);
-      setHint('Platz erkannt.');
-      toast('Platz erkannt: ' + scanState.slotLabel, 'ok');
+      setHint(t('scan.slotDetectedShort'));
+      toast(t('scan.slotDetected') + scanState.slotLabel, 'ok');
       updateScanDisplay();
       tryAutoAssign();
     } else {
-      setHint('Unbekannter QR-Code: ' + code, 'err');
-      toast('Unbekannter QR-Code.', 'err');
+      setHint(t('scan.unknownQrPrefix') + code, 'err');
+      toast(t('scan.unknownQr'), 'err');
     }
   }
 
   async function handleFilamentScan(filId) {
     if (scanState.spoolId) {
-      setHint('Bereits eine Spule vorbereitet - zuerst Platz scannen oder zuruecksetzen.', 'err');
-      toast('Bereits eine Spule vorbereitet - zuerst Platz scannen oder zuruecksetzen.', 'err');
+      setHint(t('scan.alreadyPrepared'), 'err');
+      toast(t('scan.alreadyPrepared'), 'err');
       return;
     }
     let fil;
     try {
       fil = await api(SP + '/filament/' + filId);
     } catch (e) {
-      setHint('Filament #' + filId + ' nicht gefunden.', 'err');
-      toast('Filament #' + filId + ' nicht gefunden.', 'err');
+      setHint(t('scan.filamentNotFoundPrefix') + filId + t('scan.filamentNotFoundSuffix'), 'err');
+      toast(t('scan.filamentNotFoundPrefix') + filId + t('scan.filamentNotFoundSuffix'), 'err');
       return;
     }
-    setHint('Filament erkannt - lege Spule an ...');
+    setHint(t('scan.filamentCreatedGo'));
     try {
       const spoolBody = {
         filament_id: filId,
@@ -3294,13 +3940,13 @@ function ldWireProps(el) {
       scanState.spoolId = newSpool.id;
       scanState.spoolLabel = spoolDisplayName(newSpool);
       scanState.autoAssign = true;
-      setHint('Spule angelegt: ' + scanState.spoolLabel);
-      toast('Spule angelegt: ' + scanState.spoolLabel, 'ok');
+      setHint(t('scan.spoolCreatedPrefix') + scanState.spoolLabel);
+      toast(t('scan.spoolCreatedPrefix') + scanState.spoolLabel, 'ok');
       updateScanDisplay();
       await tryAutoAssign();
     } catch (e) {
-      setHint('Fehler beim Anlegen der Spule: ' + e.message, 'err');
-      toast('Fehler beim Anlegen der Spule: ' + e.message, 'err');
+      setHint(t('scan.createSpoolErrorPrefix') + e.message, 'err');
+      toast(t('scan.createSpoolErrorPrefix') + e.message, 'err');
     }
   }
 
@@ -3308,31 +3954,31 @@ function ldWireProps(el) {
     if (!scanState.autoAssign) return;
     if (!scanState.spoolId || !scanState.slotId) return;
     const found = findUnitAndSlotBySlotId(scanState.slotId);
-    if (!found) { setHint('Platz nicht mehr gefunden.', 'err'); toast('Platz nicht mehr gefunden.', 'err'); return; }
+    if (!found) { setHint(t('scan.slotGoneAgain'), 'err'); toast(t('scan.slotGoneAgain'), 'err'); return; }
     if (found.slot.spool_id && found.slot.spool_id !== scanState.spoolId) {
-      setHint('Platz ist bereits belegt.', 'err');
-      toast('Platz ist bereits belegt - bitte anderen Platz scannen.', 'err');
+      setHint(t('scan.slotOccupied'), 'err');
+      toast(t('scan.slotOccupiedRescan'), 'err');
       return;
     }
     const spoolLabel = scanState.spoolLabel;
     const slotLabel = scanState.slotLabel;
     const sourceInfo = findSlotForSpool(scanState.spoolId);
     await assignToSlot(scanState.spoolId, scanState.slotId, sourceInfo, found.unit.name || 'Geraet');
-    toast('Zugewiesen: ' + spoolLabel + ' -> ' + slotLabel, 'ok');
+    toast(t('scan.assignedPrefix') + spoolLabel + t('scan.assignedArrow') + slotLabel, 'ok');
     resetScanState();
   }
 
   async function confirmScanAssignment() {
     if (!scanState.spoolId || !scanState.slotId) return;
     const found = findUnitAndSlotBySlotId(scanState.slotId);
-    if (!found) { setHint('Platz nicht mehr gefunden.', 'err'); return; }
+    if (!found) { setHint(t('scan.slotGoneAgain'), 'err'); return; }
     if (found.slot.spool_id && found.slot.spool_id !== scanState.spoolId) {
-      setHint('Platz ist bereits belegt.', 'err');
+      setHint(t('scan.slotOccupied'), 'err');
       return;
     }
     const sourceInfo = findSlotForSpool(scanState.spoolId);
     if (sourceInfo && sourceInfo.slot.id === scanState.slotId) {
-      setHint('Spule liegt bereits auf diesem Platz.', 'err');
+      setHint(t('scan.spoolAlreadyOnSlot'), 'err');
       return;
     }
     await assignToSlot(scanState.spoolId, scanState.slotId, sourceInfo, found.unit.name || 'Gerät');
@@ -3352,11 +3998,11 @@ function ldWireProps(el) {
   async function startCameraScan() {
     const readerBox = document.getElementById('scan-camera-reader');
     const btn = document.getElementById('scan-camera-btn');
-    if (!readerBox || !window.Html5Qrcode) { setHint('Kamera-Bibliothek nicht verfuegbar.', 'err'); return; }
+    if (!readerBox || !window.Html5Qrcode) { setHint(t('scan.cameraLibMissing'), 'err'); return; }
     if (html5QrCodeInstance) return;
     readerBox.style.display = 'block';
     readerBox.innerHTML = '';
-    if (btn) btn.textContent = 'Kamera stoppen';
+    if (btn) btn.textContent = t('scan.cameraStop');
     try {
       html5QrCodeInstance = new Html5Qrcode('scan-camera-reader');
       await html5QrCodeInstance.start(
@@ -3372,7 +4018,7 @@ function ldWireProps(el) {
         () => {}
       );
     } catch (err) {
-      setHint('Kamera konnte nicht gestartet werden: ' + (err && err.message ? err.message : err), 'err');
+      setHint(t('scan.cameraStartErrorPrefix') + (err && err.message ? err.message : err), 'err');
       await stopCameraScan();
     }
   }
@@ -3386,7 +4032,7 @@ function ldWireProps(el) {
       html5QrCodeInstance = null;
     }
     if (readerBox) { readerBox.style.display = 'none'; readerBox.innerHTML = ''; }
-    if (btn) btn.textContent = 'Kamera scannen';
+    if (btn) btn.textContent = t('scan.cameraStart');
     cameraLastCode = null;
   }
 
@@ -3399,7 +4045,7 @@ function ldWireProps(el) {
     if (!secure) {
       toggle.checked = false;
       toggle.disabled = true;
-      hint.textContent = 'Kamera-Scan benoetigt eine HTTPS-Verbindung und ist auf dieser Seite nicht verfuegbar.';
+      hint.textContent = t('scan.httpsRequired');
       hint.className = 'section-note warn';
       btn.style.display = 'none';
       stopCameraScan();
@@ -3407,7 +4053,7 @@ function ldWireProps(el) {
     }
     toggle.disabled = false;
     hint.className = 'section-note';
-    hint.textContent = 'Scannt QR-Codes direkt mit der Kamera dieses Geraets, als Alternative zu einem externen Scanner.';
+    hint.textContent = t('scan.cameraDesc');
     const enabled = localStorage.getItem(CAMERA_PREF_KEY) === '1';
     toggle.checked = enabled;
     btn.style.display = enabled ? 'block' : 'none';
@@ -3480,42 +4126,43 @@ function ldWireProps(el) {
 })();
 </script>
 
-<button id="scan-fab" class="btn" title="Scan-Modus (Wareneingang)" style="position:fixed;right:1.25rem;bottom:1.25rem;width:3.4rem;height:3.4rem;border-radius:50%;font-size:1.4rem;padding:0;z-index:90;box-shadow:0 4px 14px rgba(0,0,0,.4);">📷</button>
+<button id="scan-fab" class="btn" title="Scan-Modus (Wareneingang)" data-i18n-title="scan.fabTitle" style="position:fixed;right:1.25rem;bottom:1.25rem;width:3.4rem;height:3.4rem;border-radius:50%;font-size:1.4rem;padding:0;z-index:90;box-shadow:0 4px 14px rgba(0,0,0,.4);">📷</button>
 
 <div class="assign-overlay" id="scan-overlay">
   <div class="assign-box">
-    <h3>Scan-Modus</h3>
-    <p class="slot-label">Spule und Lagerplatz in beliebiger Reihenfolge scannen.</p>
-    <p class="section-note" style="margin-top:-.25rem;margin-bottom:.6rem;">Neuer Filament-QR: Spule wird automatisch angelegt und beim naechsten Platz-Scan automatisch zugewiesen (kein Klick noetig). Vorhandene Spule (Spulen-QR): Zuweisung muss ueber den Button unten bestaetigt werden.</p>
+    <h3 data-i18n="scan.title">Scan-Modus</h3>
+    <p class="slot-label" data-i18n="scan.slotLabelDesc">Spule und Lagerplatz in beliebiger Reihenfolge scannen.</p>
+    <p class="section-note" style="margin-top:-.25rem;margin-bottom:.6rem;" data-i18n="scan.newFilamentNote">Neuer Filament-QR: Spule wird automatisch angelegt und beim naechsten Platz-Scan automatisch zugewiesen (kein Klick noetig). Vorhandene Spule (Spulen-QR): Zuweisung muss ueber den Button unten bestaetigt werden.</p>
     <div id="scan-camera-box" style="margin-bottom:.75rem;padding:.6rem .75rem;border:1px solid var(--border);border-radius:8px;background:#0b1220;">
       <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;">
         <input type="checkbox" id="scan-camera-toggle">
-        <span>Kamera-Scan aktivieren</span>
+        <span data-i18n="scan.cameraActivate">Kamera-Scan aktivieren</span>
       </label>
       <div id="scan-camera-hint" class="section-note" style="margin-top:.35rem;margin-bottom:0;"></div>
-      <button class="btn secondary" id="scan-camera-btn" style="display:none;margin-top:.5rem;width:100%;">Kamera scannen</button>
+      <button class="btn secondary" id="scan-camera-btn" style="display:none;margin-top:.5rem;width:100%;" data-i18n="scan.cameraStart">Kamera scannen</button>
       <div id="scan-camera-reader" style="display:none;margin-top:.5rem;border-radius:8px;overflow:hidden;"></div>
     </div>
     <input type="text" id="scan-input" autocomplete="off" style="width:100%;box-sizing:border-box;padding:.5rem .6rem;border-radius:8px;border:1px solid var(--border);background:#0b1220;color:var(--text);font-size:.85rem;margin-bottom:.75rem;">
     <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:.5rem;">
       <div style="display:flex;justify-content:space-between;gap:.5rem;">
-        <span class="muted">Spule:</span>
-        <span id="scan-spool-value" class="muted">– noch nicht gescannt –</span>
+        <span class="muted" data-i18n="scan.spoolLabel2">Spule:</span>
+        <span id="scan-spool-value" class="muted" data-i18n="scan.notScannedYet">– noch nicht gescannt –</span>
       </div>
       <div style="display:flex;justify-content:space-between;gap:.5rem;">
-        <span class="muted">Platz:</span>
-        <span id="scan-slot-value" class="muted">– noch nicht gescannt –</span>
+        <span class="muted" data-i18n="scan.slotLabel2">Platz:</span>
+        <span id="scan-slot-value" class="muted" data-i18n="scan.notScannedYet">– noch nicht gescannt –</span>
       </div>
     </div>
     <div id="scan-hint" class="section-note" style="min-height:1.1rem;"></div>
     <div class="row-actions">
-      <button class="btn secondary" id="scan-close">Schließen</button>
-      <button class="btn secondary" id="scan-reset" style="display:none;">Zurücksetzen</button>
-      <button class="btn" id="scan-confirm" style="display:none;">Zuweisen bestätigen</button>
+      <button class="btn secondary" id="scan-close" data-i18n="scan.close">Schließen</button>
+      <button class="btn secondary" id="scan-reset" style="display:none;" data-i18n="scan.reset">Zurücksetzen</button>
+      <button class="btn" id="scan-confirm" style="display:none;" data-i18n="scan.confirmAssign">Zuweisen bestätigen</button>
     </div>
   </div>
 </div>
 
+<script>(function(){var l=document.getElementById("spoolman-link");if(l){l.href=window.location.protocol+"//"+window.location.hostname+":8091";}})();</script>
 </body>
 </html>
 

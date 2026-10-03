@@ -242,6 +242,53 @@
     }
     .spool-drag-chip svg { flex: 0 0 auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
     .device-card.drop-hover { outline: 2px dashed #4a90d9; outline-offset: 2px; background: rgba(74,144,217,.12); }
+  .printer-card { background: var(--card); border: 1px solid var(--border); border-radius: .75rem; padding: 1rem 1.1rem; margin-bottom: .9rem; }
+  .printer-card-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .5rem; }
+  .printer-card-head .pname { font-weight: 600; font-size: 1.05rem; }
+  .printer-card-head .psource { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; }
+  .printer-status { display: inline-block; padding: .15rem .6rem; border-radius: 999px; font-size: .75rem; font-weight: 600; background: rgba(255,255,255,.08); color: var(--muted); }
+  .printer-status.busy { background: rgba(56,189,248,.15); color: var(--accent); }
+  .printer-status.idle { background: rgba(52,211,153,.15); color: var(--ok); }
+  .printer-status.error { background: rgba(248,113,113,.15); color: var(--danger); }
+  .printer-meta { color: var(--muted); font-size: .8rem; margin-bottom: .6rem; }
+  .printer-boxes { display: flex; flex-direction: column; gap: .6rem; }
+  .printer-box-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: .3rem; }
+  .printer-slots { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .printer-illo { position: relative; border: 1px solid var(--border); border-radius: .6rem; padding: .7rem .8rem .6rem; margin-bottom: .7rem; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); }
+  .printer-illo-body { display: flex; align-items: center; gap: .9rem; }
+  .printer-illo-info { flex: 1 1 auto; min-width: 0; }
+  .printer-illo-project { font-size: .85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .printer-illo-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
+  .printer-illo-bar { margin-top: .5rem; height: .4rem; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .printer-illo-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #6ee7b7, #34d399); transition: width .6s ease; }
+  .printer-illo.error .printer-illo-bar-fill { background: linear-gradient(90deg, #fca5a5, #ef4444); }
+  .printer-illo-pct { font-size: .72rem; color: var(--muted); margin-top: .2rem; text-align: right; }
+.printer-illo-filename { font-size: .72rem; color: var(--text); font-weight: 600; margin-bottom: .3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.printer-illo-mainrow { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.printer-illo-pctbig { font-size: 1.6rem; font-weight: 700; line-height: 1; color: var(--text); }
+.printer-illo-pctbig span { font-size: .9rem; font-weight: 500; color: var(--muted); margin-left: 1px; }
+.printer-illo-timebox { text-align: right; }
+.printer-illo-eta { font-size: .72rem; color: var(--muted); }
+.printer-illo-finish { font-size: .7rem; color: var(--muted); margin-top: .1rem; }
+.printer-illo-updated { font-size: .65rem; color: var(--muted); opacity: .7; margin-top: .25rem; text-align: right; }
+  .printer-illo.idle { color: #22c55e; }
+  .printer-illo.busy { color: #f59e0b; }
+  .printer-illo.error { color: #ef4444; }
+  .printer-illo-head { transform-box: fill-box; transform-origin: center; }
+  .printer-illo.busy .printer-illo-head { animation: printerHeadMove 2.6s ease-in-out infinite; }
+  .printer-illo.busy .printer-illo-led { animation: printerLedPulse 1.1s ease-in-out infinite; }
+  @keyframes printerHeadMove { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(26px); } }
+  @keyframes printerLedPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+  .slot-chip { display: flex; flex-direction: column; min-width: 110px; padding: .45rem .6rem; border-radius: .5rem; background: rgba(255,255,255,.04); border: 1px solid var(--border); font-size: .78rem; }
+  .slot-chip .sc-top { display: flex; align-items: center; gap: .35rem; font-weight: 600; }
+  .slot-chip .sc-dot { width: .6rem; height: .6rem; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,.3); }
+  .slot-chip .sc-match { color: var(--accent); font-size: .72rem; }
+  .slot-chip.empty { opacity: .5; }
+  .printer-actions { display: flex; gap: .5rem; margin-top: .6rem; }
+  .printer-add-form { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-bottom: 1rem; }
+  .printer-add-form > div { display: flex; flex-direction: column; gap: .25rem; }
+  .printer-add-form label { font-size: .75rem; color: var(--muted); }
+  .printer-add-form input { background: var(--bg2); border: 1px solid var(--border); border-radius: .4rem; padding: .4rem .55rem; color: var(--text); font-size: .85rem; }
     .panel.drop-hover { outline: 2px dashed #e08a3c; outline-offset: -2px; }
     .slot-circle.drop-target circle, .slot-circle.drop-target ellipse { stroke: #4a90d9 !important; stroke-width: 3 !important; }
     .slot-circle.drop-target { filter: drop-shadow(0 0 4px rgba(74,144,217,.9)); }
@@ -365,6 +412,30 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 .label-props-empty { color: var(--muted); font-size: .8rem; text-align: center; padding: 2rem 0; }
 .labels-hint { font-size: .78rem; color: var(--muted); margin: -.3rem 0 .75rem 0; }
 
+
+.app-shell{display:flex;align-items:flex-start;}
+.sidebar{width:220px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--border);min-height:100vh;position:sticky;top:0;display:flex;flex-direction:column;transition:width .15s ease;}
+.sidebar.collapsed{width:56px;}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .sidebar-brand{display:none;}
+.sidebar-top{display:flex;align-items:center;gap:.6rem;padding:.9rem .75rem;border-bottom:1px solid var(--border);}
+.sidebar-burger{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border);border-radius:.4rem;color:var(--text);cursor:pointer;font-size:1rem;}
+.sidebar-brand{font-size:.85rem;font-weight:600;color:var(--text);white-space:nowrap;}
+.sidebar-nav{padding:.5rem;display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem .6rem;border:none;background:transparent;color:var(--muted);border-radius:.5rem;font-size:.85rem;text-align:left;cursor:pointer;white-space:nowrap;width:100%;}
+.nav-item:hover{background:var(--card);}
+.nav-item.active{background:rgba(56,189,248,.15);color:var(--accent);}
+.nav-icon{width:20px;text-align:center;flex-shrink:0;}
+.app-main{flex:1;min-width:0;padding:1.25rem 1.5rem;}
+main>.panel{display:none;}
+main>.panel.active{display:block;}
+.settings-list{display:flex;flex-direction:column;gap:1px;background:var(--border);border-radius:.5rem;overflow:hidden;margin-top:.9rem;}
+.settings-item{display:flex;align-items:center;gap:.8rem;padding:.85rem .95rem;background:var(--bg2);cursor:pointer;border:none;text-align:left;color:inherit;width:100%;text-decoration:none;font:inherit;}
+.settings-item:hover{background:var(--card);}
+.settings-item .si-icon{font-size:1.15rem;flex-shrink:0;}
+.settings-item .si-text b{display:block;font-size:.88rem;}
+.settings-item .si-text span{display:block;font-size:.75rem;color:var(--muted);margin-top:2px;}
+.live-print-card{display:none;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.35);border-radius:.6rem;padding:.9rem 1rem;margin-bottom:1rem;}
+.live-print-card.show{display:block;}
 </style>
 </head>
 <body>
@@ -376,7 +447,7 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 <button class="lang-btn" data-lang="de" title="Deutsch"><svg viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg"><rect width="5" height="1" y="0" fill="#000000"/><rect width="5" height="1" y="1" fill="#DD0000"/><rect width="5" height="1" y="2" fill="#FFCE00"/></svg></button>
 <button class="lang-btn" data-lang="en" title="English"><svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg"><rect width="60" height="30" fill="#00247d"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#cf142b" stroke-width="2"/><path d="M30,0 V30 M0,15 H60" stroke="#fff" stroke-width="10"/><path d="M30,0 V30 M0,15 H60" stroke="#cf142b" stroke-width="6"/></svg></button>
 </div>
-<div class="header-actions">
+<div class="header-actions" style="display:none">
 <button class="btn secondary settings-btn" id="settings-btn" type="button">&#9881; <span data-i18n="nav.settings">Einstellungen</span></button>
 <button class="btn secondary info-btn" id="info-btn" type="button">&#8505; <span data-i18n="nav.info">Info</span></button>
 </div>
@@ -384,9 +455,29 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
 <p data-i18n="hero.subtitle">Spulen im Blick &mdash; einchecken, auschecken, Verbrauch buchen, Lagerplätze visualisieren</p>
 </div>
 
+<div class="app-shell">
+<aside class="sidebar" id="app-sidebar">
+  <div class="sidebar-top">
+    <button class="sidebar-burger" id="sidebar-burger" type="button" aria-label="Menue ein-/ausblenden">&#9776;</button>
+    <span class="sidebar-brand" id="sidebar-brand">Menue</span>
+  </div>
+  <nav class="sidebar-nav" id="sidebar-nav">
+    <button class="nav-item active" data-nav-target="overview" type="button"><span class="nav-icon">&#8962;</span><span class="nav-label">Uebersicht</span></button>
+    <button class="nav-item" data-nav-target="units" type="button"><span class="nav-icon">&#128230;</span><span class="nav-label">Lagerplaetze</span></button>
+    <button class="nav-item" data-nav-target="printers" type="button"><span class="nav-icon">&#128424;</span><span class="nav-label">Drucker</span></button>
+    <button class="nav-item" data-nav-target="spools" type="button"><span class="nav-icon">&#9850;</span><span class="nav-label">Spulen</span></button>
+    <button class="nav-item" data-nav-target="new-spool" type="button"><span class="nav-icon">&#10024;</span><span class="nav-label">Neue Spule</span></button>
+    <button class="nav-item" data-nav-target="shopping" type="button"><span class="nav-icon">&#128722;</span><span class="nav-label">Einkaufsliste</span></button>
+    <button class="nav-item" data-nav-target="labels" type="button"><span class="nav-icon">&#127991;</span><span class="nav-label">Label-Designer</span></button>
+    <button class="nav-item" data-nav-target="products" type="button"><span class="nav-icon">&#128506;</span><span class="nav-label">Gedruckte Produkte</span></button>
+    <button class="nav-item" data-nav-target="statistics" type="button"><span class="nav-icon">&#128202;</span><span class="nav-label">Statistik</span></button>
+    <button class="nav-item" data-nav-target="settings" type="button"><span class="nav-icon">&#9881;</span><span class="nav-label">Einstellungen</span></button>
+  </nav>
+</aside>
+<div class="app-main">
 <main>
 <div class="panel" data-panel="overview">
-<h2 data-i18n="panel.overview">Gesamtübersicht</h2>
+<h2 data-i18n="panel.overview">Gesamtübersicht</h2><div class="live-print-card" id="live-print-card"><strong>Live-Druck</strong><p class="hint">Platzhalter - Layout folgt.</p></div>
 <div class="stats" id="stats">
 <div class="stat"><div class="num" id="stat-count">&ndash;</div><div class="label" data-i18n="ov.spools">Spulen</div></div>
 <div class="stat"><div class="num" id="stat-weight">&ndash;</div><div class="label" data-i18n="ov.remainingTotal">Rest gesamt</div></div>
@@ -578,13 +669,46 @@ button.btn.icon-only { padding: .4rem .55rem; font-size: .95rem; line-height: 1;
   </div>
 </div>
 
+<div class="panel" data-panel="printers">
+  <h2>Drucker</h2>
+  <p class="hint">Alle Drucker auf einen Blick &ndash; live aus der Anycubic-Bridge und manuell angelegte Platzhalter-Drucker, inklusive ACE-Slot-Belegung und automatischem Spoolman-Abgleich.</p>
+
+  <div class="printer-add-form">
+    <div><label for="pr-name">Name</label><input type="text" id="pr-name" placeholder="z.B. Ersatzdrucker"></div>
+    <div><label for="pr-brand">Hersteller</label><input type="text" id="pr-brand" placeholder="optional"></div>
+    <div><label for="pr-model">Modell</label><input type="text" id="pr-model" placeholder="optional"></div>
+    <div><label for="pr-firmware">Firmware</label><input type="text" id="pr-firmware" placeholder="optional"></div>
+    <div style="flex:2 1 220px"><label for="pr-note">Notiz</label><input type="text" id="pr-note" placeholder="optional"></div>
+    <div class="btn-wrap"><button class="btn secondary" id="printer-add-btn" type="button">+ Manueller Drucker</button></div>
+  </div>
+
+  <div id="printers-content"><div class="empty">Lade&hellip;</div></div>
+</div>
+<div class="panel" data-panel="settings">
+  <h2>Einstellungen</h2>
+  <div class="settings-list">
+    <a class="settings-item" href="anycubic.html"><span class="si-icon">&#128268;</span><span class="si-text"><b>Anycubic-Integration</b><span>Token, Slot-Zuordnung, Verbindungsstatus</span></span></a>
+    <button class="settings-item" type="button" onclick="document.getElementById('settings-btn').click()"><span class="si-icon">&#8597;</span><span class="si-text"><b>Reihenfolge anpassen</b><span>Abschnitte in der Uebersicht neu sortieren</span></span></button>
+    <button class="settings-item" type="button" onclick="document.getElementById('info-btn').click()"><span class="si-icon">&#8505;</span><span class="si-text"><b>Info / Hilfe</b><span>Anleitung und Versionsinfo</span></span></button>
+  </div>
+</div>
+<div class="panel" data-panel="products">
+  <h2>Gedruckte Produkte</h2>
+  <p class="hint">Grundgeruest - Datenanbindung folgt.</p>
+</div>
+<div class="panel" data-panel="statistics">
+  <h2>Statistik</h2>
+  <p class="hint">Grundgeruest - Datenanbindung folgt.</p>
+</div>
 </main>
+</div>
+</div>
 
 <div class="links">
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.3.0</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.4.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -827,6 +951,8 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.4.0 – 03.10.2026</h4>
+      <p>Seitenleisten-Navigation, neue Drucker-Seite (Bridge- und manuelle Drucker vereint, live ACE-Slots), Spooly-Style Druckfortschrittskarte, Idle-Status-Fix.</p>
       <h4>v1.3.0 – 28.09.2026</h4>
       <p>Versionsanzeige und dieser Änderungsverlauf im Footer eingeführt, damit du als Tester immer siehst, welcher Stand gerade läuft.</p>
       <h4>v1.2.0 – 28.09.2026</h4>
@@ -1120,6 +1246,8 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.4.0 – 2026-10-03</h4>
+      <p>Sidebar navigation, new Printers page (bridge and manual printers unified, live ACE slots), Spooly-style print progress card, idle-status fix.</p>
       <h4>v1.3.0 – 2026-09-28</h4>
       <p>Added a version indicator and this changelog in the footer, so testers can always see which build is currently running.</p>
       <h4>v1.2.0 – 2026-09-28</h4>
@@ -2899,6 +3027,165 @@ document.getElementById('spool-search').addEventListener('input', (e) => {
 });
 initSpoolDrag();
 // ---------- Init ----------
+function prEsc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function printerStatusClass(status) {
+  const s = (status || '').toLowerCase();
+  if (!s) return 'idle';
+  if (s.includes('error') || s.includes('fehler') || s.includes('fail')) return 'error';
+  if (s.includes('idle') || s.includes('bereit') || s.includes('fertig') || s.includes('ready') || s.includes('finish') || s.includes('complete') || s.includes('available') || s.includes('online') || s.includes('standby')) return 'idle';
+  return 'busy';
+}
+
+function printerSlotColorHex(color) {
+  if (Array.isArray(color) && color.length >= 3) {
+    return '#' + color.slice(0,3).map(c => { const n = Math.max(0, Math.min(255, parseInt(c,10) || 0)); return n.toString(16).padStart(2,'0'); }).join('');
+  }
+  return '#808080';
+}
+
+function formatPrinterCompletion(val) {
+  if (!val) return '';
+  var d;
+  if (typeof val === 'number') { d = new Date(val > 1e12 ? val : val * 1000); }
+  else { d = new Date(val); }
+  if (isNaN(d.getTime())) return '';
+  var days = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  var wd = days[d.getDay()];
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mm = String(d.getMinutes()).padStart(2, '0');
+  return wd + '., ' + hh + ':' + mm;
+}
+
+function buildPrinterIllustration(p, statusCls) {
+  var prog = p.progress || null;
+  var pct = (prog && typeof prog.progress_percentage === 'number') ? Math.max(0, Math.min(100, prog.progress_percentage)) : null;
+  var projectName = (prog && prog.project_name) ? prog.project_name : null;
+  var remain = (prog && typeof prog.remaining_minutes === 'number') ? prog.remaining_minutes : null;
+  var remainTxt = remain != null ? (remain >= 60 ? (Math.floor(remain / 60) + 'h ' + (remain % 60) + 'min') : (remain + ' min')) : '';
+  var finishTxt = formatPrinterCompletion(prog && prog.approximate_completion_time);
+  var hasProgress = statusCls === 'busy' && pct != null;
+  var infoHtml;
+  if (hasProgress) {
+    infoHtml = '<div class="printer-illo-info">' +
+      (projectName ? ('<div class="printer-illo-filename">' + prEsc(projectName) + '</div>') : '') +
+      '<div class="printer-illo-mainrow">' +
+        '<div class="printer-illo-pctbig">' + Math.round(pct) + '<span>%</span></div>' +
+        '<div class="printer-illo-timebox">' +
+          (remainTxt ? ('<div class="printer-illo-eta">~ ' + prEsc(remainTxt) + '</div>') : '') +
+          (finishTxt ? ('<div class="printer-illo-finish">fertig ca. ' + prEsc(finishTxt) + '</div>') : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="printer-illo-bar"><div class="printer-illo-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="printer-illo-updated">Stand: Jetzt</div>' +
+      '</div>';
+  } else {
+    var subText = statusCls === 'busy'
+      ? (projectName ? prEsc(projectName) : 'Druckt...')
+      : (statusCls === 'error' ? 'Fehler' : 'Bereit');
+    infoHtml = '<div class="printer-illo-info">' +
+      '<div class="printer-illo-project">' + subText + '</div>' +
+      '</div>';
+  }
+  var svg = '<svg width="92" height="70" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="8" y="10" width="104" height="70" rx="6" stroke="var(--border)" stroke-width="2"/>' +
+    '<line x1="8" y1="26" x2="112" y2="26" stroke="var(--border)" stroke-width="2"/>' +
+    '<rect x="18" y="58" width="84" height="8" rx="2" fill="rgba(255,255,255,.08)"/>' +
+    '<g class="printer-illo-head"><rect x="44" y="20" width="14" height="12" rx="2" fill="currentColor" opacity=".85"/><line x1="51" y1="32" x2="51" y2="58" stroke="currentColor" stroke-width="2" opacity=".55"/></g>' +
+    '<circle class="printer-illo-led" cx="100" cy="20" r="3.2" fill="currentColor"/>' +
+    '</svg>';
+  return '<div class="printer-illo ' + statusCls + '"><div class="printer-illo-body">' + svg + infoHtml + '</div></div>';
+}
+
+function renderPrinterCard(p) {
+  const statusCls = printerStatusClass(p.current_status);
+  const statusText = p.current_status || (p.source === 'manual' ? 'manuell' : 'unbekannt');
+  let boxesHtml = '';
+  if (p.boxes && p.boxes.length) {
+    boxesHtml = p.boxes.map((box, bi) => {
+      const slots = (box.slots || []).map(slot => {
+        const empty = !slot.sku && !slot.type && !slot.material_name;
+        const hex = printerSlotColorHex(slot.color);
+        const label = slot.type || slot.material_name || 'leer';
+        const match = slot.matched_spool_name ? ('<div class="sc-match">&rarr; ' + prEsc(slot.matched_spool_name) + '</div>') : '';
+        return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
+          '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + '</div>' +
+          match +
+        '</div>';
+      }).join('');
+      return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + '</div><div class="printer-slots">' + (slots || '<span class="hint">Keine Slot-Daten</span>') + '</div></div>';
+    }).join('');
+  }
+  const actions = p.source === 'manual'
+    ? '<div class="printer-actions"><button class="btn secondary" data-del-printer="' + p.manual_id + '" type="button">Loeschen</button></div>'
+    : '';
+  return '<div class="printer-card">' +
+    buildPrinterIllustration(p, statusCls) +
+    '<div class="printer-card-head">' +
+      '<div><div class="pname">' + prEsc(p.name || 'Unbenannt') + '</div><div class="psource">' + (p.source === 'manual' ? 'Manuell' : 'Anycubic-Bridge') + '</div></div>' +
+      '<span class="printer-status ' + statusCls + '">' + prEsc(statusText) + '</span>' +
+    '</div>' +
+    ((p.brand || p.model) ? ('<div class="printer-meta">' + prEsc([p.brand, p.model].filter(Boolean).join(' ')) + '</div>') : '') +
+    '<div class="printer-boxes">' + boxesHtml + '</div>' +
+    actions +
+  '</div>';
+}
+
+async function loadPrinters() {
+  const el = document.getElementById('printers-content');
+  if (!el) return;
+  try {
+    const data = await api(ST + '/printers');
+    const printers = (data && data.printers) || [];
+    if (!printers.length) {
+      el.innerHTML = '<div class="empty">Keine Drucker gefunden.</div>';
+    } else {
+      el.innerHTML = (data.bridge_error ? '<p class="section-note warn">Anycubic-Bridge nicht erreichbar &ndash; es werden nur manuelle Drucker angezeigt.</p>' : '') +
+        printers.map(renderPrinterCard).join('');
+    }
+    el.querySelectorAll('[data-del-printer]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Diesen Drucker wirklich loeschen?')) return;
+        try {
+          await api(ST + '/printers/manual/' + btn.getAttribute('data-del-printer'), { method: 'DELETE' });
+          toast('Drucker geloescht', 'ok');
+          loadPrinters();
+        } catch (e) {
+          toast('Fehler: ' + e.message, 'err');
+        }
+      });
+    });
+  } catch (e) {
+    el.innerHTML = '<div class="empty">Fehler beim Laden: ' + prEsc(e.message) + '</div>';
+  }
+}
+
+async function createManualPrinter() {
+  const nameEl = document.getElementById('pr-name');
+  const name = nameEl.value.trim();
+  if (!name) { toast('Name erforderlich', 'err'); return; }
+  const body = {
+    name: name,
+    brand: document.getElementById('pr-brand').value.trim() || null,
+    model: document.getElementById('pr-model').value.trim() || null,
+    firmware_version: document.getElementById('pr-firmware').value.trim() || null,
+    note: document.getElementById('pr-note').value.trim() || null,
+  };
+  try {
+    await api(ST + '/printers/manual', { method: 'POST', body: JSON.stringify(body) });
+    ['pr-name','pr-brand','pr-model','pr-firmware','pr-note'].forEach(id => { document.getElementById(id).value = ''; });
+    toast('Drucker hinzugefuegt', 'ok');
+    loadPrinters();
+  } catch (e) {
+    toast('Fehler: ' + e.message, 'err');
+  }
+}
+
+const printerAddBtn = document.getElementById('printer-add-btn');
+if (printerAddBtn) printerAddBtn.addEventListener('click', createManualPrinter);
+
 async function init() {
   try {
     allSpools = await api(SP + '/spool');
@@ -2906,6 +3193,7 @@ async function init() {
   await loadDevices();
   await loadSpools();
   await loadShoppingList();
+  loadPrinters();
 }
 init();
 
@@ -4242,6 +4530,45 @@ function ldWireProps(el) {
 </div>
 
 <script>(function(){var l=document.getElementById("spoolman-link");if(l){l.href=window.location.protocol+"//"+window.location.hostname+":8091";}})();</script>
+
+<script>
+(function(){
+  function initSidebarNav(){
+    var panels = Array.prototype.slice.call(document.querySelectorAll('main > .panel'));
+    var navBtns = Array.prototype.slice.call(document.querySelectorAll('.nav-item'));
+    if(!panels.length || !navBtns.length) return;
+    function showSection(id){
+      panels.forEach(function(p){ p.classList.toggle('active', p.getAttribute('data-panel')===id); });
+      navBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-nav-target')===id); });
+      try{ localStorage.setItem('lager_active_section', id); }catch(e){}
+      window.dispatchEvent(new Event('resize'));
+    }
+    navBtns.forEach(function(b){
+      b.addEventListener('click', function(){ showSection(b.getAttribute('data-nav-target')); });
+    });
+    var start = 'overview';
+    try{
+      var saved = localStorage.getItem('lager_active_section');
+      if(saved && panels.some(function(p){return p.getAttribute('data-panel')===saved;})) start = saved;
+    }catch(e){}
+    showSection(start);
+    var burger = document.getElementById('sidebar-burger');
+    var sidebar = document.getElementById('app-sidebar');
+    if(burger && sidebar){
+      try{ if(localStorage.getItem('lager_sidebar_collapsed')==='1') sidebar.classList.add('collapsed'); }catch(e){}
+      burger.addEventListener('click', function(){
+        sidebar.classList.toggle('collapsed');
+        try{ localStorage.setItem('lager_sidebar_collapsed', sidebar.classList.contains('collapsed')?'1':'0'); }catch(e){}
+      });
+    }
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initSidebarNav);
+  } else {
+    initSidebarNav();
+  }
+})();
+</script>
 </body>
 </html>
 

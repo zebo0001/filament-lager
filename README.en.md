@@ -60,6 +60,12 @@ Scan-driven workflow (hardware barcode/QR scanner with HID keyboard emulation, n
 - Fully scan-only receiving workflow: scanning a filament QR code automatically creates a new spool, and scanning a location code right after assigns it directly - no manual dialog interaction needed
 - Alternatively, in the "New spool" dialog you can scan a printed filament QR label to auto-fill material/manufacturer/color
 
+Printers page (dedicated dashboard section, since v1.4.0):
+
+- Shows all Anycubic printers connected via the bridge live (status, current print job, ACE slot occupancy) together with manually added placeholder printers in one unified view
+- Active prints show a Spooly-style progress card: filename, large percentage, remaining time, estimated completion time, progress bar
+- Idle printers (status "available"/"online"/"standby") show a calm, non-animated illustration instead of the printing animation
+
 ## Structure
 
 ```

@@ -60,6 +60,12 @@ Scan-gestuetzter Workflow (Hardware-Barcode-/QR-Scanner mit HID-Tastatur-Emulati
 - Vollstaendiger Scan-only Wareneingang: ein gescannter Filament-QR-Code legt automatisch eine neue Spule an, ein anschliessend gescannter Platz-Code weist sie direkt zu - ganz ohne manuelle Dialog-Interaktion
 - Im 'Neue Spule'-Dialog kann alternativ ein gedrucktes Filament-QR-Label gescannt werden, um Material/Hersteller/Farbe automatisch vorzubefuellen
 
+Drucker-Seite (eigener Menuepunkt im Dashboard, ab v1.4.0):
+
+- Zeigt alle per Anycubic-Bridge verbundenen Drucker live (Status, aktuelles Druckprojekt, ACE-Slot-Belegung) zusammen mit manuell angelegten Platzhalter-Druckern in einer gemeinsamen Ansicht
+- Laufende Drucke zeigen eine Spooly-artige Fortschrittskarte: Dateiname, grosse Prozentanzeige, Restzeit, geschaetzte Fertigstellungszeit, Fortschrittsbalken
+- Idle-Drucker (status "available"/"online"/"standby") zeigen eine ruhige, nicht animierte Illustration statt der Druck-Animation
+
 ## Aufbau
 
 ```

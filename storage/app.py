@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 DB_PATH = os.environ.get("DB_PATH", "/data/storage.db")
 SPOOLMAN_URL = os.environ.get("SPOOLMAN_URL", "http://lagersystem_spoolman:8000/api/v1")
+BRIDGE_URL = os.environ.get("BRIDGE_URL", "http://anycubic-bridge:8080")
 
 app = FastAPI(title="Lagersystem Storage Overlay")
 app.add_middleware(
@@ -92,6 +93,17 @@ def init_db():
         shop_cols = [r["name"] for r in conn.execute("PRAGMA table_info(shopping_list)").fetchall()]
         if "article_number" not in shop_cols:
             conn.execute("ALTER TABLE shopping_list ADD COLUMN article_number TEXT")
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS manual_printers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                brand TEXT,
+                model TEXT,
+                firmware_version TEXT,
+                note TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )"""
+        )
         
 
 init_db()
@@ -119,6 +131,10 @@ class UnitUpdate(BaseModel):
 
 class SlotAssign(BaseModel):
     spool_id: Optional[int] = None
+
+
+class SpoolUseRequest(BaseModel):
+    grams: float
 
 
 class ShoppingItemCreate(BaseModel):
@@ -317,6 +333,51 @@ async def sync_spoolman_location(spool_id: int, location: str):
         except Exception:
             # Best-effort Sync -- Slot-Zuweisung soll nicht an einem Spoolman-Hänger scheitern.
             pass
+
+
+@app.get("/spools")
+async def list_spools():
+    """Aktive Spulen aus Spoolman, fuer externe Auswahl (z.B. Mesh Hub)."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            resp = await client.get(f"{SPOOLMAN_URL}/spool")
+            resp.raise_for_status()
+        except Exception:
+            raise HTTPException(502, "Spoolman nicht erreichbar")
+    spools = []
+    for s in resp.json():
+        if s.get("archived"):
+            continue
+        filament = s.get("filament") or {}
+        spools.append({
+            "id": s.get("id"),
+            "name": filament.get("name"),
+            "material": filament.get("material"),
+            "color_hex": filament.get("color_hex"),
+            "multi_color_hexes": filament.get("multi_color_hexes"),
+            "remaining_weight": s.get("remaining_weight"),
+            "location": s.get("location"),
+        })
+    return {"spools": spools}
+
+
+@app.post("/spools/{spool_id}/use")
+async def use_spool(spool_id: int, body: SpoolUseRequest):
+    """Bucht Gramm-Verbrauch auf eine Spule (Wrapper um Spoolmans use-Endpoint)."""
+    if not body.grams or body.grams <= 0:
+        raise HTTPException(400, "grams muss > 0 sein")
+    async with httpx.AsyncClient(timeout=10) as client:
+        try:
+            resp = await client.put(
+                f"{SPOOLMAN_URL}/spool/{spool_id}/use",
+                json={"use_weight": body.grams},
+            )
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(e.response.status_code, "Spoolman: Buchung fehlgeschlagen")
+        except Exception:
+            raise HTTPException(502, "Spoolman nicht erreichbar")
+    return resp.json()
 
 
 @app.put("/slots/{slot_id}")
@@ -1199,3 +1260,161 @@ def unit_labels_print(unit_id: int, cols: int = 4):
 <div class="grid">{imgs}</div>
 </body></html>"""
     return html
+
+
+class ManualPrinterCreate(BaseModel):
+    name: str
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    firmware_version: Optional[str] = None
+    note: Optional[str] = None
+
+
+class ManualPrinterUpdate(BaseModel):
+    name: Optional[str] = None
+    brand: Optional[str] = None
+    model: Optional[str] = None
+    firmware_version: Optional[str] = None
+    note: Optional[str] = None
+
+
+def _match_spool_for_slot(slot: dict, spools: list) -> Optional[dict]:
+    sku = (slot.get("sku") or "").strip()
+    material = (slot.get("type") or slot.get("material_name") or "").strip().lower()
+    color = slot.get("color") or []
+    color_hex = None
+    if isinstance(color, (list, tuple)) and len(color) >= 3:
+        try:
+            color_hex = "".join(f"{int(c):02X}" for c in color[:3])
+        except Exception:
+            color_hex = None
+    candidates = [s for s in spools if (s.get("remaining_weight") or 0) > 0]
+    if sku:
+        for s in candidates:
+            if (s.get("sku") or "").strip().upper() == sku.upper():
+                return s
+    if material and color_hex:
+        for s in candidates:
+            s_material = (s.get("material") or "").strip().lower()
+            s_hex = (s.get("color_hex") or "").strip().upper()
+            if s_material == material and s_hex == color_hex.upper():
+                return s
+    if material:
+        matches = [s for s in candidates if (s.get("material") or "").strip().lower() == material]
+        if len(matches) == 1:
+            return matches[0]
+    return None
+
+
+@app.get("/printers")
+async def list_printers():
+    bridge_printers: list = []
+    bridge_error: Optional[str] = None
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(f"{BRIDGE_URL}/api/printers")
+            resp.raise_for_status()
+            bridge_printers = resp.json().get("printers", [])
+    except Exception as e:
+        bridge_error = str(e)
+
+    spools: list = []
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            resp = await client.get(f"{SPOOLMAN_URL}/spool")
+            resp.raise_for_status()
+            for s in resp.json():
+                if s.get("archived"):
+                    continue
+                filament = s.get("filament") or {}
+                spools.append({
+                    "id": s.get("id"),
+                    "material": filament.get("material"),
+                    "color_hex": filament.get("color_hex"),
+                    "sku": filament.get("article_number") or filament.get("sku"),
+                    "remaining_weight": s.get("remaining_weight"),
+                    "name": filament.get("name"),
+                })
+    except Exception:
+        spools = []
+
+    result = []
+    for p in bridge_printers:
+        boxes = []
+        for box in (p.get("boxes") or []):
+            slots = []
+            for slot in (box.get("slots") or []):
+                match = _match_spool_for_slot(slot, spools)
+                slots.append({
+                    **slot,
+                    "matched_spool_id": match["id"] if match else None,
+                    "matched_spool_name": match["name"] if match else None,
+                })
+            boxes.append({**box, "slots": slots})
+        result.append({
+            "source": "bridge",
+            "printer_id": p.get("printer_id"),
+            "name": p.get("name"),
+            "current_status": p.get("current_status"),
+            "progress": p.get("progress"),
+            "boxes": boxes,
+        })
+
+    with db() as conn:
+        rows = conn.execute(
+            "SELECT id, name, brand, model, firmware_version, note FROM manual_printers ORDER BY name"
+        ).fetchall()
+        for r in rows:
+            result.append({
+                "source": "manual",
+                "printer_id": f"manual-{r['id']}",
+                "manual_id": r["id"],
+                "name": r["name"],
+                "brand": r["brand"],
+                "model": r["model"],
+                "firmware_version": r["firmware_version"],
+                "note": r["note"],
+                "current_status": None,
+                "progress": None,
+                "boxes": [],
+            })
+
+    return {"printers": result, "bridge_error": bridge_error}
+
+
+@app.get("/printers/manual")
+async def list_manual_printers():
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM manual_printers ORDER BY name").fetchall()
+        return {"printers": [dict(r) for r in rows]}
+
+
+@app.post("/printers/manual")
+async def create_manual_printer(body: ManualPrinterCreate):
+    with db() as conn:
+        cur = conn.execute(
+            "INSERT INTO manual_printers (name, brand, model, firmware_version, note) VALUES (?, ?, ?, ?, ?)",
+            (body.name, body.brand, body.model, body.firmware_version, body.note),
+        )
+        return {"id": cur.lastrowid}
+
+
+@app.put("/printers/manual/{printer_id}")
+async def update_manual_printer(printer_id: int, body: ManualPrinterUpdate):
+    fields = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not fields:
+        return {"ok": True}
+    with db() as conn:
+        set_clause = ", ".join(f"{k} = ?" for k in fields)
+        conn.execute(
+            f"UPDATE manual_printers SET {set_clause} WHERE id = ?",
+            (*fields.values(), printer_id),
+        )
+        return {"ok": True}
+
+
+@app.delete("/printers/manual/{printer_id}")
+async def delete_manual_printer(printer_id: int):
+    with db() as conn:
+        conn.execute("DELETE FROM manual_printers WHERE id = ?", (printer_id,))
+        return {"ok": True}

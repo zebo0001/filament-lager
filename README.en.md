@@ -72,9 +72,12 @@ Printers page (dedicated dashboard section, since v1.4.0):
 
 ```
 docker-compose.yml
-dashboard/ Frontend (nginx, static SPA) + reverse proxy to Spoolman/Storage
+dashboard/ Frontend (nginx, static SPA) + reverse proxy to Spoolman/Storage/Anycubic bridge
 storage/ Custom storage-location and label backend (FastAPI + SQLite + Playwright/Chromium for label export)
+bridge/ Anycubic cloud bridge (FastAPI): reads live print status/ACE slots via an Anycubic account and books consumption in Spoolman
 ```
+
+All four services (Spoolman, Storage, Dashboard, Anycubic bridge) are part of the same Compose project and start together with `docker compose up -d`. The Anycubic integration is entirely optional **to use** - ignore it if you have no Anycubic account, or configure it under Settings -> Anycubic Integration in the dashboard if you do.
 
 Spoolman itself runs as the official image (`ghcr.io/donkie/spoolman`); configuration/docs there: https://github.com/Donkie/Spoolman
 

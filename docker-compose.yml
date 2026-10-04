@@ -40,7 +40,19 @@ services:
     depends_on:
       - spoolman
       - storage
+      - anycubic-bridge
+
+  anycubic-bridge:
+    build: ./bridge
+    restart: unless-stopped
+    volumes:
+      - bridge_data:/data
+    ports:
+      - "${BRIDGE_PORT:-8094}:8080"
+    depends_on:
+      - storage
 
 volumes:
   spoolman_data:
   storage_data:
+  bridge_data:

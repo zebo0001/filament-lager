@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anycubic-Integration &middot; Lagersystem</title>
+<style>
+  :root { --bg:#f4f1fb; --card:#ffffff; --accent:#8b5cf6; --accent2:#a78bfa; --text:#2e2a3d; --muted:#6b6478; --border:#e4defa; --warn:#d97706; --ok:#16a34a; --err:#dc2626; }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); margin:0; padding: 24px; }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-top: 0; margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 18px; }
+  .card h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .row { display:flex; align-items:center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  label { font-weight: 600; font-size: 0.92rem; }
+  input[type=text], select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.92rem; min-width: 220px; }
+  .btn { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-size: 0.92rem; cursor: pointer; }
+  .btn:hover { background: var(--accent2); }
+  .btn.secondary { background: #efeafc; color: var(--accent); }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #d9d4ec; border-radius: 24px; transition: .2s; }
+  .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+  input:checked + .slider { background: var(--accent); }
+  input:checked + .slider:before { transform: translateX(20px); }
+  .hint { color: var(--muted); font-size: 0.86rem; line-height: 1.5; }
+  .badge { display:inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; }
+  .badge.ok { background: #dcfce7; color: var(--ok); }
+  .badge.warn { background: #fef3c7; color: var(--warn); }
+  .badge.err { background: #fee2e2; color: var(--err); }
+  .badge.muted { background: #efeafc; color: var(--muted); }
+  code { background: #f1edfb; padding: 2px 6px; border-radius: 6px; font-size: 0.85rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; }
+  .status-line { display:flex; align-items:center; gap: 10px; margin-top: 6px;}
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--text); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 0.88rem; opacity: 0; transform: translateY(10px); transition: .2s; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  a.back { color: var(--accent); text-decoration: none; font-size: 0.88rem; }
+  ol { padding-left: 20px; line-height: 1.7; font-size: 0.92rem; }
+  .step { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">&larr; zurück zum Lagersystem</a>
+  <h1>Anycubic-Integration</h1>
+  <p class="sub">Optionale Cloud-Anbindung: Verbrauch auf dem Drucker wird automatisch auf die zugeordnete Spoolman-Spule gebucht. Standardmäßig deaktiviert &mdash; wer nicht mit der Anycubic-Cloud arbeiten möchte, lässt dies einfach aus.</p>
+
+  <div class="card">
+    <h2>Status</h2>
+    <div class="row">
+      <label class="switch">
+        <input type="checkbox" id="enabled-toggle">
+        <span class="slider"></span>
+      </label>
+      <span id="enabled-label">Integration ist deaktiviert</span>
+    </div>
+    <div class="status-line">
+      <span id="token-badge" class="badge muted">kein Token hinterlegt</span>
+      <span id="token-detail" class="hint"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Token hinterlegen</h2>
+    <p class="hint">Anycubic erlaubt keinen automatisierten Login (Captcha/2FA). Einmal alle ~90 Tage manuell bei Anycubic anmelden und den Token per Bookmarklet an diese Seite senden:</p>
+    <ol>
+      <li class="step">Browser-Lesezeichen anlegen mit folgendem Inhalt als Adresse (einmalig):<br><code id="bookmarklet-code" style="display:block; margin-top:6px; word-break: break-all; padding:10px;"></code></li>
+      <li class="step">Bei <code>cloud-universe.anycubic.com</code> einloggen.</li>
+      <li class="step">Das Lesezeichen anklicken &mdash; der Token wird automatisch an diese Seite übertragen.</li>
+    </ol>
+    <p class="hint">Alternativ Token manuell einfügen:</p>
+    <div class="row">
+      <input type="text" id="manual-token" placeholder="Token einfügen...">
+      <button class="btn secondary" id="manual-token-btn">Übernehmen</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Spulen-Zuordnung</h2>
+    <p class="hint">Welche Spoolman-Spule steckt in welchem ACE-Slot? Ohne Zuordnung wird nichts gebucht.</p>
+    <div id="mapping-area"><p class="hint">Lädt...</p></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BRIDGE = '/api/anycubic';
+const STORAGE = '/api/storage';
+
+function toast(msg, cls) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show';
+  setTimeout(() => el.className = 'toast', 2500);
+}
+
+async function api(path, opts) {
+  const res = await fetch(BRIDGE + path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts || {}));
+  if (!res.ok) { throw new Error(await res.text()); }
+  return res.json();
+}
+
+function buildBookmarklet() {
+  const target = window.location.origin + BRIDGE + '/auth/token';
+  const js = `javascript:(function(){var t=window.localStorage["XX-Token"];if(!t){alert("Kein Token gefunden - bist du eingeloggt?");return;}fetch("${target}",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:t,auth_mode:"web"})}).then(function(r){return r.json();}).then(function(d){alert("Token übertragen, gültig bis "+new Date(d.expires_at*1000).toLocaleDateString());}).catch(function(e){alert("Fehlgeschlagen: "+e);});})();`;
+  document.getElementById('bookmarklet-code').textContent = js;
+}
+
+async function refreshStatus() {
+  const s = await api('/settings');
+  document.getElementById('enabled-toggle').checked = s.enabled;
+  document.getElementById('enabled-label').textContent = s.enabled ? 'Integration ist aktiv' : 'Integration ist deaktiviert';
+
+  const badge = document.getElementById('token-badge');
+  const detail = document.getElementById('token-detail');
+  if (!s.token_present) {
+    badge.className = 'badge muted';
+    badge.textContent = 'kein Token hinterlegt';
+    detail.textContent = '';
+  } else if (s.days_remaining === null) {
+    badge.className = 'badge warn';
+    badge.textContent = 'Token vorhanden, Ablauf unbekannt';
+    detail.textContent = '';
+  } else if (s.days_remaining < 7) {
+    badge.className = 'badge err';
+    badge.textContent = 'läuft bald ab';
+    detail.textContent = 'noch ' + s.days_remaining + ' Tage - bitte neu anmelden';
+  } else {
+    badge.className = 'badge ok';
+    badge.textContent = 'Token gültig';
+    detail.textContent = 'noch ' + s.days_remaining + ' Tage';
+  }
+}
+
+async function loadMappings() {
+  const area = document.getElementById('mapping-area');
+  let printers;
+  try {
+    printers = (await api('/printers')).printers;
+  } catch (e) {
+    area.innerHTML = '<p class="hint">Keine Verbindung zu Anycubic möglich (Token fehlt oder abgelaufen).</p>';
+    return;
+  }
+
+  let spools = [];
+  try {
+    const r = await fetch(STORAGE + '/spools');
+    const d = await r.json();
+    spools = d.spools || [];
+  } catch (e) {}
+
+  let mappings = [];
+  try {
+    const mappingsResp = await api('/mappings');
+    mappings = mappingsResp.mappings || [];
+  } catch (e) {
+    area.innerHTML = '<p class="hint">Zuordnungen konnten nicht geladen werden: ' + e.message + '</p>';
+    return;
+  }
+  const findMapping = (pid, bid, si) => mappings.find(m => m.printer_id === pid && m.box_id === bid && m.slot_index === si);
+
+  if (!printers.length) {
+    area.innerHTML = '<p class="hint">Keine Drucker gefunden.</p>';
+    return;
+  }
+
+  let html = '<table><thead><tr><th>Drucker</th><th>ACE-Box</th><th>Slot</th><th>Material/Farbe</th><th>Spoolman-Spule</th></tr></thead><tbody>';
+  let rowCount = 0;
+  for (const p of printers) {
+    for (const box of (p.boxes || [])) {
+      for (const slot of (box.slots || [])) {
+        if (!slot.spool_present) continue;
+        rowCount++;
+        const existing = findMapping(p.printer_id, box.box_id, slot.slot_index);
+        const options = ['<option value="">- keine -</option>'].concat(spools.map(s =>
+          `<option value="${s.id}" ${existing && existing.spool_id === s.id ? 'selected' : ''}>${s.material} - ${s.name} (${s.remaining_weight}g)</option>`
+        ));
+        html += `<tr>
+          <td>${p.name}</td>
+          <td>${box.box_id}</td>
+          <td>${slot.slot_index + 1}</td>
+          <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${slot.color_hex};vertical-align:middle;margin-right:6px;"></span>${slot.material_type}</td>
+          <td><select data-printer="${p.printer_id}" data-box="${box.box_id}" data-slot="${slot.slot_index}" class="mapping-select">${options.join('')}</select></td>
+        </tr>`;
+      }
+    }
+  }
+  html += '</tbody></table>';
+
+  if (rowCount === 0) {
+    area.innerHTML = '<p class="hint">Keine ACE-Slot-Daten vom Drucker verfügbar (Spulenerkennung derzeit nicht möglich). Zuordnung ist erst möglich, sobald der Drucker belegte Slots meldet.</p>';
+    return;
+  }
+
+  area.innerHTML = html;
+
+  document.querySelectorAll('.mapping-select').forEach(sel => {
+    sel.addEventListener('change', async () => {
+      const spoolId = sel.value;
+      try {
+        if (!spoolId) {
+          await fetch(`${BRIDGE}/mappings?printer_id=${encodeURIComponent(sel.dataset.printer)}&box_id=${sel.dataset.box}&slot_index=${sel.dataset.slot}`, { method: 'DELETE' });
+        } else {
+          await api('/mappings', { method: 'POST', body: JSON.stringify({
+            printer_id: sel.dataset.printer, box_id: Number(sel.dataset.box), slot_index: Number(sel.dataset.slot), spool_id: Number(spoolId)
+          })});
+        }
+        toast('Zuordnung gespeichert');
+      } catch (e) {
+        toast('Fehler: ' + e.message);
+      }
+    });
+  });
+}
+
+document.getElementById('enabled-toggle').addEventListener('change', async (e) => {
+  try {
+    await api('/settings', { method: 'POST', body: JSON.stringify({ enabled: e.target.checked }) });
+    await refreshStatus();
+    toast(e.target.checked ? 'Integration aktiviert' : 'Integration deaktiviert');
+  } catch (err) {
+    toast('Fehler: ' + err.message);
+  }
+});
+
+document.getElementById('manual-token-btn').addEventListener('click', async () => {
+  const val = document.getElementById('manual-token').value.trim();
+  if (!val) return;
+  try {
+    const r = await api('/auth/token', { method: 'POST', body: JSON.stringify({ token: val, auth_mode: 'web' }) });
+    toast('Token übernommen, gültig bis ' + new Date(r.expires_at * 1000).toLocaleDateString());
+    document.getElementById('manual-token').value = '';
+    await refreshStatus();
+    await loadMappings();
+  } catch (e) {
+    toast('Fehlgeschlagen: ' + e.message);
+  }
+});
+
+buildBookmarklet();
+refreshStatus();
+loadMappings();
+</script>
+</body>
+</html>

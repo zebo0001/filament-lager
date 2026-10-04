@@ -35,7 +35,8 @@ Ports can be adjusted via a `.env` file (template: `.env.example`).
 Core features:
 
 - Add spools in Spoolman (material, manufacturer, color, including multi-color), including an article-number field
-- Configure storage locations (Dashboard -> Storage locations): printer, AMS/ACE unit, dry box
+- Create devices via the Device Wizard (Dashboard -> Storage locations -> Device Wizard): printer (optionally with AMS/ACE feed unit) or dry box, with a live preview while you fill in the fields. All device types go through the same wizard now, no separate form needed
+- Nested devices: a printer with AMS/ACE can contain several feed boxes as independent child devices. The storage overview shows this nesting indented
 - Assign spools to locations via drag & drop or the assignment dialog ("On printer/AMS", "In dry box")
 - Click a spool name in the table -> a detail/edit modal opens (price, weights, lot number, comment, temperature overrides, filament-type fields) - editing after the fact is supported
 - Try "Spool empty" (archives the spool in Spoolman, frees the slot, adds an entry to the shopping list including the article number)
@@ -65,6 +66,7 @@ Printers page (dedicated dashboard section, since v1.4.0):
 - Shows all Anycubic printers connected via the bridge live (status, current print job, ACE slot occupancy) together with manually added placeholder printers in one unified view
 - Active prints show a Spooly-style progress card: filename, large percentage, remaining time, estimated completion time, progress bar
 - Idle printers (status "available"/"online"/"standby") show a calm, non-animated illustration instead of the printing animation
+- Storage locations can be linked to one specific ACE box on a printer (not just the printer as a whole) - important when a printer has several feed boxes
 
 ## Structure
 
@@ -83,6 +85,18 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 ## Known limitations (as of this version)
 
 - Camera scanning is only available in a secure context (HTTPS or `localhost`) - see the note above.
+
+## Updating to a newer version
+
+If you already have this repo running and want to update to the latest state:
+
+```bash
+git pull
+docker compose down
+docker compose up -d --build
+```
+
+The SQLite database in the `storage` service migrates its schema automatically on startup (missing columns/tables are added via `ALTER TABLE`) - no manual DB migration step is needed for existing installations. Your data in the `spoolman_data` and `storage_data` volumes is preserved across the update (only `docker compose down -v` would delete it - do NOT use that if you want to keep your data).
 
 ## Status
 

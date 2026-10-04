@@ -90,6 +90,12 @@ def init_db():
             conn.execute("ALTER TABLE storage_units ADD COLUMN ace_feed_slot INTEGER")
         if "rows_per_level" not in cols:
             conn.execute("ALTER TABLE storage_units ADD COLUMN rows_per_level INTEGER NOT NULL DEFAULT 1")
+        if "bridge_printer_id" not in cols:
+            conn.execute("ALTER TABLE storage_units ADD COLUMN bridge_printer_id TEXT")
+        if "bridge_box_id" not in cols:
+            conn.execute("ALTER TABLE storage_units ADD COLUMN bridge_box_id INTEGER")
+        if "parent_unit_id" not in cols:
+            conn.execute("ALTER TABLE storage_units ADD COLUMN parent_unit_id INTEGER")
         shop_cols = [r["name"] for r in conn.execute("PRAGMA table_info(shopping_list)").fetchall()]
         if "article_number" not in shop_cols:
             conn.execute("ALTER TABLE shopping_list ADD COLUMN article_number TEXT")
@@ -117,6 +123,9 @@ class UnitCreate(BaseModel):
     layout: str = "row"
     ace_feed_slot: Optional[int] = None
     rows_per_level: int = 1
+    bridge_printer_id: Optional[str] = None
+    bridge_box_id: Optional[int] = None
+    parent_unit_id: Optional[int] = None
 
 
 class UnitUpdate(BaseModel):
@@ -125,6 +134,12 @@ class UnitUpdate(BaseModel):
     ace_feed_slot: Optional[int] = None
     clear_ace_feed_slot: Optional[bool] = None
     rows_per_level: Optional[int] = None
+    bridge_printer_id: Optional[str] = None
+    clear_bridge_printer_id: Optional[bool] = None
+    bridge_box_id: Optional[int] = None
+    clear_bridge_box_id: Optional[bool] = None
+    parent_unit_id: Optional[int] = None
+    clear_parent_unit_id: Optional[bool] = None
     levels: Optional[int] = None
     slots_per_level: Optional[int] = None
 
@@ -155,6 +170,9 @@ def unit_to_dict(u, slots):
         "slots_per_level": u["slots_per_level"],
         "layout": u["layout"] if u["layout"] else "row",
         "ace_feed_slot": u["ace_feed_slot"],
+        "bridge_printer_id": u["bridge_printer_id"] if "bridge_printer_id" in u.keys() else None,
+        "bridge_box_id": u["bridge_box_id"] if "bridge_box_id" in u.keys() else None,
+        "parent_unit_id": u["parent_unit_id"] if "parent_unit_id" in u.keys() else None,
         "rows_per_level": u["rows_per_level"] if u["rows_per_level"] else 1,
         "slots": [dict(s) for s in slots],
     }
@@ -199,8 +217,8 @@ def create_unit(u: UnitCreate):
         )
         sort_order = cur.fetchone()["n"]
         cur = conn.execute(
-            "INSERT INTO storage_units (name, type, levels, slots_per_level, sort_order, layout, ace_feed_slot, rows_per_level) VALUES (?,?,?,?,?,?,?,?)",
-            (u.name, u.type, u.levels, u.slots_per_level, sort_order, u.layout, u.ace_feed_slot, u.rows_per_level),
+            "INSERT INTO storage_units (name, type, levels, slots_per_level, sort_order, layout, ace_feed_slot, rows_per_level, bridge_printer_id, bridge_box_id, parent_unit_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (u.name, u.type, u.levels, u.slots_per_level, sort_order, u.layout, u.ace_feed_slot, u.rows_per_level, u.bridge_printer_id, u.bridge_box_id, u.parent_unit_id),
         )
         unit_id = cur.lastrowid
         for level in range(u.levels):
@@ -240,6 +258,38 @@ def update_unit(unit_id: int, u: UnitUpdate):
             conn.execute(
                 "UPDATE storage_units SET ace_feed_slot=? WHERE id=?",
                 (u.ace_feed_slot, unit_id),
+            )
+        if u.clear_bridge_printer_id:
+            conn.execute(
+                "UPDATE storage_units SET bridge_printer_id=NULL WHERE id=?",
+                (unit_id,),
+            )
+        elif u.bridge_printer_id is not None:
+            conn.execute(
+                "UPDATE storage_units SET bridge_printer_id=? WHERE id=?",
+                (u.bridge_printer_id, unit_id),
+            )
+        if u.clear_bridge_box_id:
+            conn.execute(
+                "UPDATE storage_units SET bridge_box_id=NULL WHERE id=?",
+                (unit_id,),
+            )
+        elif u.bridge_box_id is not None:
+            conn.execute(
+                "UPDATE storage_units SET bridge_box_id=? WHERE id=?",
+                (u.bridge_box_id, unit_id),
+            )
+        if u.clear_parent_unit_id:
+            conn.execute(
+                "UPDATE storage_units SET parent_unit_id=NULL WHERE id=?",
+                (unit_id,),
+            )
+        elif u.parent_unit_id is not None:
+            if u.parent_unit_id == unit_id:
+                raise HTTPException(400, "Ein Gerät kann nicht sein eigenes Unterelement sein")
+            conn.execute(
+                "UPDATE storage_units SET parent_unit_id=? WHERE id=?",
+                (u.parent_unit_id, unit_id),
             )
         if u.rows_per_level is not None:
             if u.rows_per_level < 1:

@@ -256,6 +256,7 @@
   .printer-slots { display: flex; flex-wrap: wrap; gap: .5rem; }
   .printer-illo { position: relative; border: 1px solid var(--border); border-radius: .6rem; padding: .7rem .8rem .6rem; margin-bottom: .7rem; background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); }
   .printer-illo-body { display: flex; align-items: center; gap: .9rem; }
+    .printer-illo-thumb { width: 92px; height: 70px; border-radius: .5rem; object-fit: cover; border: 1px solid var(--border); background: rgba(255,255,255,.04); flex-shrink: 0; }
   .printer-illo-info { flex: 1 1 auto; min-width: 0; }
   .printer-illo-project { font-size: .85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .printer-illo-sub { font-size: .72rem; color: var(--muted); margin-top: .15rem; }
@@ -519,42 +520,8 @@ main>.panel.active{display:block;}
 
   <div class="panel" data-panel="units">
 <h2 data-i18n="panel.locations">Lagerplätze</h2>
-    <p class="hint" data-i18n="sl.hint">Geräte anlegen (Drybox, ACE, Drucker, &hellip;), bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Bei Druckern mit ACE-Zuführung kann ein Platz als reserviert markiert werden (bleibt auch bei mehreren gekoppelten ACE-Einheiten über einen Hub an derselben Position). Der Standort wird automatisch zu Spoolman zurückgeschrieben.</p>
-
-    <div class="add-device-form">
-      <div>
-        <label for="dev-name" data-i18n="sl.name">Name</label>
-        <input type="text" id="dev-name" placeholder="z.B. Drybox">
-      </div>
-      <div>
-        <label for="dev-type" data-i18n="sl.type">Typ</label>
-        <select id="dev-type">
-          <option value="drybox" data-i18n="sl.typeDrybox">Drybox</option>
-          <option value="ace" data-i18n="sl.typeAce">ACE</option>
-          <option value="printer" data-i18n="sl.typePrinter">Drucker</option>
-          <option value="custom" data-i18n="sl.typeCustom">Sonstiges</option>
-        </select>
-      </div>
-      <div>
-        <label for="dev-levels" data-i18n="sl.levels">Ebenen</label>
-        <input type="number" id="dev-levels" value="1" min="1" step="1">
-      </div>
-      <div>
-        <label for="dev-slots" data-i18n="sl.slotsPerLevel">Plätze/Ebene</label>
-        <input type="number" id="dev-slots" value="4" min="1" step="1">
-      </div>
-      <div>
-        <label for="dev-rows" data-i18n="sl.rowsPerLevel">Reihen/Ebene</label>
-        <input type="number" id="dev-rows" value="1" min="1" step="1">
-      </div>
-      <div id="dev-ace-slot-wrap" style="display:none">
-        <label for="dev-ace-slot" data-i18n="sl.aceFeedSlotLabel">ACE-Zuführung Platz</label>
-        <input type="number" id="dev-ace-slot" placeholder="z.B. 4" min="1" step="1">
-      </div>
-      <div class="btn-wrap">
-        <button class="btn" id="dev-add-btn" data-i18n="sl.add">Anlegen</button>
-      </div>
-    </div>
+    <p class="hint" data-i18n="sl.hint">Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Spoolman zurückgeschrieben.</p>
+    <button type="button" class="pw-fab" id="pwOpenBtn" title="Drucker oder Drybox anlegen">🖨Geräte-Wizard</button>
 
     <div id="device-content"><div class="empty">Lade&hellip;</div></div>
   </div>
@@ -708,7 +675,7 @@ main>.panel.active{display:block;}
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.4.0</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.3.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -951,8 +918,6 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.4.0 – 03.10.2026</h4>
-      <p>Seitenleisten-Navigation, neue Drucker-Seite (Bridge- und manuelle Drucker vereint, live ACE-Slots), Spooly-Style Druckfortschrittskarte, Idle-Status-Fix.</p>
       <h4>v1.3.0 – 28.09.2026</h4>
       <p>Versionsanzeige und dieser Änderungsverlauf im Footer eingeführt, damit du als Tester immer siehst, welcher Stand gerade läuft.</p>
       <h4>v1.2.0 – 28.09.2026</h4>
@@ -1090,7 +1055,7 @@ const I18N = {
     'ns.newSpoolBtn': '+ Neue Spule',
     'ns.spoolmanOpen': 'Spoolman öffnen →',
     'sp.hint': 'Standort kommt direkt aus den Lagerplätzen – kein manuelles Eintippen mehr. Über „Auf Drucker/ACE" bzw. „In Drybox" wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert „Rolle leer" sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.',
-    'sl.hint': 'Geräte anlegen (Drybox, ACE, Drucker, …), bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Bei Druckern mit ACE-Zuführung kann ein Platz als reserviert markiert werden (bleibt auch bei mehreren gekoppelten ACE-Einheiten über einen Hub an derselben Position). Der Standort wird automatisch zu Spoolman zurückgeschrieben.',
+    'sl.hint': 'Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Spoolman zurückgeschrieben.',
     'shop.hint': 'Wird automatisch befüllt, wenn eine leere Spule über „Rolle leer" aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.',
     'sl.level': 'Ebene',
     'sl.slot': 'Platz',
@@ -1246,8 +1211,6 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.4.0 – 2026-10-03</h4>
-      <p>Sidebar navigation, new Printers page (bridge and manual printers unified, live ACE slots), Spooly-style print progress card, idle-status fix.</p>
       <h4>v1.3.0 – 2026-09-28</h4>
       <p>Added a version indicator and this changelog in the footer, so testers can always see which build is currently running.</p>
       <h4>v1.2.0 – 2026-09-28</h4>
@@ -1385,7 +1348,7 @@ const I18N = {
     'ns.newSpoolBtn': '+ New spool',
     'ns.spoolmanOpen': 'Open Spoolman →',
     'sp.hint': 'Location comes directly from the storage locations — no more manual typing. Using "On printer/ACE" or "In drybox" assigns a free slot (the Spoolman location updates automatically). When a spool is empty, marking it "Spool empty" archives it in Spoolman, frees the slot and adds an entry to the shopping list.',
-    'sl.hint': 'Create devices (drybox, ACE, printer, …), specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. For printers with ACE feed, a slot can be marked as reserved (this persists even with several coupled ACE units on the same position via a hub). The location is written back to Spoolman automatically.',
+    'sl.hint': 'Create devices (printer and drybox) using the Device Wizard below. Specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. The location is written back to Spoolman automatically.',
     'shop.hint': 'Filled automatically when an empty spool is removed from the system via "Spool empty". Entries can also be added or removed manually here.',
     'sl.level': 'Level',
     'sl.slot': 'Slot',
@@ -1550,6 +1513,8 @@ function findSlotForSpool(spoolId) {
 
 // ---------- Spoolman ----------
 let allSpools = [];
+let livePrintersForLink = [];
+let unitsByPrinterId = {};
 let spoolSearchText = '';
 let spoolPage = 1;
 const SPOOL_PAGE_SIZE = 20;
@@ -1913,6 +1878,9 @@ function renderDeviceCard(unit) {
 
 function renderDeviceSettings(unit) {
   let html = '<div class="device-settings" data-unit-id="' + unit.id + '" data-levels="' + unit.levels + '" data-slots-per-level="' + unit.slots_per_level + '">' +
+    '<label>Name</label>' +
+    '<input type="text" class="dev-name-input" value="' + prEsc(unit.name || '') + '">' +
+    '<button class="btn secondary dev-name-save">' + t('common.save') + '</button>' +
     '<label>' + t('sl.rowsPerLevel') + '</label>' +
     '<input type="number" class="dev-rows-input" min="1" step="1" value="' + (unit.rows_per_level || 1) + '">' +
     '<button class="btn secondary dev-rows-save">' + t('common.save') + '</button>' +
@@ -1926,6 +1894,20 @@ function renderDeviceSettings(unit) {
       '<input type="number" class="dev-ace-input" min="1" max="' + unit.slots_per_level + '" placeholder="keine" value="' + (unit.ace_feed_slot || '') + '">' +
       '<button class="btn secondary dev-ace-save">' + t('common.save') + '</button>';
   }
+  if (unit.type === 'printer' || unit.type === 'ace') {
+    const linkOpts = (livePrintersForLink || []).map(function(lp) {
+      return '<option value="' + lp.printer_id + '"' + (String(unit.bridge_printer_id || '') === String(lp.printer_id) ? ' selected' : '') + '>' + prEsc(lp.name || lp.printer_id) + '</option>';
+    }).join('');
+    const linkedPrinterObj = (livePrintersForLink || []).find(function(lp) { return String(lp.printer_id) === String(unit.bridge_printer_id || ''); });
+    const boxOpts = ((linkedPrinterObj && linkedPrinterObj.boxes) || []).map(function(bx) {
+      return '<option value="' + bx.box_id + '"' + (String(unit.bridge_box_id != null ? unit.bridge_box_id : '') === String(bx.box_id) ? ' selected' : '') + '>' + prEsc(bx.name || ('Box ' + bx.box_id)) + '</option>';
+    }).join('');
+    html += '<label>Verknuepfter Live-Drucker</label>' +
+      '<select class="dev-link-select"><option value="">\u2014 keiner \u2014</option>' + linkOpts + '</select>' +
+      '<label>Box</label>' +
+      '<select class="dev-link-box-select"><option value="">\u2014 keine \u2014</option>' + boxOpts + '</select>' +
+      '<button class="btn secondary dev-link-save">' + t('common.save') + '</button>';
+  }
   html += '</div>';
   if (unit.type === 'printer' && unit.ace_feed_slot) {
     html += '<div class="ace-feed-note">' + t('sl.aceFeedNotePrefix') + ' ' + unit.ace_feed_slot + ' ' + t('sl.aceFeedNoteSuffix') + '</div>';
@@ -1937,6 +1919,7 @@ async function loadDevices() {
   const el = document.getElementById('device-content');
   try {
     const units = await api(ST + '/units');
+    try { const pd = await api(ST + '/printers'); livePrintersForLink = (pd && pd.printers) || []; } catch (e) { livePrintersForLink = []; }
     allUnits = units;
     if (!units.length) {
       el.innerHTML = '<div class="empty">Noch keine Geräte angelegt. Oben ein Gerät hinzufügen (z.&nbsp;B. Drybox mit 3 Ebenen &agrave; 10 Plätzen).</div>';
@@ -1977,6 +1960,19 @@ async function loadDevices() {
           }
         });
       }
+      const nameSave = row.querySelector('.dev-name-save');
+      if (nameSave) {
+        nameSave.addEventListener('click', async () => {
+          const newName = row.querySelector('.dev-name-input').value;
+          try {
+            await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify({ name: newName }) });
+            toast('Name gespeichert', 'ok');
+            loadDevices();
+          } catch (e) {
+            toast(t('common.error') + ': ' + e.message, 'err');
+          }
+        });
+      }
       const gridSave = row.querySelector('.dev-grid-save');
       if (gridSave) {
         gridSave.addEventListener('click', async () => {
@@ -2008,40 +2004,27 @@ async function loadDevices() {
           }
         });
       }
+    const linkSave = row.querySelector('.dev-link-save');
+    if (linkSave) {
+      linkSave.addEventListener('click', async () => {
+        const val = row.querySelector('.dev-link-select').value;
+        const boxSelect = row.querySelector('.dev-link-box-select');
+        const boxVal = boxSelect ? boxSelect.value : '';
+        const body = val ? Object.assign({ bridge_printer_id: val }, boxVal !== '' ? { bridge_box_id: parseInt(boxVal, 10) } : { clear_bridge_box_id: true }) : { clear_bridge_printer_id: true, clear_bridge_box_id: true };
+        try {
+          await api(ST + '/units/' + unitId, { method: 'PATCH', body: JSON.stringify(body) });
+          toast('Drucker-Verknuepfung gespeichert', 'ok');
+          loadDevices();
+        } catch (e) {
+          toast(t('common.error') + ': ' + e.message, 'err');
+        }
+      });
+    }
     });
   } catch (e) {
     el.innerHTML = '<div class="empty">Fehler beim Laden: ' + e.message + '</div>';
   }
 }
-
-const devTypeEl = document.getElementById('dev-type');
-const aceSlotWrapEl = document.getElementById('dev-ace-slot-wrap');
-function syncAceSlotVisibility() {
-  aceSlotWrapEl.style.display = devTypeEl.value === 'printer' ? '' : 'none';
-}
-devTypeEl.addEventListener('change', syncAceSlotVisibility);
-syncAceSlotVisibility();
-
-document.getElementById('dev-add-btn').addEventListener('click', async () => {
-  const name = document.getElementById('dev-name').value.trim();
-  const type = document.getElementById('dev-type').value;
-  const levels = parseInt(document.getElementById('dev-levels').value, 10) || 1;
-  const slots = parseInt(document.getElementById('dev-slots').value, 10) || 1;
-  const rowsPerLevel = parseInt(document.getElementById('dev-rows').value, 10) || 1;
-  const aceSlotRaw = document.getElementById('dev-ace-slot').value;
-  const aceFeedSlot = (type === 'printer' && aceSlotRaw) ? parseInt(aceSlotRaw, 10) : null;
-  if (!name) { toast(t('sl.needName'), 'err'); return; }
-  if (slots % rowsPerLevel !== 0) { toast(t('sl.slotsDivisibleByRows'), 'err'); return; }
-  try {
-    await api(ST + '/units', { method: 'POST', body: JSON.stringify({ name, type, levels, slots_per_level: slots, rows_per_level: rowsPerLevel, ace_feed_slot: aceFeedSlot }) });
-    document.getElementById('dev-name').value = '';
-    document.getElementById('dev-ace-slot').value = '';
-    toast(t('sl.deviceCreated'), 'ok');
-    loadDevices();
-  } catch (e) {
-    toast(t('common.error') + ': ' + e.message, 'err');
-  }
-});
 
 // ---------- Assign-Dialog (Klick auf einen Platz im Geräte-Raster) ----------
 let currentSlotId = null;
@@ -3096,23 +3079,35 @@ function buildPrinterIllustration(p, statusCls) {
     '<g class="printer-illo-head"><rect x="44" y="20" width="14" height="12" rx="2" fill="currentColor" opacity=".85"/><line x1="51" y1="32" x2="51" y2="58" stroke="currentColor" stroke-width="2" opacity=".55"/></g>' +
     '<circle class="printer-illo-led" cx="100" cy="20" r="3.2" fill="currentColor"/>' +
     '</svg>';
-  return '<div class="printer-illo ' + statusCls + '"><div class="printer-illo-body">' + svg + infoHtml + '</div></div>';
+  var imgUrl = (prog && prog.image_url) ? prog.image_url : null;
+      var visual = svg + (imgUrl ? ('<img class="printer-illo-thumb" src="' + prEsc(imgUrl) + '" alt="Modell" loading="lazy" />') : '');
+      return '<div class="printer-illo ' + statusCls + '"><div class="printer-illo-body">' + visual + infoHtml + '</div></div>';
 }
 
 function renderPrinterCard(p) {
+  
   const statusCls = printerStatusClass(p.current_status);
   const statusText = p.current_status || (p.source === 'manual' ? 'manuell' : 'unbekannt');
   let boxesHtml = '';
   if (p.boxes && p.boxes.length) {
     boxesHtml = p.boxes.map((box, bi) => {
-      const slots = (box.slots || []).map(slot => {
+      const linkedUnit = unitsByPrinterId[String(p.printer_id) + ':' + String(box.box_id)];
+      const slots = (box.slots || []).map((slot, si) => {
         const empty = !slot.sku && !slot.type && !slot.material_name;
         const hex = printerSlotColorHex(slot.color);
         const label = slot.type || slot.material_name || 'leer';
         const match = slot.matched_spool_name ? ('<div class="sc-match">&rarr; ' + prEsc(slot.matched_spool_name) + '</div>') : '';
+        let storInfo = '';
+        if (linkedUnit && linkedUnit.slots) {
+          const storSlot = linkedUnit.slots.find(ss => ss.position === si);
+          if (storSlot && storSlot.spool_id) {
+            const storSpool = allSpools.find(sp => sp.id === storSlot.spool_id);
+            if (storSpool) storInfo = '<div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Lager: ' + prEsc(spoolLabel(storSpool)) + '</div>';
+          }
+        }
         return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
           '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + '</div>' +
-          match +
+          match + storInfo +
         '</div>';
       }).join('');
       return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + '</div><div class="printer-slots">' + (slots || '<span class="hint">Keine Slot-Daten</span>') + '</div></div>';
@@ -3138,6 +3133,11 @@ async function loadPrinters() {
   if (!el) return;
   try {
     const data = await api(ST + '/printers');
+    unitsByPrinterId = {};
+    try {
+      const unitsData = await api(ST + '/units');
+      (unitsData || []).forEach(u => { if ((u.type === 'printer' || u.type === 'ace') && u.bridge_printer_id) unitsByPrinterId[String(u.bridge_printer_id) + ':' + String(u.bridge_box_id)] = u; });
+    } catch (e) {}
     const printers = (data && data.printers) || [];
     if (!printers.length) {
       el.innerHTML = '<div class="empty">Keine Drucker gefunden.</div>';
@@ -4542,6 +4542,15 @@ function ldWireProps(el) {
       navBtns.forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-nav-target')===id); });
       try{ localStorage.setItem('lager_active_section', id); }catch(e){}
       window.dispatchEvent(new Event('resize'));
+    if (id === 'printers') {
+      if (!window.__printerPollTimer) {
+        loadPrinters();
+        window.__printerPollTimer = setInterval(loadPrinters, 15000);
+      }
+    } else if (window.__printerPollTimer) {
+      clearInterval(window.__printerPollTimer);
+      window.__printerPollTimer = null;
+    }
     }
     navBtns.forEach(function(b){
       b.addEventListener('click', function(){ showSection(b.getAttribute('data-nav-target')); });
@@ -4569,6 +4578,446 @@ function ldWireProps(el) {
   }
 })();
 </script>
+
+<style id="pw-wizard-style">
+.pw-type-choice{display:flex;gap:12px;margin:8px 0;}
+.pw-type-btn{flex:1;background:var(--bg3,#13203a);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:10px;padding:18px 14px;cursor:pointer;color:var(--text,#e2e8f0);text-align:center;transition:border-color .15s;}
+.pw-type-btn:hover{border-color:var(--accent,#38bdf8);}
+.pw-type-btn.active{border-color:var(--accent,#38bdf8);box-shadow:0 0 0 1px var(--accent,#38bdf8) inset;}
+.pw-type-title{font-weight:600;font-size:1rem;}
+.pw-type-sub{font-size:.75rem;color:var(--muted,#94a3b8);margin-top:4px;}
+.pw-row[hidden],#pwDryboxFields[hidden]{display:none !important;}
+.pw-fab{display:inline-flex;align-items:center;gap:8px;background:var(--accent,#38bdf8);color:#05202c;border:none;border-radius:10px;padding:10px 18px;font-weight:600;font-size:.95rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.25);margin:4px 0 18px;}
+.pw-fab:hover{filter:brightness(1.08);}
+.pw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.pw-overlay[hidden]{display:none;}
+.pw-modal{background:var(--bg2,#1e293b);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:14px;width:100%;max-width:720px;max-height:88vh;overflow:auto;padding:24px;color:var(--text,#e2e8f0);}
+.pw-modal h2{margin:0 0 4px;font-size:1.3rem;}
+.pw-modal .pw-sub{color:var(--muted,#94a3b8);font-size:.85rem;margin:0 0 18px;}
+.pw-steps{display:flex;gap:6px;margin-bottom:20px;}
+.pw-step-dot{flex:1;height:4px;border-radius:2px;background:var(--border,rgba(255,255,255,.08));}
+.pw-step-dot.active{background:var(--accent,#38bdf8);}
+.pw-field{margin-bottom:16px;}
+.pw-field label{display:block;font-size:.85rem;color:var(--muted,#94a3b8);margin-bottom:6px;}
+.pw-field input[type=text],.pw-field input[type=number],.pw-field select{width:100%;box-sizing:border-box;background:rgba(255,255,255,.03);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:8px;padding:9px 11px;color:var(--text,#e2e8f0);font-size:.95rem;}
+.pw-row{display:flex;gap:14px;}
+.pw-row>.pw-field{flex:1;}
+.pw-ace-list{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+.pw-ace-row{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border:1px solid var(--border,rgba(255,255,255,.08));border-radius:8px;padding:8px 10px;}
+.pw-ace-row span.pw-ace-label{flex:1;font-size:.9rem;}
+.pw-ace-row input{width:70px;}
+.pw-btn{border:1px solid var(--border,rgba(255,255,255,.08));background:rgba(255,255,255,.04);color:var(--text,#e2e8f0);border-radius:8px;padding:9px 16px;cursor:pointer;font-size:.9rem;}
+.pw-btn:hover{border-color:var(--border-hover,rgba(255,255,255,.18));}
+.pw-btn.pw-primary{background:var(--accent,#38bdf8);color:#05202c;border-color:transparent;font-weight:600;}
+.pw-btn.pw-primary:disabled{opacity:.5;cursor:not-allowed;}
+.pw-actions{display:flex;justify-content:space-between;margin-top:20px;gap:10px;}
+.pw-actions .pw-actions-right{display:flex;gap:10px;}
+.pw-preview{border:1px dashed var(--border-hover,rgba(255,255,255,.18));border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:14px;background:rgba(255,255,255,.02);}
+.pw-pv-printer{border:2px solid var(--accent,#38bdf8);border-radius:10px;padding:14px 18px;min-width:220px;text-align:center;background:rgba(56,189,248,.08);}
+.pw-pv-printer .pw-pv-name{font-weight:600;font-size:1rem;}
+.pw-pv-ace-wrap{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:10px;}
+.pw-pv-ace{border:1px solid var(--border-hover,rgba(255,255,255,.18));border-radius:8px;padding:8px 12px;font-size:.8rem;background:rgba(255,255,255,.04);min-width:90px;text-align:center;}
+.pw-pv-ace .pw-pv-slots{display:flex;gap:3px;justify-content:center;margin-top:6px;}
+.pw-pv-ace .pw-pv-slot{width:8px;height:8px;border-radius:50%;background:var(--muted,#94a3b8);opacity:.5;}
+.pw-pv-arrow{color:var(--muted,#94a3b8);font-size:1.2rem;}
+.pw-close{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--muted,#94a3b8);font-size:1.3rem;cursor:pointer;}
+.pw-modal{position:relative;}
+.pw-err{color:#f87171;font-size:.85rem;margin-top:8px;min-height:1.1em;}
+.pw-child-wrap{margin-top:10px;padding-left:16px;border-left:2px solid var(--accent,#38bdf8);display:flex;flex-direction:column;gap:8px;}
+.pw-child-wrap .device-card{opacity:.95;transform:scale(.97);transform-origin:top left;}
+.pw-child-label{font-size:.72rem;color:var(--accent,#38bdf8);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 2px 2px;}
+</style>
+
+
+<div class="pw-overlay" id="pwOverlay" hidden>
+  <div class="pw-modal">
+    <button type="button" class="pw-close" id="pwCloseBtn">&times;</button>
+    <h2 id="pwTitle">Geraet anlegen</h2>
+      <p class="pw-sub" id="pwSub">Geraetetyp waehlen und mit Live-Vorschau anlegen.</p>
+    <div class="pw-steps">
+      <div class="pw-step-dot active" data-step="0"></div>
+      <div class="pw-step-dot" data-step="1"></div>
+      <div class="pw-step-dot" data-step="2"></div>
+        <div class="pw-step-dot" data-step="3"></div>
+    </div>
+
+    <div class="pw-pane" data-pane="0">
+        <div class="pw-type-choice">
+          <button type="button" class="pw-type-btn" id="pwTypePrinter" data-type="printer">
+            <div class="pw-type-title">Drucker</div>
+            <div class="pw-type-sub">mit ACE/AMS-Zufuehrung</div>
+          </button>
+          <button type="button" class="pw-type-btn" id="pwTypeDrybox" data-type="drybox">
+            <div class="pw-type-title">Drybox</div>
+            <div class="pw-type-sub">Trockenlagerung fuer Spulen</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="pw-pane" data-pane="1" hidden>
+        <div class="pw-field">
+          <label for="pwName">Name</label>
+          <input type="text" id="pwName" placeholder="z. B. Kobra 3 Max / Drybox 1">
+        </div>
+        <div class="pw-row" id="pwPrinterFields">
+          <div class="pw-field">
+            <label for="pwPrinterSlots">Eigene Spulenplaetze am Drucker</label>
+            <input type="number" id="pwPrinterSlots" min="1" max="8" value="1">
+          </div>
+        </div>
+        <div id="pwDryboxFields" hidden>
+          <div class="pw-row">
+            <div class="pw-field">
+              <label for="pwDryboxLevels">Ebenen</label>
+              <input type="number" id="pwDryboxLevels" min="1" max="10" value="1">
+            </div>
+            <div class="pw-field">
+              <label for="pwDryboxSlots">Plaetze/Ebene</label>
+              <input type="number" id="pwDryboxSlots" min="1" max="12" value="4">
+            </div>
+            <div class="pw-field">
+              <label for="pwDryboxRows">Reihen/Ebene</label>
+              <input type="number" id="pwDryboxRows" min="1" max="4" value="1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pw-pane" data-pane="2" hidden>
+      <div class="pw-field">
+        <label for="pwAceCount">Anzahl ACE/AMS-Einheiten</label>
+        <input type="number" id="pwAceCount" min="0" max="4" value="1">
+      </div>
+      <div class="pw-ace-list" id="pwAceList"></div>
+    </div>
+
+    <div class="pw-pane" data-pane="3" hidden>
+      <div class="pw-preview" id="pwPreview"></div>
+    </div>
+
+    <div class="pw-err" id="pwErr"></div>
+
+    <div class="pw-actions">
+      <button type="button" class="pw-btn" id="pwBackBtn">Zurueck</button>
+      <div class="pw-actions-right">
+        <button type="button" class="pw-btn" id="pwCancelBtn">Abbrechen</button>
+        <button type="button" class="pw-btn pw-primary" id="pwNextBtn">Weiter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var pwStep = 0;
+  var pwDeviceType = 'printer';
+  var overlay = document.getElementById('pwOverlay');
+  var openBtn = document.getElementById('pwOpenBtn');
+  var closeBtn = document.getElementById('pwCloseBtn');
+  var cancelBtn = document.getElementById('pwCancelBtn');
+  var backBtn = document.getElementById('pwBackBtn');
+  var nextBtn = document.getElementById('pwNextBtn');
+  var errEl = document.getElementById('pwErr');
+  var typePrinterBtn = document.getElementById('pwTypePrinter');
+  var typeDryboxBtn = document.getElementById('pwTypeDrybox');
+  var printerFieldsEl = document.getElementById('pwPrinterFields');
+  var dryboxFieldsEl = document.getElementById('pwDryboxFields');
+  var aceCountEl = document.getElementById('pwAceCount');
+  var aceListEl = document.getElementById('pwAceList');
+  var previewEl = document.getElementById('pwPreview');
+
+  function panes(){ return Array.prototype.slice.call(document.querySelectorAll('.pw-pane')); }
+  function dots(){ return Array.prototype.slice.call(document.querySelectorAll('.pw-step-dot')); }
+
+  function showStep(n){
+    pwStep = n;
+    panes().forEach(function(p){ p.hidden = (parseInt(p.getAttribute('data-pane'),10) !== n); });
+    dots().forEach(function(d){ d.classList.toggle('active', parseInt(d.getAttribute('data-step'),10) <= n); });
+    backBtn.style.visibility = n === 0 ? 'hidden' : 'visible';
+    nextBtn.style.display = n === 0 ? 'none' : '';
+    nextBtn.textContent = n === 3 ? 'Anlegen' : 'Weiter';
+    errEl.textContent = '';
+    if (n === 2) renderAceRows();
+    if (n === 3) renderPreview();
+  }
+
+  function selectType(t){
+    pwDeviceType = t;
+    typePrinterBtn.classList.toggle('active', t === 'printer');
+    typeDryboxBtn.classList.toggle('active', t === 'drybox');
+    printerFieldsEl.hidden = (t !== 'printer');
+    dryboxFieldsEl.hidden = (t !== 'drybox');
+    showStep(1);
+  }
+  typePrinterBtn.addEventListener('click', function(){ selectType('printer'); });
+  typeDryboxBtn.addEventListener('click', function(){ selectType('drybox'); });
+
+  function renderAceRows(){
+    var count = Math.max(0, Math.min(4, parseInt(aceCountEl.value, 10) || 0));
+    var existing = aceListEl.querySelectorAll('.pw-ace-row').length;
+    if (existing === count) return;
+    aceListEl.innerHTML = '';
+    for (var i = 0; i < count; i++){
+      var row = document.createElement('div');
+      row.className = 'pw-ace-row';
+      row.innerHTML = '<span class="pw-ace-label">ACE/AMS ' + (i+1) + '</span>' +
+        '<label style="font-size:.75rem;color:var(--muted,#94a3b8);">Slots</label>' +
+        '<input type="number" class="pw-ace-slots" min="1" max="8" value="4" data-idx="' + i + '">';
+      aceListEl.appendChild(row);
+    }
+  }
+  aceCountEl.addEventListener('input', renderAceRows);
+
+  function gatherAceConfigs(){
+    var rows = aceListEl.querySelectorAll('.pw-ace-row');
+    var out = [];
+    rows.forEach(function(r, i){
+      var slots = parseInt(r.querySelector('.pw-ace-slots').value, 10) || 4;
+      out.push({ name: 'ACE/AMS ' + (i+1), slots: Math.max(1, Math.min(8, slots)) });
+    });
+    return out;
+  }
+
+  function escapeHtml(s){
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderPreview(){
+    if (pwDeviceType === 'drybox'){
+      var dbName = (document.getElementById('pwName').value || 'Drybox').trim();
+      var dbLevels = Math.max(1, Math.min(10, parseInt(document.getElementById('pwDryboxLevels').value,10) || 1));
+      var dbSlots = Math.max(1, Math.min(12, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
+      var dbRows = Math.max(1, Math.min(4, parseInt(document.getElementById('pwDryboxRows').value,10) || 1));
+      previewEl.innerHTML = '<div class="pw-pv-printer"><div class="pw-pv-name">' + escapeHtml(dbName) + '</div>' +
+        '<div style="font-size:.75rem;color:var(--muted,#94a3b8);margin-top:4px;">' + dbLevels + ' Ebene(n) &middot; ' + dbSlots + ' Plaetze/Ebene &middot; ' + dbRows + ' Reihe(n)/Ebene</div></div>';
+      return;
+    }
+    var name = (document.getElementById('pwName').value || 'Drucker').trim();
+    var printerSlots = Math.max(1, Math.min(8, parseInt(document.getElementById('pwPrinterSlots').value,10) || 1));
+    var aces = gatherAceConfigs();
+    var html = '<div class="pw-pv-printer"><div class="pw-pv-name">' + escapeHtml(name) + '</div>' +
+      '<div style="font-size:.75rem;color:var(--muted,#94a3b8);margin-top:4px;">' + printerSlots + ' eigene Spulenplaetze</div></div>';
+    if (aces.length){
+      html += '<div class="pw-pv-arrow">&darr;</div><div class="pw-pv-ace-wrap">';
+      aces.forEach(function(a){
+        html += '<div class="pw-pv-ace"><div>' + escapeHtml(a.name) + '</div><div class="pw-pv-slots">';
+        for (var i=0;i<a.slots;i++) html += '<div class="pw-pv-slot"></div>';
+        html += '</div><div style="margin-top:4px;color:var(--muted,#94a3b8);">' + a.slots + ' Slots</div></div>';
+      });
+      html += '</div>';
+    } else {
+      html += '<div style="font-size:.8rem;color:var(--muted,#94a3b8);">Keine ACE/AMS-Einheit verknuepft</div>';
+    }
+    previewEl.innerHTML = html;
+  }
+
+  function resetWizard(){
+    pwDeviceType = 'printer';
+    document.getElementById('pwName').value = '';
+    document.getElementById('pwPrinterSlots').value = '1';
+    document.getElementById('pwDryboxLevels').value = '1';
+    document.getElementById('pwDryboxSlots').value = '4';
+    document.getElementById('pwDryboxRows').value = '1';
+    printerFieldsEl.hidden = false;
+    dryboxFieldsEl.hidden = true;
+    typePrinterBtn.classList.remove('active');
+    typeDryboxBtn.classList.remove('active');
+    aceCountEl.value = '1';
+    aceListEl.innerHTML = '';
+    showStep(0);
+  }
+
+  openBtn.addEventListener('click', function(){
+    resetWizard();
+    overlay.hidden = false;
+  });
+  function closeWizard(){ overlay.hidden = true; }
+  closeBtn.addEventListener('click', closeWizard);
+  cancelBtn.addEventListener('click', closeWizard);
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) closeWizard(); });
+
+  backBtn.addEventListener('click', function(){
+    if (pwStep === 3 && pwDeviceType === 'drybox'){ showStep(1); return; }
+    if (pwStep > 0) showStep(pwStep - 1);
+  });
+
+  nextBtn.addEventListener('click', function(){
+    if (pwStep === 0){
+      return;
+    }
+    if (pwStep === 1){
+      var name = document.getElementById('pwName').value.trim();
+      if (!name){ errEl.textContent = 'Bitte einen Namen eingeben.'; return; }
+      if (pwDeviceType === 'printer'){ showStep(2); } else { showStep(3); }
+      return;
+    }
+    if (pwStep === 2){
+      showStep(3);
+      return;
+    }
+    submitWizard();
+  });
+
+  function submitWizard(){
+    nextBtn.disabled = true;
+    errEl.textContent = '';
+    var name = document.getElementById('pwName').value.trim();
+
+    if (pwDeviceType === 'drybox'){
+      var dbLevels2 = Math.max(1, Math.min(10, parseInt(document.getElementById('pwDryboxLevels').value,10) || 1));
+      var dbSlots2 = Math.max(1, Math.min(12, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
+      var dbRows2 = Math.max(1, Math.min(4, parseInt(document.getElementById('pwDryboxRows').value,10) || 1));
+      var dryboxBody = { name: name, type: 'drybox', levels: dbLevels2, slots_per_level: dbSlots2, layout: 'row', rows_per_level: dbRows2 };
+      fetch('/api/storage/units', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dryboxBody)
+      }).then(function(r){
+        if (!r.ok) throw new Error('Drybox konnte nicht angelegt werden (HTTP ' + r.status + ')');
+        return r.json();
+      }).then(function(){
+        closeWizard();
+        if (typeof window.toast === 'function') { try { window.toast('Drybox angelegt', 'ok'); } catch(e){} }
+        if (typeof window.loadDevices === 'function') { try { window.loadDevices(); return; } catch(e){} }
+        location.reload();
+      }).catch(function(e){
+        errEl.textContent = e.message || 'Unbekannter Fehler';
+        nextBtn.disabled = false;
+      });
+      return;
+    }
+
+    var printerSlots = Math.max(1, Math.min(8, parseInt(document.getElementById('pwPrinterSlots').value,10) || 1));
+    var aces = gatherAceConfigs();
+
+    var printerBody = {
+      name: name,
+      type: 'printer',
+      levels: 1,
+      slots_per_level: printerSlots,
+      layout: 'row',
+      rows_per_level: 1
+    };
+
+    fetch('/api/storage/units', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(printerBody)
+    }).then(function(r){
+      if (!r.ok) throw new Error('Drucker konnte nicht angelegt werden (HTTP ' + r.status + ')');
+      return r.json();
+    }).then(function(printer){
+      var printerId = printer.id;
+      var chain = Promise.resolve();
+      aces.forEach(function(a){
+        chain = chain.then(function(){
+          return fetch('/api/storage/units', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: a.name,
+              type: 'ace',
+              levels: 1,
+              slots_per_level: a.slots,
+              layout: 'row',
+              rows_per_level: 1,
+              parent_unit_id: printerId
+            })
+          }).then(function(r){
+            if (!r.ok) throw new Error('ACE/AMS-Einheit konnte nicht angelegt werden (HTTP ' + r.status + ')');
+            return r.json();
+          });
+        });
+      });
+      return chain;
+    }).then(function(){
+      closeWizard();
+      if (typeof window.toast === 'function') {
+        try { window.toast('Drucker angelegt', 'ok'); } catch(e){}
+      }
+      if (typeof window.loadDevices === 'function') {
+        try { window.loadDevices(); return; } catch(e){}
+      }
+      location.reload();
+    }).catch(function(e){
+      errEl.textContent = e.message || 'Unbekannter Fehler';
+    }).finally(function(){
+      nextBtn.disabled = false;
+    });
+  }
+
+  // ---- Nested rendering of child units (ACE/AMS) under their parent printer card ----
+  var pwUnitsCache = null;
+  var pwUnitsCacheAt = 0;
+  function fetchUnitsCached(){
+    var now = Date.now();
+    if (pwUnitsCache && (now - pwUnitsCacheAt) < 4000) return Promise.resolve(pwUnitsCache);
+    return fetch('/api/storage/units', { credentials: 'include' }).then(function(r){
+      return r.ok ? r.json() : [];
+    }).then(function(d){
+      pwUnitsCache = d;
+      pwUnitsCacheAt = Date.now();
+      return d;
+    }).catch(function(){ return []; });
+  }
+
+  var pwNesting = false;
+  function nestChildUnits(){
+    if (pwNesting) return;
+    var grid = document.querySelector('.device-grid');
+    if (!grid) return;
+    pwNesting = true;
+    fetchUnitsCached().then(function(units){
+      var byId = {};
+      units.forEach(function(u){ byId[u.id] = u; });
+      var cards = grid.querySelectorAll('.device-card');
+      cards.forEach(function(card){
+        var uid = parseInt(card.getAttribute('data-unit-id'), 10);
+        var u = byId[uid];
+        if (!u || !u.parent_unit_id) return;
+        var parentCard = grid.querySelector('.device-card[data-unit-id="' + u.parent_unit_id + '"]');
+        if (!parentCard) return;
+        var wrap = parentCard.querySelector('.pw-child-wrap');
+        if (!wrap){
+          wrap = document.createElement('div');
+          wrap.className = 'pw-child-wrap';
+          var label = document.createElement('div');
+          label.className = 'pw-child-label';
+          label.textContent = 'ACE / AMS';
+          wrap.appendChild(label);
+          parentCard.appendChild(wrap);
+        }
+        if (card.parentElement !== wrap) wrap.appendChild(card);
+      });
+    }).finally(function(){ pwNesting = false; });
+  }
+
+  var pwGridObserver = null;
+  function initNestObserver(){
+    var grid = document.querySelector('.device-grid');
+    if (!grid){ setTimeout(initNestObserver, 800); return; }
+    if (pwGridObserver) pwGridObserver.disconnect();
+    pwGridObserver = new MutationObserver(function(){
+      clearTimeout(window.__pwNestTimer);
+      window.__pwNestTimer = setTimeout(nestChildUnits, 120);
+    });
+    pwGridObserver.observe(grid, { childList: true });
+    nestChildUnits();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNestObserver);
+  } else {
+    initNestObserver();
+  }
+})();
+</script>
+
 </body>
 </html>
 

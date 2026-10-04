@@ -35,7 +35,8 @@ Ports lassen sich ueber eine `.env`-Datei anpassen (Vorlage: `.env.example`).
 Grundfunktionen:
 
 - Spulen in Spoolman anlegen (Material, Hersteller, Farbe, auch mehrfarbig), inkl. Artikelnummer-Feld
-- Lagerplaetze konfigurieren (Dashboard -> Lagerplaetze): Drucker, ACE-Einheit, Drybox
+- Geraete im Geraete-Wizard anlegen (Dashboard -> Lagerplaetze -> Geraete-Wizard): Drucker (optional mit ACE/AMS-Zufuehrung) oder Drybox - mit Live-Vorschau waehrend der Eingabe. Alle Geraetetypen laufen durch denselben Wizard, kein separates Formular mehr noetig
+- Verschachtelte Geraete: ein Drucker mit ACE/AMS kann mehrere Zufuehrungs-Boxen als eigene Untergeraete enthalten. Die Lagerplaetze-Uebersicht stellt das eingerueckt dar
 - Spulen per Drag & Drop bzw. Zuweisungsdialog ('Auf Drucker/ACE', 'In Drybox') auf Plaetze legen
 - Auf einen Spulennamen in der Tabelle klicken -> Detail-/Edit-Modal oeffnet sich (Preis, Gewichte, Lot-Nr., Kommentar, Temperatur-Overrides, Filament-Typ-Felder) - auch nachtraegliche Bearbeitung moeglich
 - 'Rolle leer' testen (archiviert die Spule in Spoolman, gibt den Platz frei, setzt einen Eintrag auf die Einkaufsliste inkl. Artikelnummer)
@@ -65,6 +66,7 @@ Drucker-Seite (eigener Menuepunkt im Dashboard, ab v1.4.0):
 - Zeigt alle per Anycubic-Bridge verbundenen Drucker live (Status, aktuelles Druckprojekt, ACE-Slot-Belegung) zusammen mit manuell angelegten Platzhalter-Druckern in einer gemeinsamen Ansicht
 - Laufende Drucke zeigen eine Spooly-artige Fortschrittskarte: Dateiname, grosse Prozentanzeige, Restzeit, geschaetzte Fertigstellungszeit, Fortschrittsbalken
 - Idle-Drucker (status "available"/"online"/"standby") zeigen eine ruhige, nicht animierte Illustration statt der Druck-Animation
+- Lagerplaetze lassen sich praezise mit einer einzelnen ACE-Box eines Druckers verknuepfen (nicht nur pauschal mit dem Drucker) - wichtig bei mehreren Zufuehrungs-Boxen am selben Geraet
 
 ## Aufbau
 
@@ -83,6 +85,18 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 ## Bekannte Einschraenkungen (Stand dieser Version)
 
 - Kamera-Scan ist nur in einem sicheren Kontext (HTTPS oder `localhost`) verfuegbar - siehe Hinweis oben.
+
+## Update auf eine neuere Version
+
+Wer dieses Repo bereits laufen hat und auf den neuesten Stand aktualisieren moechte:
+
+```bash
+git pull
+docker compose down
+docker compose up -d --build
+```
+
+Die SQLite-Datenbank im `storage`-Dienst migriert ihr Schema beim Start automatisch (fehlende Spalten/Tabellen werden per `ALTER TABLE` ergaenzt) - ein manueller DB-Migrationsschritt ist fuer bestehende Installationen nicht noetig. Eure Daten in den Volumes `spoolman_data` und `storage_data` bleiben beim Update erhalten (nur `docker compose down -v` wuerde sie loeschen - das NICHT verwenden, wenn ihr eure Daten behalten wollt).
 
 ## Status
 

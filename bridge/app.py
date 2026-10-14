@@ -969,3 +969,75 @@ async def delete_mapping(printer_id: str, box_id: int, slot_index: int) -> dict[
         return {"ok": True}
     finally:
         await db.close()
+
+
+@app.post("/api/prints/sync")
+async def prints_sync(pages: int = 5) -> dict[str, Any]:
+    """Importiert die Cloud-Druckhistorie ins Storage-Backend (idempotent)."""
+    db = await get_db()
+    try:
+        token = await get_setting(db, "token")
+        auth_mode_raw = await get_setting(db, "auth_mode", "web")
+    finally:
+        await db.close()
+    if not token:
+        raise HTTPException(status_code=400, detail="Kein Anycubic-Token hinterlegt.")
+    preferred_mode = AnycubicAuthMode.SLICER if auth_mode_raw == "slicer" else AnycubicAuthMode.WEB
+    jar = aiohttp.CookieJar()
+    rows: list[dict[str, Any]] = []
+    async with aiohttp.ClientSession(cookie_jar=jar) as session:
+        rdb = await get_db()
+        try:
+            api = await _resolve_auth_mode(session, jar, token, preferred_mode, rdb)
+        finally:
+            await rdb.close()
+        if api is None:
+            raise HTTPException(status_code=401, detail="Token ungueltig")
+        for page in range(1, max(1, pages) + 1):
+            raw = await api.list_all_projects(page=page, raw_data=True)
+            data = (raw or {}).get("data") or []
+            for x in data:
+                try:
+                    mm = float(x.get("material") or 0)
+                except (TypeError, ValueError):
+                    mm = 0.0
+                sp = x.get("slice_param")
+                if isinstance(sp, str):
+                    try:
+                        sp = json.loads(sp)
+                    except Exception:
+                        sp = {}
+                plates = (sp or {}).get("plate_infos") or []
+                mat = (plates[0].get("material_type") if plates else None) or "PLA"
+                grams = round(grams_from_mm(mm, mat), 1) if mm > 0 else 0.0
+                ps = x.get("print_status")
+                try:
+                    dur = float(x.get("print_time") or 0)
+                except (TypeError, ValueError):
+                    dur = 0.0
+                rows.append({
+                    "cloud_id": str(x.get("id")),
+                    "name": x.get("gcode_name") or x.get("task_name"),
+                    "printer": x.get("machine_name"),
+                    "start_ts": int(x.get("start_time") or x.get("create_time") or 0) or None,
+                    "end_ts": int(x.get("end_time") or 0) or None,
+                    "duration_min": dur,
+                    "status": "done" if ps == 2 else "failed",
+                    "grams": grams,
+                    "length_mm": mm,
+                    "thumb": x.get("img") or None,
+                    "reason": str(x.get("reason") or "").strip() if x.get("reason") not in (0, "0", None) else None,
+                    "source": "cloud",
+                })
+            if len(data) < 100:
+                break
+    res = {"new": 0, "updated": 0, "matched_booked": 0}
+    async with aiohttp.ClientSession() as s2:
+        for k in range(0, len(rows), 100):
+            async with s2.post(f"{STORAGE_BASE_URL}/prints/import", json={"items": rows[k:k + 100]}, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status >= 400:
+                    raise HTTPException(status_code=502, detail="Storage: " + (await resp.text())[:200])
+                j = await resp.json()
+                for key in res:
+                    res[key] += j.get(key, 0)
+    return {"fetched": len(rows), **res}

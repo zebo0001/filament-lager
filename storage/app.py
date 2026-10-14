@@ -1670,3 +1670,147 @@ async def delete_manual_printer(printer_id: int):
     with db() as conn:
         conn.execute("DELETE FROM manual_printers WHERE id = ?", (printer_id,))
         return {"ok": True}
+
+
+# ---------- Druckhistorie ----------
+def prints_init():
+    with db() as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS prints (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cloud_id TEXT UNIQUE, name TEXT, printer TEXT,
+            start_ts INTEGER, end_ts INTEGER, duration_min REAL,
+            status TEXT, grams REAL, length_mm REAL, thumb TEXT, reason TEXT,
+            spool_id INTEGER, state TEXT, source TEXT)"""
+        )
+
+
+prints_init()
+
+
+class PrintItem(BaseModel):
+    cloud_id: Optional[str] = None
+    name: Optional[str] = None
+    printer: Optional[str] = None
+    start_ts: Optional[int] = None
+    end_ts: Optional[int] = None
+    duration_min: Optional[float] = None
+    status: Optional[str] = None
+    grams: Optional[float] = None
+    length_mm: Optional[float] = None
+    thumb: Optional[str] = None
+    reason: Optional[str] = None
+    source: Optional[str] = "cloud"
+
+
+class PrintImport(BaseModel):
+    items: List[PrintItem]
+
+
+class PrintAssign(BaseModel):
+    spool_id: int
+    grams: Optional[float] = None
+
+
+@app.post("/prints/import")
+def prints_import(body: PrintImport):
+    new = upd = booked = 0
+    with db() as conn:
+        for it in body.items:
+            ex = None
+            if it.cloud_id:
+                ex = conn.execute("SELECT id FROM prints WHERE cloud_id=?", (it.cloud_id,)).fetchone()
+            if ex:
+                conn.execute(
+                    "UPDATE prints SET name=?, printer=?, start_ts=?, end_ts=?, duration_min=?, status=?, length_mm=?, thumb=COALESCE(?,thumb), reason=? WHERE id=?",
+                    (it.name, it.printer, it.start_ts, it.end_ts, it.duration_min, it.status, it.length_mm, it.thumb, it.reason, ex["id"]),
+                )
+                conn.execute("UPDATE prints SET grams=? WHERE id=? AND state!='booked'", (it.grams, ex["id"]))
+                upd += 1
+                continue
+            state, spool, g = "none", None, it.grams
+            if it.start_ts and it.name:
+                a = _dt.datetime.fromtimestamp(it.start_ts - 900).isoformat(timespec="seconds")
+                b = _dt.datetime.fromtimestamp((it.end_ts or it.start_ts) + 1800).isoformat(timespec="seconds")
+                r = conn.execute(
+                    "SELECT spool_id, SUM(grams) g FROM usage_log WHERE print_name=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC",
+                    (it.name, a, b),
+                ).fetchone()
+                if r:
+                    state, spool, g = "booked", r["spool_id"], r["g"]
+                    booked += 1
+            conn.execute(
+                "INSERT INTO prints (cloud_id,name,printer,start_ts,end_ts,duration_min,status,grams,length_mm,thumb,reason,spool_id,state,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (it.cloud_id, it.name, it.printer, it.start_ts, it.end_ts, it.duration_min, it.status, g, it.length_mm, it.thumb, it.reason, spool, state, it.source or "cloud"),
+            )
+            new += 1
+    return {"new": new, "updated": upd, "matched_booked": booked}
+
+
+@app.get("/prints")
+def prints_list(q: str = "", printer: str = "", state: str = "", sort: str = "new", limit: int = 1000):
+    where, args = [], []
+    if q:
+        where.append("name LIKE ?")
+        args.append("%" + q + "%")
+    if printer:
+        where.append("printer=?")
+        args.append(printer)
+    if state:
+        where.append("state=?")
+        args.append(state)
+    w = (" WHERE " + " AND ".join(where)) if where else ""
+    order = {"new": "start_ts DESC", "old": "start_ts ASC", "grams": "grams DESC", "dur": "duration_min DESC"}.get(sort, "start_ts DESC")
+    with db() as conn:
+        rows = [dict(r) for r in conn.execute("SELECT * FROM prints" + w + " ORDER BY " + order + " LIMIT ?", args + [limit]).fetchall()]
+        tot = dict(conn.execute("SELECT COUNT(*) n, COALESCE(SUM(grams),0) g, COALESCE(SUM(duration_min),0) d FROM prints" + w, args).fetchone())
+        per = [dict(r) for r in conn.execute("SELECT printer, COUNT(*) n, COALESCE(SUM(grams),0) g, COALESCE(SUM(duration_min),0) d FROM prints" + w + " GROUP BY printer", args).fetchall()]
+        cnt = [dict(r) for r in conn.execute("SELECT state, COUNT(*) n FROM prints GROUP BY state").fetchall()]
+    return {"items": rows, "total": tot, "per_printer": per, "states": cnt}
+
+
+@app.post("/prints")
+def prints_create(it: PrintItem):
+    ts = it.start_ts or int(_dt.datetime.now().timestamp())
+    with db() as conn:
+        cur = conn.execute(
+            "INSERT INTO prints (cloud_id,name,printer,start_ts,end_ts,duration_min,status,grams,length_mm,thumb,reason,spool_id,state,source) VALUES (NULL,?,?,?,?,?,?,?,?,?,?,NULL,'none','manual')",
+            (it.name or "Manuell", it.printer, ts, it.end_ts or ts, it.duration_min, it.status or "done", it.grams, it.length_mm, it.thumb, it.reason),
+        )
+        return {"id": cur.lastrowid}
+
+
+@app.post("/prints/{pid}/assign")
+async def prints_assign(pid: int, body: PrintAssign):
+    with db() as conn:
+        r = conn.execute("SELECT * FROM prints WHERE id=?", (pid,)).fetchone()
+    if not r:
+        raise HTTPException(404, "Druck nicht gefunden")
+    if r["state"] == "booked":
+        raise HTTPException(409, "Bereits abgezogen")
+    g = body.grams if body.grams is not None else r["grams"]
+    if not g or g <= 0:
+        raise HTTPException(400, "Gramm fehlen")
+    await use_spool(body.spool_id, SpoolUseRequest(grams=g, source="print", print_name=r["name"]))
+    with db() as conn:
+        conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=? WHERE id=?", (body.spool_id, g, pid))
+    return {"ok": True}
+
+
+@app.delete("/prints/{pid}")
+def prints_delete(pid: int):
+    with db() as conn:
+        conn.execute("DELETE FROM prints WHERE id=? AND source='manual'", (pid,))
+    return {"ok": True}
+
+
+class PrintSkip(BaseModel):
+    ids: List[int]
+
+
+@app.post("/prints/skip")
+def prints_skip(b: PrintSkip):
+    with db() as conn:
+        for i in b.ids:
+            conn.execute("UPDATE prints SET state='skipped' WHERE id=? AND state!='booked'", (i,))
+    return {"ok": True, "count": len(b.ids)}

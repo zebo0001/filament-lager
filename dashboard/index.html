@@ -680,7 +680,7 @@ main>.panel.active{display:block;}
 </div>
 <div class="panel" data-panel="products">
   <h2>Gedruckte Produkte</h2>
-  <p class="hint">Grundgeruest - Datenanbindung folgt.</p>
+  <div id="pr-root"></div>
 </div>
 <div class="panel" data-panel="statistics">
   <h2>Statistik</h2>
@@ -5232,6 +5232,128 @@ loadOv(); loadPage();
 })();
 </script>
 <script>(function(){function f(){var en=(typeof currentLang!=='undefined'&&currentLang==='en');['cn-lbl-sd','cn-lbl-ns'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=en?'Color name':'Farbname';});var p=document.getElementById('ns-fil-colorname');if(p)p.placeholder=en?'e.g. Light blue':'z.B. Hellblau';} f(); document.addEventListener('click',function(){setTimeout(f,50);},true);})();</script>
+<style>
+.pr-bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.pr-bar input,.pr-bar select{width:auto;min-width:150px;background:var(--bg2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 10px}
+.pr-sum{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.pr-sum div{flex:1;min-width:130px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px}
+.pr-sum b{display:block;font-size:22px}
+.pr-sum span{color:var(--muted);font-size:12px}
+.pr-tabs{display:flex;gap:6px;flex-wrap:wrap}
+.pr-tab{padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer}
+.pr-tab.on{background:var(--accent);color:#0f172a;border-color:var(--accent)}
+.pr-card{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px;margin:8px 0}
+.pr-th{width:72px;height:72px;border-radius:8px;object-fit:cover;background:var(--bg2);flex:none}
+.pr-main{flex:1;min-width:0}
+.pr-name{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pr-meta{color:var(--muted);font-size:12px;margin-top:3px}
+.pr-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;margin:4px 4px 0 0;border:1px solid currentColor}
+.pr-ok{color:var(--ok)}.pr-warn{color:var(--warn)}.pr-bad{color:var(--danger)}.pr-mut{color:var(--muted)}
+.pr-g{font-size:18px;font-weight:700;text-align:right;white-space:nowrap}
+.pr-act{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.pr-btn{background:var(--accent);color:#0f172a;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:600}
+.pr-btn.sec{background:transparent;color:var(--text);border:1px solid var(--border)}
+.pr-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:9999}
+.pr-dlg{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:18px;width:min(520px,94vw);max-height:88vh;overflow:auto}
+.pr-dlg input,.pr-dlg select{width:100%;box-sizing:border-box;margin:4px 0 10px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px}
+.pr-sp{padding:8px;border:1px solid var(--border);border-radius:8px;margin:4px 0;cursor:pointer;font-size:13px}
+.pr-sp.sel{border-color:var(--accent);background:var(--card)}
+</style>
+<script>
+(function(){
+var L=function(d,e){return (typeof T==='function')?T(d,e):d;};
+var root=document.getElementById('pr-root'); if(!root) return;
+var st={printer:'',q:'',state:'',sort:'new',data:null,pl:[],spools:null,opened:false};
+function E(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmtMin(m){m=Math.round(m||0);return Math.floor(m/60)+'h '+('0'+(m%60)).slice(-2)+'m';}
+function fmtD(ts){if(!ts)return '-';var en=(typeof currentLang!=='undefined'&&currentLang==='en');return new Date(ts*1000).toLocaleString(en?'en-GB':'de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});}
+async function pj(url,method,body){var o={method:method||'GET',headers:{'Content-Type':'application/json'}};if(body!==undefined)o.body=JSON.stringify(body);var r=await fetch(url,o);var t=await r.text();var j=null;try{j=JSON.parse(t);}catch(e){}if(!r.ok){throw new Error((j&&j.detail)||t||r.status);}return j;}
+async function load(){
+  var p=new URLSearchParams({q:st.q,printer:st.printer,state:st.state,sort:st.sort});
+  st.data=await pj(ST+'/prints?'+p.toString());
+  if(!st.printer){st.pl=st.data.per_printer.map(function(x){return x.printer;}).filter(Boolean);}
+  draw();
+}
+function badge(p){
+  var h='';
+  if(p.state==='booked')h+='<span class="pr-badge pr-ok">'+L('Abgezogen','Deducted')+'</span>';
+  else if(p.state==='skipped')h+='<span class="pr-badge pr-mut">'+L('Ohne Abzug','No deduction')+'</span>';
+  else if(p.state==='guess')h+='<span class="pr-badge" style="color:var(--accent)">'+L('Vermutet','Assumed')+'</span>';
+  else h+='<span class="pr-badge pr-warn">'+L('Keine Zuordnung','Unassigned')+'</span>';
+  if(p.status==='failed')h+='<span class="pr-badge pr-bad" title="'+E(p.reason||'')+'">'+L('Fehlgeschlagen','Failed')+'</span>';
+  if(p.source==='manual')h+='<span class="pr-badge pr-mut">'+L('Manuell','Manual')+'</span>';
+  return h;
+}
+function draw(){
+  var d=st.data,t=d.total,h='';
+  h+='<div class="pr-tabs"><button class="pr-tab'+(st.printer===''?' on':'')+'" data-act="tab" data-v="">'+L('Alle','All')+'</button>';
+  st.pl.forEach(function(n){h+='<button class="pr-tab'+(st.printer===n?' on':'')+'" data-act="tab" data-v="'+E(n)+'">'+E(n.replace('Anycubic ',''))+'</button>';});
+  h+='</div><div class="pr-sum"><div><b>'+t.n+'</b><span>'+L('Drucke','Prints')+'</span></div><div><b>'+(t.g>=1000?(t.g/1000).toFixed(2)+' kg':Math.round(t.g)+' g')+'</b><span>'+L('Gewicht','Weight')+'</span></div><div><b>'+Math.round(t.d/60)+' h</b><span>'+L('Druckzeit','Print time')+'</span></div></div>';
+  var n0=0;d.states.forEach(function(s){if(s.state==='none')n0=s.n;});
+  h+='<div class="pr-bar"><input id="pr-q" placeholder="'+L('Suche nach Name','Search name')+'" value="'+E(st.q)+'">';
+  h+='<select id="pr-st"><option value="">'+L('Alle Status','All states')+'</option><option value="booked">'+L('Abgezogen','Deducted')+'</option><option value="none">'+L('Keine Zuordnung','Unassigned')+' ('+n0+')</option><option value="skipped">'+L('Ohne Abzug','No deduction')+'</option></select>';
+  h+='<select id="pr-so"><option value="new">'+L('Neueste zuerst','Newest first')+'</option><option value="old">'+L('\u00c4lteste zuerst','Oldest first')+'</option><option value="grams">'+L('Gewicht','Weight')+'</option><option value="dur">'+L('Dauer','Duration')+'</option></select>';
+  h+='<button class="pr-btn sec" data-act="sync">'+L('Cloud aktualisieren','Refresh cloud')+'</button><button class="pr-btn" data-act="new">+ '+L('Neuer Druck','New print')+'</button>';
+  if(st.state==='none'&&d.items.length)h+='<button class="pr-btn sec" data-act="skipall">'+L('Alle sichtbaren ohne Abzug','Mark all shown: no deduction')+'</button>';
+  h+='</div>';
+  if(!d.items.length)h+='<p class="hint">'+L('Keine Drucke gefunden.','No prints found.')+'</p>';
+  d.items.forEach(function(p){
+    h+='<div class="pr-card"><img class="pr-th" loading="lazy" referrerpolicy="no-referrer" src="'+E(p.thumb||'')+'" onerror="this.style.visibility=\'hidden\'">';
+    h+='<div class="pr-main"><div class="pr-name" title="'+E(p.name)+'">'+E(p.name)+'</div><div class="pr-meta">'+fmtD(p.start_ts)+' \u00b7 '+fmtMin(p.duration_min)+' \u00b7 '+E((p.printer||'').replace('Anycubic ',''))+'</div>'+badge(p)+'</div>';
+    h+='<div class="pr-act"><div class="pr-g">'+(p.grams?Math.round(p.grams*10)/10+' g':'-')+'</div>';
+    if(p.state==='none'||p.state==='skipped')h+='<button class="pr-btn" data-act="assign" data-id="'+p.id+'">'+L('Zuordnen','Assign')+'</button>';
+    if(p.state==='none')h+='<button class="pr-btn sec" data-act="skip" data-id="'+p.id+'">'+L('Ohne Abzug','Skip')+'</button>';
+    if(p.source==='manual')h+='<button class="pr-btn sec" data-act="del" data-id="'+p.id+'">'+L('L\u00f6schen','Delete')+'</button>';
+    h+='</div></div>';
+  });
+  root.innerHTML=h;
+  document.getElementById('pr-st').value=st.state;document.getElementById('pr-so').value=st.sort;
+}
+function overlay(inner){var o=document.createElement('div');o.className='pr-ov';o.innerHTML='<div class="pr-dlg">'+inner+'</div>';o.addEventListener('click',function(e){if(e.target===o)o.remove();});document.body.appendChild(o);return o;}
+function spLabel(s){var f=s.filament||{};return '#'+s.id+' '+((f.vendor||{}).name||'')+' '+(f.name||'')+' '+(f.material||'')+' \u00b7 '+Math.round(s.remaining_weight||0)+' g';}
+async function openAssign(p){
+  if(!st.spools){st.spools=await pj(SP+'/spool');}
+  var sel=null,o=overlay('<h3>'+L('Spule zuordnen','Assign spool')+'</h3><div class="pr-meta">'+E(p.name)+'</div><label>'+L('Verbrauch (g)','Usage (g)')+'</label><input id="pa-g" type="number" step="0.1" value="'+(p.grams||'')+'"><input id="pa-q" placeholder="'+L('Spule suchen','Search spool')+'"><div id="pa-l"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="pr-btn sec" id="pa-c">'+L('Abbrechen','Cancel')+'</button><button class="pr-btn" id="pa-ok">'+L('Abziehen','Deduct')+'</button></div>');
+  function list(){var q=o.querySelector('#pa-q').value.toLowerCase();var l=st.spools.filter(function(s){return spLabel(s).toLowerCase().indexOf(q)>=0;}).slice(0,60);o.querySelector('#pa-l').innerHTML=l.map(function(s){return '<div class="pr-sp'+(sel===s.id?' sel':'')+'" data-sid="'+s.id+'">'+E(spLabel(s))+'</div>';}).join('');}
+  list();
+  o.querySelector('#pa-q').addEventListener('input',list);
+  o.querySelector('#pa-l').addEventListener('click',function(e){var x=e.target.closest('[data-sid]');if(x){sel=+x.dataset.sid;list();}});
+  o.querySelector('#pa-c').onclick=function(){o.remove();};
+  o.querySelector('#pa-ok').onclick=async function(){
+    var g=parseFloat(o.querySelector('#pa-g').value);
+    if(!sel){alert(L('Bitte eine Spule w\u00e4hlen.','Please pick a spool.'));return;}
+    if(!(g>0)){alert(L('Gramm fehlen.','Grams missing.'));return;}
+    try{await pj(ST+'/prints/'+p.id+'/assign','POST',{spool_id:sel,grams:g});o.remove();st.spools=null;await load();}catch(e){alert(e.message);}
+  };
+}
+function openNew(){
+  var opts=st.pl.map(function(n){return '<option>'+E(n)+'</option>';}).join('');
+  var o=overlay('<h3>'+L('Neuer Druck','New print')+'</h3><label>'+L('Name','Name')+'</label><input id="pn-n"><label>'+L('Drucker','Printer')+'</label><select id="pn-p">'+opts+'<option>'+L('Sonstiger','Other')+'</option></select><label>'+L('Verbrauch (g)','Usage (g)')+'</label><input id="pn-g" type="number" step="0.1"><label>'+L('Dauer (Minuten)','Duration (min)')+'</label><input id="pn-d" type="number"><label>Status</label><select id="pn-s"><option value="done">'+L('Fertig','Done')+'</option><option value="failed">'+L('Fehlgeschlagen','Failed')+'</option></select><div style="display:flex;gap:8px;justify-content:flex-end"><button class="pr-btn sec" id="pn-c">'+L('Abbrechen','Cancel')+'</button><button class="pr-btn" id="pn-ok">'+L('Speichern & zuordnen','Save & assign')+'</button></div>');
+  o.querySelector('#pn-c').onclick=function(){o.remove();};
+  o.querySelector('#pn-ok').onclick=async function(){
+    var g=parseFloat(o.querySelector('#pn-g').value)||0;var name=o.querySelector('#pn-n').value.trim();
+    if(!name){alert(L('Name fehlt.','Name missing.'));return;}
+    try{var r=await pj(ST+'/prints','POST',{name:name,printer:o.querySelector('#pn-p').value,grams:g,duration_min:parseFloat(o.querySelector('#pn-d').value)||0,status:o.querySelector('#pn-s').value,source:'manual'});o.remove();await load();if(g>0)openAssign({id:r.id,name:name,grams:g});}catch(e){alert(e.message);}
+  };
+}
+async function sync(pages){try{await pj('/api/anycubic/prints/sync?pages='+pages,'POST');}catch(e){if(pages>1)alert('Cloud: '+e.message);}}
+root.addEventListener('click',async function(e){
+  var b=e.target.closest('[data-act]');if(!b)return;var a=b.dataset.act,id=+b.dataset.id;
+  if(a==='tab'){st.printer=b.dataset.v;load();}
+  else if(a==='sync'){b.disabled=true;await sync(3);await load();}
+  else if(a==='new')openNew();
+  else if(a==='assign')openAssign(st.data.items.find(function(x){return x.id===id;}));
+  else if(a==='skip'){await pj(ST+'/prints/skip','POST',{ids:[id]});load();}
+  else if(a==='skipall'){if(confirm(L('Alle sichtbaren Drucke ohne Abzug markieren?','Mark all shown prints as no deduction?'))){await pj(ST+'/prints/skip','POST',{ids:st.data.items.map(function(x){return x.id;})});load();}}
+  else if(a==='del'){if(confirm(L('Druck l\u00f6schen?','Delete print?'))){await pj(ST+'/prints/'+id,'DELETE');load();}}
+});
+var tm=null;
+root.addEventListener('input',function(e){if(e.target.id==='pr-q'){st.q=e.target.value;clearTimeout(tm);tm=setTimeout(function(){load().then(function(){var q=document.getElementById('pr-q');q.focus();q.setSelectionRange(q.value.length,q.value.length);});},300);}});
+root.addEventListener('change',function(e){if(e.target.id==='pr-st'){st.state=e.target.value;load();}else if(e.target.id==='pr-so'){st.sort=e.target.value;load();}});
+async function open(){st.opened=true;try{await load();}catch(e){root.innerHTML='<p class="hint">'+E(e.message)+'</p>';}sync(1).then(load).catch(function(){});}
+setInterval(function(){if(root.offsetParent!==null){if(!st.opened)open();}else{st.opened=false;}},1200);
+})();
+</script>
 </body>
 </html>
 

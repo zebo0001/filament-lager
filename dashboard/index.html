@@ -273,6 +273,24 @@
 .printer-illo-finish { font-size: .7rem; color: var(--muted); margin-top: .1rem; }
 .printer-illo-updated { font-size: .65rem; color: var(--muted); opacity: .7; margin-top: .25rem; text-align: right; }
   .printer-illo.idle { color: #22c55e; }
+  .printer-illo-body { flex-direction: column; align-items: stretch; gap: .6rem; }
+  .pv-hero { position: relative; height: 220px; border-radius: .6rem; background: rgba(255,255,255,.03); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+  .pv-stage { position: relative; height: 200px; aspect-ratio: 240 / 200; }
+  .pv-svg { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--muted); }
+  .printer-illo.busy .pv-svg { color: var(--accent); }
+  .printer-illo.idle .pv-svg { color: #22c55e; }
+  .pv-model { position: absolute; left: 22%; width: 56%; bottom: 20%; height: 46%; }
+  .pv-model img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
+  .pv-ghost { opacity: .15; filter: grayscale(1); }
+  .pv-grow { transition: clip-path .8s ease; }
+  .pv-preview { display: none; position: absolute; inset: 8px 8px 44px; }
+  .pv-preview img { width: 100%; height: 100%; object-fit: contain; border-radius: .4rem; }
+  .printer-illo[data-view=preview] .pv-printer { display: none; }
+  .printer-illo[data-view=preview] .pv-preview { display: block; }
+  .pv-tabs { position: absolute; left: 8px; bottom: 8px; display: flex; gap: 4px; padding: 3px; border-radius: 999px; background: rgba(15,23,42,.8); }
+  .pv-tab { width: 30px; height: 30px; border-radius: 50%; border: none; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .pv-tab.active { background: var(--text); color: #0f172a; }
+  .pv-tab svg { width: 18px; height: 18px; }
   .printer-illo.busy { color: #f59e0b; }
   .printer-illo.error { color: #ef4444; }
   .printer-illo-head { transform-box: fill-box; transform-origin: center; }
@@ -3042,6 +3060,18 @@ function formatPrinterCompletion(val) {
   return wd + '., ' + hh + ':' + mm;
 }
 
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('[data-pview]') : null;
+  if (!b) return;
+  var v = b.getAttribute('data-pview'), id = b.getAttribute('data-pid');
+  try { localStorage.setItem('printerView:' + id, v); } catch (err) {}
+  var illo = b.closest('.printer-illo');
+  if (illo) {
+    illo.setAttribute('data-view', v);
+    illo.querySelectorAll('.pv-tab').forEach(function (t) { t.classList.toggle('active', t === b); });
+  }
+});
+
 function buildPrinterIllustration(p, statusCls) {
   var prog = p.progress || null;
   var pct = (prog && typeof prog.progress_percentage === 'number') ? Math.max(0, Math.min(100, prog.progress_percentage)) : null;
@@ -3072,16 +3102,35 @@ function buildPrinterIllustration(p, statusCls) {
       '<div class="printer-illo-project">' + subText + '</div>' +
       '</div>';
   }
-  var svg = '<svg width="92" height="70" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-    '<rect x="8" y="10" width="104" height="70" rx="6" stroke="var(--border)" stroke-width="2"/>' +
-    '<line x1="8" y1="26" x2="112" y2="26" stroke="var(--border)" stroke-width="2"/>' +
-    '<rect x="18" y="58" width="84" height="8" rx="2" fill="rgba(255,255,255,.08)"/>' +
-    '<g class="printer-illo-head"><rect x="44" y="20" width="14" height="12" rx="2" fill="currentColor" opacity=".85"/><line x1="51" y1="32" x2="51" y2="58" stroke="currentColor" stroke-width="2" opacity=".55"/></g>' +
-    '<circle class="printer-illo-led" cx="100" cy="20" r="3.2" fill="currentColor"/>' +
-    '</svg>';
   var imgUrl = (prog && prog.image_url) ? prog.image_url : null;
-      var visual = svg + (imgUrl ? ('<img class="printer-illo-thumb" src="' + prEsc(imgUrl) + '" alt="Modell" loading="lazy" />') : '');
-      return '<div class="printer-illo ' + statusCls + '"><div class="printer-illo-body">' + visual + infoHtml + '</div></div>';
+  var pid = String(p.id != null ? p.id : (p.printer_id != null ? p.printer_id : p.name));
+  var view = 'printer';
+  try { view = localStorage.getItem('printerView:' + pid) || 'printer'; } catch (e) {}
+  if (view === 'preview' && !imgUrl) view = 'printer';
+  var building = (statusCls === 'busy' && pct != null);
+  var shown = building ? Math.max(0, Math.min(100, pct)) : 100;
+  var modelHtml = '';
+  if (imgUrl) {
+    modelHtml = '<img class="pv-ghost" src="' + prEsc(imgUrl) + '" alt="" loading="lazy" />' +
+      '<img class="pv-grow" src="' + prEsc(imgUrl) + '" alt="Modell" loading="lazy" style="clip-path:inset(' + (100 - shown) + '% 0 0 0)" />';
+  }
+  var printerSvg = '<svg class="pv-svg" viewBox="0 0 240 200" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="38" y="172" width="164" height="14" rx="4" fill="#1b2433" stroke="rgba(255,255,255,.14)"/>' +
+    '<rect x="44" y="34" width="9" height="138" rx="2" fill="#243044"/>' +
+    '<rect x="187" y="34" width="9" height="138" rx="2" fill="#243044"/>' +
+    '<rect x="38" y="24" width="164" height="14" rx="4" fill="#1b2433" stroke="rgba(255,255,255,.14)"/>' +
+    '<rect x="56" y="160" width="128" height="8" rx="2" fill="#3a475c"/>' +
+    '<g style="transition:transform .8s ease" transform="translate(0,' + (-Math.round(shown * 0.8)) + ')">' +
+    '<rect x="53" y="140" width="134" height="6" rx="2" fill="#2f3b50"/>' +
+    '<rect x="106" y="130" width="28" height="22" rx="3" fill="currentColor"/>' +
+    '<polygon points="116,152 124,152 120,158" fill="#cbd5e1"/></g></svg>';
+  var icoPrinter = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="3" rx="1"/><path d="M6 6v13M18 6v13M3 19h18"/><rect x="10" y="9" width="4" height="3"/></svg>';
+  var icoImage = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>';
+  var tabs = '<div class="pv-tabs"><button type="button" class="pv-tab' + (view === 'printer' ? ' active' : '') + '" data-pview="printer" data-pid="' + prEsc(pid) + '" title="Drucker">' + icoPrinter + '</button>' +
+    (imgUrl ? '<button type="button" class="pv-tab' + (view === 'preview' ? ' active' : '') + '" data-pview="preview" data-pid="' + prEsc(pid) + '" title="Vorschau">' + icoImage + '</button>' : '') + '</div>';
+  var hero = '<div class="pv-hero"><div class="pv-stage pv-printer">' + printerSvg + '<div class="pv-model">' + modelHtml + '</div></div>' +
+    '<div class="pv-preview">' + (imgUrl ? '<img src="' + prEsc(imgUrl) + '" alt="Vorschau" loading="lazy" />' : '') + '</div>' + tabs + '</div>';
+  return '<div class="printer-illo ' + statusCls + '" data-view="' + view + '"><div class="printer-illo-body">' + hero + infoHtml + '</div></div>';
 }
 
 function renderPrinterCard(p) {

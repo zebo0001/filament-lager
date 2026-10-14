@@ -370,6 +370,10 @@ async def _resolve_auth_mode(session, cookie_jar, token, preferred_mode, db=None
             ok = False
 
         if ok:
+            try:
+                await api.get_user_info()
+            except Exception as exc:
+                log.warning("get_user_info fehlgeschlagen: %s", exc)
             if mode != preferred_mode:
                 mode_str = "slicer" if mode == AnycubicAuthMode.SLICER else "web"
                 log.info("Anycubic auth_mode automatisch auf '%s' korrigiert.", mode_str)
@@ -378,6 +382,15 @@ async def _resolve_auth_mode(session, cookie_jar, token, preferred_mode, db=None
             return api
 
     return None
+
+
+async def _rest_refresh(printers) -> None:
+    """ACE-Slots/Status per REST laden (funktioniert auch mit Web-Token ohne MQTT)."""
+    for _p in printers:
+        try:
+            await asyncio.wait_for(_p.update_info_from_api(True), timeout=15)
+        except Exception as exc:
+            log.warning("REST-Refresh fehlgeschlagen fuer %s: %s", getattr(_p, "id", "?"), exc)
 
 
 async def poll_once(db: aiosqlite.Connection, session: aiohttp.ClientSession) -> None:
@@ -403,6 +416,8 @@ async def poll_once(db: aiosqlite.Connection, session: aiohttp.ClientSession) ->
             log.warning("Druckerliste konnte nicht geladen werden: %s", exc)
             return
 
+
+        await _rest_refresh(printers)
 
         for _p in printers:
             try:
@@ -444,6 +459,7 @@ async def poll_once(db: aiosqlite.Connection, session: aiohttp.ClientSession) ->
                 except Exception as _e478j:
                     logging.getLogger("uvicorn.error").warning("DEBUG478j GET_INFO_FAIL %r: %s", type(_e478j), _e478j)
                     pass
+            await _rest_refresh(printers)
             await asyncio.sleep(180)
             for _p in printers:
                 try:
@@ -838,6 +854,8 @@ async def _fetch_printers_live() -> dict[str, Any]:
             except Exception as _ed:
                 logging.getLogger("uvicorn.error").warning("DEBUG478n RAW_PRINTER_FAIL %r: %s", type(_ed), _ed)
 
+        await _rest_refresh(printers)
+
         for _p in printers:
             try:
                 api.mqtt_add_subscribed_printer(_p)
@@ -879,6 +897,7 @@ async def _fetch_printers_live() -> dict[str, Any]:
                     logging.getLogger("uvicorn.error").warning("DEBUG478m_1 GET_INFO_OK result=%r", _r478m_1)
                 except Exception as _e478m_1:
                     logging.getLogger("uvicorn.error").warning("DEBUG478m_1 GET_INFO_FAIL %r: %s", type(_e478m_1), _e478m_1)
+            await _rest_refresh(printers)
             await asyncio.sleep(180)
             for _p in printers:
                 try:

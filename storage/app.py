@@ -220,11 +220,19 @@ async def get_stats(days: int = 30):
         init = _spool_initial(s) or 0
         mat = f.get("material") or "?"
         ven = (f.get("vendor") or {}).get("name") or "?"
-        col = (f.get("color_hex") or "").lstrip("#").lower() or "?"
+        col_hex = (f.get("color_hex") or "").lstrip("#").lower()
+        _raw = (f.get("extra") or {}).get("color_name")
+        try:
+            _cn = json.loads(_raw) if _raw else ""
+        except Exception:
+            _cn = str(_raw or "")
+        col = str(_cn).strip() or (f.get("name") or "").strip() or "?"
         for d, k in ((by_type, mat), (by_vendor, ven), (by_color, col)):
             e = d.setdefault(k, {"key": k, "count": 0, "grams": 0.0})
             e["count"] += 1
             e["grams"] += rem
+            if d is by_color and col_hex:
+                e.setdefault("color_hex", col_hex)
         total_rem += rem
         total_init += init
         price = _spool_price(s)

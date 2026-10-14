@@ -745,7 +745,7 @@ main>.panel.active{display:block;}
 </div>
 <p class="section-note warn" data-i18n-html="sd.filamentChangeWarnHtml">Änderungen hier gelten für <strong>alle</strong> Spulen dieses Filament-Typs, nicht nur diese eine.</p>
 <div class="field-grid" id="sd-filament-fields">
-<div><label for="sd-fil-name" data-i18n="fil.name">Name</label><input type="text" id="sd-fil-name" disabled></div>
+<div><label for="sd-fil-name" data-i18n="fil.name">Name</label><input type="text" id="sd-fil-name" disabled></div><div><label for="sd-fil-colorname" id="cn-lbl-sd">Farbname</label><input type="text" id="sd-fil-colorname"></div>
 <div><label for="sd-fil-material" data-i18n="fil.material">Material</label><input type="text" id="sd-fil-material" disabled></div>
 <div><label for="sd-fil-vendor" data-i18n="fil.vendor">Hersteller</label><input type="text" id="sd-fil-vendor" disabled></div><div><label for="sd-fil-article" data-i18n="fil.articleNr">Hersteller-Artikelnr.</label><input type="text" id="sd-fil-article" disabled></div>
 <div><label for="sd-fil-color" data-i18n="fil.colorHex">Farbe (Hex)</label><input type="text" id="sd-fil-color" disabled></div>
@@ -794,7 +794,7 @@ main>.panel.active{display:block;}
 <div id="ns-db-results" class="db-results" style="display:none"></div>
 </div>
 <div class="field-grid">
-<div><label for="ns-fil-name" data-i18n="fil.name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div>
+<div><label for="ns-fil-name" data-i18n="fil.name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div><div><label for="ns-fil-colorname" id="cn-lbl-ns">Farbname</label><input type="text" id="ns-fil-colorname" placeholder="z.B. Hellblau"></div>
 <div><label for="ns-fil-material" data-i18n="fil.material">Material</label><input type="text" id="ns-fil-material" placeholder="z.B. PLA"></div>
 <div>
 <label for="ns-fil-vendor-select" data-i18n="fil.vendor">Hersteller</label>
@@ -2494,6 +2494,9 @@ document.getElementById('shop-add-btn').addEventListener('click', async () => {
   }
 });
 
+function cnGet(f){ try{ var v=(f&&f.extra&&f.extra.color_name); if(v==null||v==='') return ''; var q=JSON.parse(v); return (typeof q==='string')?q:String(q); }catch(e){ return String((f&&f.extra&&f.extra.color_name)||''); } }
+function cnExtra(f,val){ var e=Object.assign({},(f&&f.extra)||{}); val=(val||'').trim(); if(val) e.color_name=JSON.stringify(val); else if(e.color_name!==undefined) e.color_name=JSON.stringify(''); else delete e.color_name; return e; }
+async function cnEnsureField(){ try{ var defs=await api(SP + '/field/filament'); if(!(defs||[]).some(function(d){return d.key==='color_name';})) await api(SP + '/field/filament/color_name',{method:'POST',body:JSON.stringify({name:'Farbname',field_type:'text'})}); }catch(e){} }
 let spoolFieldDefs = null;
 let filamentFieldDefs = null;
 let allFilaments = null;
@@ -2509,6 +2512,7 @@ async function ensureFieldDefs() {
     spoolFieldDefs = [];
   }
   try {
+    await cnEnsureField();
     filamentFieldDefs = await api(SP + '/field/filament');
   } catch (e) {
     filamentFieldDefs = [];
@@ -2617,6 +2621,7 @@ async function openSpoolDetail(spoolId) {
   document.getElementById('sd-fil-material').value = f.material || '';
   document.getElementById('sd-fil-vendor').value = f.vendor ? f.vendor.name : '';
     document.getElementById('sd-fil-article').value = f.article_number || '';
+      document.getElementById('sd-fil-colorname').value = cnGet(f);
   document.getElementById('sd-fil-color').value = f.color_hex || '';
   const sdMultiHexes = f.multi_color_hexes ? f.multi_color_hexes.split(',').map(x => x.trim()).filter(Boolean) : [];
   if (sdMultiHexes.length >= 2) {
@@ -2684,6 +2689,7 @@ document.getElementById('spool-detail-save').addEventListener('click', async () 
         name: document.getElementById('sd-fil-name').value || null,
         material: document.getElementById('sd-fil-material').value || null,
         article_number: document.getElementById('sd-fil-article').value.trim() || null,
+        extra: cnExtra(spool.filament, document.getElementById('sd-fil-colorname').value),
         color_hex: (sdColorMode === 'multi' && sdMcHexesOut.length >= 2) ? null : (document.getElementById('sd-fil-color').value || null),
         multi_color_hexes: (sdColorMode === 'multi' && sdMcHexesOut.length >= 2) ? sdMcHexesOut.join(',') : null,
         multi_color_direction: (sdColorMode === 'multi' && sdMcHexesOut.length >= 2) ? document.getElementById('sd-fil-multi-direction').value : null,
@@ -2985,6 +2991,7 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
         name: name,
         material: material,
         article_number: document.getElementById('ns-fil-article').value.trim() || null,
+      extra: cnExtra(null, document.getElementById('ns-fil-colorname').value),
         diameter: diameter,
         density: density,
         vendor_id: vendorId || null,
@@ -5127,7 +5134,7 @@ function donut(items,colorFn,valFn){
 function lab(list,fn){ return list.map(function(x){ return {label:fn(x),count:x.count,grams:x.grams,key:x.key}; }); }
 function typeDonut(o){ return donut(lab(o.by_type,function(x){return nm(x.key);}),function(x,i){return COL[i%COL.length];},function(x){return x.count;}); }
 function vendorDonut(o){ return donut(lab(o.by_vendor,function(x){return nm(x.key);}),function(x,i){return COL[i%COL.length];},function(x){return x.count;}); }
-var _uc=String.fromCharCode; var CPAL=[['000000','Schwarz','Black'],['FFFFFF','Wei'+_uc(223),'White'],['808080','Grau','Gray'],['C0C0C0','Hellgrau','Light gray'],['303030','Dunkelgrau','Dark gray'],['FF0000','Rot','Red'],['8B0000','Dunkelrot','Dark red'],['FF7F32','Orange','Orange'],['FFFF00','Gelb','Yellow'],['00A000','Gr'+_uc(252)+'n','Green'],['006400','Dunkelgr'+_uc(252)+'n','Dark green'],['90EE90','Hellgr'+_uc(252)+'n','Light green'],['00FFFF','T'+_uc(252)+'rkis','Cyan'],['0000FF','Blau','Blue'],['000080','Dunkelblau','Dark blue'],['ADD8E6','Hellblau','Light blue'],['800080','Lila','Purple'],['FF69B4','Pink','Pink'],['8B4513','Braun','Brown'],['F5F5DC','Beige','Beige'],['D2B48C','Sand','Tan'],['FFD700','Gold','Gold']]; function cname(k){ var h=String(k).replace('#',''); var r=parseInt(h.substr(0,2),16),g=parseInt(h.substr(2,2),16),b=parseInt(h.substr(4,2),16); if(isNaN(r)||isNaN(g)||isNaN(b)) return '#'+h; var best=null,bd=1e9; CPAL.forEach(function(p){ var pr=parseInt(p[0].substr(0,2),16),pg=parseInt(p[0].substr(2,2),16),pb=parseInt(p[0].substr(4,2),16); var d=(r-pr)*(r-pr)+(g-pg)*(g-pg)+(b-pb)*(b-pb); if(d<bd){bd=d;best=p;} }); return T(best[1],best[2]); } function colorDonut(o){ var m={},a=[]; (o.by_color||[]).forEach(function(x){ var n=(x.key==='?'||x.key==null)?'-':cname(x.key); if(m[n]){m[n].count+=x.count;m[n].grams+=(x.grams||0);}else{m[n]={label:n,count:x.count,grams:(x.grams||0),key:x.key};a.push(m[n]);} }); a.sort(function(p,q){return q.count-p.count;}); return donut(a,function(x){return hex(x.key);},function(x){return x.count;}); }
+function colorDonut(o){ var a=(o.by_color||[]).map(function(x){ var nm=(x.key==='?'||x.key==null)?'-':String(x.key); nm=nm.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); return {label:nm,count:x.count,grams:x.grams||0,key:x.color_hex||'?'}; }); return donut(a,function(x){return hex(x.key);},function(x){return x.count;}); }
 function bars(series){
   var mx=1,i,h='<div class="st-bars">';
   for(i=0;i<series.length;i++) if(series[i].grams>mx) mx=series[i].grams;
@@ -5224,6 +5231,7 @@ document.addEventListener('change',function(ev){
 loadOv(); loadPage();
 })();
 </script>
+<script>(function(){function f(){var en=(typeof currentLang!=='undefined'&&currentLang==='en');['cn-lbl-sd','cn-lbl-ns'].forEach(function(id){var e=document.getElementById(id);if(e)e.textContent=en?'Color name':'Farbname';});var p=document.getElementById('ns-fil-colorname');if(p)p.placeholder=en?'e.g. Light blue':'z.B. Hellblau';} f(); document.addEventListener('click',function(){setTimeout(f,50);},true);})();</script>
 </body>
 </html>
 

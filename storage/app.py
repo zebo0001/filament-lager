@@ -115,6 +115,196 @@ def init_db():
 init_db()
 
 
+# ---------------- Statistik (Verlauf ab Einfuehrung) ----------------
+import asyncio
+import datetime as _dt
+
+
+def stats_init():
+    with db() as conn:
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS stats_snapshots (
+                day TEXT NOT NULL, spool_id INTEGER NOT NULL,
+                used REAL, remaining REAL, initial REAL,
+                PRIMARY KEY (day, spool_id))"""
+        )
+        conn.execute(
+            """CREATE TABLE IF NOT EXISTS usage_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts TEXT NOT NULL, day TEXT NOT NULL, spool_id INTEGER,
+                grams REAL, material TEXT, color_hex TEXT, vendor TEXT,
+                name TEXT, cost REAL, source TEXT, print_name TEXT)"""
+        )
+
+
+stats_init()
+
+
+def _spool_price(s):
+    f = s.get("filament") or {}
+    p = s.get("price")
+    if p is None:
+        p = f.get("price")
+    return float(p) if p else None
+
+
+def _spool_initial(s):
+    f = s.get("filament") or {}
+    v = s.get("initial_weight") or f.get("weight")
+    return float(v) if v else None
+
+
+def _log_usage(spool, grams, source=None, print_name=None):
+    try:
+        f = spool.get("filament") or {}
+        price = _spool_price(spool)
+        init = _spool_initial(spool)
+        cost = round(grams * price / init, 4) if price and init else None
+        now = _dt.datetime.now()
+        with db() as conn:
+            conn.execute(
+                "INSERT INTO usage_log (ts, day, spool_id, grams, material, color_hex, vendor, name, cost, source, print_name) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (now.isoformat(timespec="seconds"), now.date().isoformat(), spool.get("id"), grams,
+                 f.get("material"), f.get("color_hex"), (f.get("vendor") or {}).get("name"),
+                 f.get("name"), cost, source or "manual", print_name),
+            )
+    except Exception as exc:
+        print("usage_log failed:", exc)
+
+
+async def _snapshot_once():
+    async with httpx.AsyncClient(timeout=15) as client:
+        resp = await client.get(f"{SPOOLMAN_URL}/spool", params={"allow_archived": "true"})
+        resp.raise_for_status()
+        spools = resp.json()
+    day = _dt.date.today().isoformat()
+    with db() as conn:
+        for s in spools:
+            conn.execute(
+                "INSERT OR REPLACE INTO stats_snapshots (day, spool_id, used, remaining, initial) VALUES (?,?,?,?,?)",
+                (day, s.get("id"), s.get("used_weight"), s.get("remaining_weight"), _spool_initial(s)),
+            )
+
+
+async def _snapshot_loop():
+    while True:
+        try:
+            await _snapshot_once()
+        except Exception as exc:
+            print("snapshot failed:", exc)
+        await asyncio.sleep(3600)
+
+
+@app.on_event("startup")
+async def _stats_startup():
+    asyncio.create_task(_snapshot_loop())
+
+
+@app.get("/stats")
+async def get_stats(days: int = 30):
+    days = max(1, min(days, 365))
+    async with httpx.AsyncClient(timeout=15) as client:
+        try:
+            resp = await client.get(f"{SPOOLMAN_URL}/spool", params={"allow_archived": "true"})
+            resp.raise_for_status()
+            spools = resp.json()
+        except Exception:
+            raise HTTPException(502, "Spoolman nicht erreichbar")
+    active = [s for s in spools if not s.get("archived")]
+    by_type, by_vendor, by_color = {}, {}, {}
+    total_rem = total_init = stock_value = 0.0
+    low, warn_n, crit_n, empty_n = [], 0, 0, 0
+    for s in active:
+        f = s.get("filament") or {}
+        rem = float(s.get("remaining_weight") or 0)
+        init = _spool_initial(s) or 0
+        mat = f.get("material") or "?"
+        ven = (f.get("vendor") or {}).get("name") or "?"
+        col = (f.get("color_hex") or "").lstrip("#").lower() or "?"
+        for d, k in ((by_type, mat), (by_vendor, ven), (by_color, col)):
+            e = d.setdefault(k, {"key": k, "count": 0, "grams": 0.0})
+            e["count"] += 1
+            e["grams"] += rem
+        total_rem += rem
+        total_init += init
+        price = _spool_price(s)
+        if price and init:
+            stock_value += price * min(rem / init, 1)
+        pct = (rem / init * 100) if init else None
+        if rem <= 0:
+            empty_n += 1
+        if pct is not None and pct < 10:
+            crit_n += 1
+        elif pct is not None and pct < 25:
+            warn_n += 1
+        if pct is not None and pct < 25:
+            low.append({"id": s.get("id"), "name": f.get("name"), "material": mat, "vendor": ven,
+                        "color_hex": f.get("color_hex"), "remaining": round(rem), "percent": round(pct),
+                        "level": "critical" if pct < 10 else "warning"})
+    low.sort(key=lambda x: x["percent"])
+    since = (_dt.date.today() - _dt.timedelta(days=days - 1)).isoformat()
+    with db() as conn:
+        logs = [dict(r) for r in conn.execute("SELECT * FROM usage_log WHERE day >= ? ORDER BY ts", (since,)).fetchall()]
+        first = conn.execute("SELECT MIN(day) m FROM usage_log").fetchone()["m"]
+        snap_first = conn.execute("SELECT MIN(day) m FROM stats_snapshots").fetchone()["m"]
+        all_cost = conn.execute("SELECT COALESCE(SUM(cost),0) c, COALESCE(SUM(grams),0) g FROM usage_log").fetchone()
+    per_day, per_mat, prints = {}, {}, {}
+    used_total = cost_total = 0.0
+    for r in logs:
+        g = r["grams"] or 0
+        used_total += g
+        cost_total += r["cost"] or 0
+        per_day[r["day"]] = per_day.get(r["day"], 0) + g
+        m = per_mat.setdefault(r["material"] or "?", {"key": r["material"] or "?", "grams": 0.0, "cost": 0.0})
+        m["grams"] += g
+        m["cost"] += r["cost"] or 0
+        if r["print_name"]:
+            p = prints.setdefault((r["print_name"], r["day"]), {"name": r["print_name"], "day": r["day"], "grams": 0.0, "cost": 0.0})
+            p["grams"] += g
+            p["cost"] += r["cost"] or 0
+    series = []
+    for i in range(days):
+        d = (_dt.date.today() - _dt.timedelta(days=days - 1 - i)).isoformat()
+        series.append({"day": d, "grams": round(per_day.get(d, 0), 1)})
+    hist_days = 0
+    if first:
+        hist_days = (_dt.date.today() - _dt.date.fromisoformat(first)).days + 1
+    window = max(1, min(days, hist_days)) if hist_days else 0
+    forecast = []
+    if window:
+        for k, e in sorted(by_type.items()):
+            used = per_mat.get(k, {}).get("grams", 0)
+            daily = used / window
+            forecast.append({"material": k, "remaining": round(e["grams"]), "daily": round(daily, 1),
+                             "days_left": round(e["grams"] / daily) if daily > 0 else None})
+    daily_all = used_total / window if window else 0
+    return {
+        "overview": {
+            "spools": len(active), "archived": len(spools) - len(active),
+            "remaining_kg": round(total_rem / 1000, 2), "initial_kg": round(total_init / 1000, 2),
+            "stock_value": round(stock_value, 2), "warning": warn_n, "critical": crit_n, "empty": empty_n,
+            "by_type": sorted(by_type.values(), key=lambda x: -x["count"]),
+            "by_vendor": sorted(by_vendor.values(), key=lambda x: -x["count"]),
+            "by_color": sorted(by_color.values(), key=lambda x: -x["count"]),
+            "low": low,
+        },
+        "consumption": {
+            "days": days, "total_g": round(used_total, 1), "per_day": series,
+            "by_material": sorted(per_mat.values(), key=lambda x: -x["grams"]),
+            "history_since": first or snap_first, "history_days": hist_days,
+            "avg_daily_g": round(daily_all, 1),
+        },
+        "prints": sorted(prints.values(), key=lambda x: x["day"], reverse=True)[:50],
+        "cost": {
+            "stock_value": round(stock_value, 2), "period_cost": round(cost_total, 2),
+            "total_cost": round(all_cost["c"], 2), "total_g": round(all_cost["g"], 1),
+            "by_material": [{"key": m["key"], "cost": round(m["cost"], 2), "grams": round(m["grams"], 1)} for m in sorted(per_mat.values(), key=lambda x: -x["cost"])],
+        },
+        "forecast": forecast,
+    }
+# ---------------- Ende Statistik ----------------
+
+
 class UnitCreate(BaseModel):
     name: str
     type: str
@@ -149,6 +339,8 @@ class SlotAssign(BaseModel):
 
 
 class SpoolUseRequest(BaseModel):
+    source: Optional[str] = None
+    print_name: Optional[str] = None
     grams: float
 
 
@@ -427,7 +619,9 @@ async def use_spool(spool_id: int, body: SpoolUseRequest):
             raise HTTPException(e.response.status_code, "Spoolman: Buchung fehlgeschlagen")
         except Exception:
             raise HTTPException(502, "Spoolman nicht erreichbar")
-    return resp.json()
+    _spool = resp.json()
+    _log_usage(_spool, body.grams, getattr(body, "source", None), getattr(body, "print_name", None))
+    return _spool
 
 
 @app.put("/slots/{slot_id}")

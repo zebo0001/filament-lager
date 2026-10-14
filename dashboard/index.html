@@ -502,6 +502,7 @@ main>.panel.active{display:block;}
 <div class="stat"><div class="num" id="stat-weight">&ndash;</div><div class="label" data-i18n="ov.remainingTotal">Rest gesamt</div></div>
 <div class="stat"><div class="num warn-color" id="stat-low">&ndash;</div><div class="label" data-i18n="ov.almostEmpty">Fast leer (&lt;100g)</div></div>
 </div>
+<div id="ov-stats"></div>
 </div>
 
 <div class="panel new-spool-panel" data-panel="new-spool" id="new-spool-panel">
@@ -683,7 +684,8 @@ main>.panel.active{display:block;}
 </div>
 <div class="panel" data-panel="statistics">
   <h2>Statistik</h2>
-  <p class="hint">Grundgeruest - Datenanbindung folgt.</p>
+  <div id="stats-tabs"></div>
+  <div id="stats-body"><p class="hint">...</p></div>
 </div>
 </main>
 </div>
@@ -4675,6 +4677,37 @@ function ldWireProps(el) {
 .pw-child-wrap{margin-top:10px;padding-left:16px;border-left:2px solid var(--accent,#38bdf8);display:flex;flex-direction:column;gap:8px;}
 .pw-child-wrap .device-card{opacity:.95;transform:scale(.97);transform-origin:top left;}
 .pw-child-label{font-size:.72rem;color:var(--accent,#38bdf8);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 2px 2px;}
+.st-tabs{display:flex;gap:6px;margin:12px 0;flex-wrap:wrap;align-items:center}
+.st-tab{padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:var(--card);color:var(--muted);cursor:pointer;font-size:.9rem}
+.st-tab.active{background:var(--accent);color:#0f172a;border-color:var(--accent);font-weight:600}
+.st-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:12px 0}
+.st-kpi{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px}
+.st-kpi .v{font-size:1.5rem;font-weight:700;color:var(--text)}
+.st-kpi .v.danger-color{color:var(--danger)}
+.st-kpi .v.warn-color{color:var(--warn)}
+.st-kpi .l{color:var(--muted);font-size:.8rem;margin-top:2px}
+.st-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px}
+.st-card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px}
+.st-card.wide{grid-column:1/-1}
+.st-card h3{margin:0 0 10px;font-size:.9rem;color:var(--muted);font-weight:600}
+.st-donut-wrap{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.st-legend{font-size:.82rem;display:flex;flex-direction:column;gap:4px;color:var(--text)}
+.st-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;flex:none;border:1px solid rgba(255,255,255,.25)}
+.st-bars{display:flex;align-items:flex-end;gap:2px;height:110px}
+.st-bar{flex:1;background:var(--accent);border-radius:2px 2px 0 0;min-height:1px;opacity:.85}
+.st-axis{display:flex;justify-content:space-between;color:var(--muted);font-size:.75rem;margin-top:4px}
+.st-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.st-table th{color:var(--muted);text-align:left;font-weight:600;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.st-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--text)}
+.st-table td.r,.st-table th.r{text-align:right}
+.st-empty{color:var(--muted);padding:12px;border:1px dashed rgba(255,255,255,.15);border-radius:10px;font-size:.88rem}
+.st-low{display:flex;flex-direction:column;gap:6px}
+.st-low-row{display:flex;align-items:center;font-size:.85rem;color:var(--text);cursor:pointer;gap:2px}
+.st-low-row .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-low-row .p{color:var(--warn);margin-left:8px;white-space:nowrap}
+.st-low-row.critical .p{color:var(--danger)}
+.st-hint{color:var(--muted);font-size:.8rem;margin:6px 0}
+.st-sel{width:auto;background:var(--bg2);color:var(--text);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 8px;margin-left:auto}
 </style>
 
 
@@ -5067,6 +5100,130 @@ function ldWireProps(el) {
 })();
 </script>
 
+<script>
+(function(){
+var COL=['#38bdf8','#a78bfa','#34d399','#fbbf24','#f87171','#fb923c','#2dd4bf','#e879f9','#94a3b8'];
+var D=null, days=30, tab='overview';
+try{ tab=localStorage.getItem('lager_stats_tab')||'overview'; }catch(e){}
+function T(de,en){ return currentLang==='en'?en:de; }
+function E(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function eur(v){ var s=(v||0).toFixed(2); if(currentLang!=='en') s=s.replace('.',','); return s+' &euro;'; }
+function hex(c){ if(c==null||c==='?'||c==='') return '#94a3b8'; return c.charAt(0)==='#'?c:'#'+c; }
+function nm(k){ return k==='?'?'-':k; }
+function kpi(v,l,cls){ return '<div class="st-kpi"><div class="v '+(cls||'')+'">'+v+'</div><div class="l">'+l+'</div></div>'; }
+function donut(items,colorFn,valFn){
+  var tot=0,i; items=items.slice(0,8);
+  for(i=0;i<items.length;i++) tot+=valFn(items[i]);
+  if(tot<=0) return '<div class="st-empty">'+T('Keine Daten','No data')+'</div>';
+  var C=2*Math.PI*40, acc=0, segs='', leg='';
+  for(i=0;i<items.length;i++){
+    var v=valFn(items[i]), len=v/tot*C, c=colorFn(items[i],i);
+    segs+='<circle r="40" cx="60" cy="60" fill="none" stroke="'+c+'" stroke-width="18" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-acc).toFixed(2)+'" transform="rotate(-90 60 60)"/>';
+    acc+=len;
+    leg+='<div><span class="st-dot" style="background:'+c+'"></span>'+E(items[i].label)+' <b>'+v+'</b></div>';
+  }
+  return '<div class="st-donut-wrap"><svg viewBox="0 0 120 120" width="120" height="120">'+segs+'<text x="60" y="66" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700">'+tot+'</text></svg><div class="st-legend">'+leg+'</div></div>';
+}
+function lab(list,fn){ return list.map(function(x){ return {label:fn(x),count:x.count,grams:x.grams,key:x.key}; }); }
+function typeDonut(o){ return donut(lab(o.by_type,function(x){return nm(x.key);}),function(x,i){return COL[i%COL.length];},function(x){return x.count;}); }
+function vendorDonut(o){ return donut(lab(o.by_vendor,function(x){return nm(x.key);}),function(x,i){return COL[i%COL.length];},function(x){return x.count;}); }
+function colorDonut(o){ return donut(lab(o.by_color,function(x){return x.key==='?'?'-':'#'+x.key;}),function(x){return hex(x.key);},function(x){return x.count;}); }
+function bars(series){
+  var mx=1,i,h='<div class="st-bars">';
+  for(i=0;i<series.length;i++) if(series[i].grams>mx) mx=series[i].grams;
+  for(i=0;i<series.length;i++) h+='<div class="st-bar" title="'+series[i].day+': '+series[i].grams+' g" style="height:'+Math.max(1,series[i].grams/mx*100)+'%"></div>';
+  return h+'</div><div class="st-axis"><span>'+series[0].day.slice(5)+'</span><span>'+series[series.length-1].day.slice(5)+'</span></div>';
+}
+function lowList(low,max){
+  if(low.length===0) return '<div class="st-empty">'+T('Keine Spule unter 25 %','No spool below 25%')+'</div>';
+  var h='<div class="st-low">',i,s;
+  for(i=0;i<low.length&&i<max;i++){
+    s=low[i];
+    h+='<div class="st-low-row '+s.level+'" data-goto="spools"><span class="st-dot" style="background:'+hex(s.color_hex)+'"></span><span class="n">#'+s.id+' '+E(s.vendor)+' '+E(s.name)+' ('+E(s.material)+')</span><span class="p">'+s.remaining+' g &middot; '+s.percent+' %</span></div>';
+  }
+  return h+'</div>';
+}
+function table(heads,rows){
+  var h='<table class="st-table"><tr>',i,j;
+  for(i=0;i<heads.length;i++) h+='<th'+(i>0?' class="r"':'')+'>'+heads[i]+'</th>';
+  h+='</tr>';
+  for(i=0;i<rows.length;i++){ h+='<tr>'; for(j=0;j<rows[i].length;j++) h+='<td'+(j>0?' class="r"':'')+'>'+rows[i][j]+'</td>'; h+='</tr>'; }
+  return h+'</table>';
+}
+function typeRows(list){ return list.map(function(x){ return [E(nm(x.key)),x.count,Math.round(x.grams)+' g']; }); }
+function noData(){ return '<div class="st-empty">'+T('Noch keine Verbrauchsdaten.','No usage data yet.')+'</div>'; }
+function renderOv(d){
+  var el=document.getElementById('ov-stats'); if(el==null) return;
+  var o=d.overview, c=d.consumption, low=o.warning+o.critical;
+  var h='<div class="st-kpis">'+kpi(o.spools,T('Spulen aktiv','Active spools'))+kpi(o.remaining_kg.toFixed(1)+' kg',T('Restbestand','Remaining'))+kpi(eur(o.stock_value),T('Bestandswert','Stock value'))+kpi(low,T('Niedrig (&lt;25 %)','Low (&lt;25%)'),o.critical>0?'danger-color':(low>0?'warn-color':''))+'</div>';
+  h+='<div class="st-grid"><div class="st-card"><h3>'+T('Nach Typ','By type')+'</h3>'+typeDonut(o)+'</div>';
+  h+='<div class="st-card"><h3>'+T('Niedriger Bestand','Low stock')+'</h3>'+lowList(o.low,6)+'</div>';
+  if(c.history_days>0&&c.total_g>0) h+='<div class="st-card wide"><h3>'+T('Verbrauch letzte 30 Tage','Usage, last 30 days')+' &middot; '+Math.round(c.total_g)+' g</h3>'+bars(c.per_day)+'</div>';
+  el.innerHTML=h+'</div>';
+}
+function tabsBar(){
+  var names=[['overview',T('&Uuml;bersicht','Overview')],['stock',T('Bestand','Stock')],['cost',T('Kosten','Costs')],['usage',T('Verbrauch / Drucke / Prognose','Usage / Prints / Forecast')]];
+  var h='<div class="st-tabs">',i;
+  for(i=0;i<names.length;i++) h+='<button type="button" class="st-tab'+(tab===names[i][0]?' active':'')+'" data-sttab="'+names[i][0]+'">'+names[i][1]+'</button>';
+  if(tab==='usage'||tab==='cost'){
+    h+='<select class="st-sel" id="st-days">';
+    [7,30,90,365].forEach(function(n){ h+='<option value="'+n+'"'+(n===days?' selected':'')+'>'+n+' '+T('Tage','days')+'</option>'; });
+    h+='</select>';
+  }
+  return h+'</div>';
+}
+function histHint(c){
+  if(c.history_days>0) return '<div class="st-hint">'+T('Verlauf seit ','History since ')+c.history_since+'</div>';
+  return '<div class="st-hint">'+T('Der Verlauf wird seit Einf&uuml;hrung der Statistik mitgeschrieben &ndash; es gibt noch keine Buchungen.','History is recorded since statistics were introduced &ndash; no bookings yet.')+'</div>';
+}
+function renderPage(){
+  var el=document.getElementById('stats-body'), tb=document.getElementById('stats-tabs');
+  if(el==null||D==null) return;
+  tb.innerHTML=tabsBar();
+  var o=D.overview, c=D.consumption, k=D.cost, h='';
+  if(tab==='overview'){
+    h+='<div class="st-kpis">'+kpi(o.spools,T('Spulen aktiv','Active spools'))+kpi(o.remaining_kg.toFixed(2)+' kg',T('Restbestand','Remaining'))+kpi(eur(o.stock_value),T('Bestandswert','Stock value'))+kpi(o.warning,T('Warnung (&lt;25 %)','Warning (&lt;25%)'),o.warning>0?'warn-color':'')+kpi(o.critical,T('Kritisch (&lt;10 %)','Critical (&lt;10%)'),o.critical>0?'danger-color':'')+kpi(o.empty,T('Leer','Empty'))+kpi(o.archived,T('Archiviert','Archived'))+'</div>';
+    h+='<div class="st-grid"><div class="st-card"><h3>'+T('Nach Typ','By type')+'</h3>'+typeDonut(o)+'</div><div class="st-card"><h3>'+T('Nach Hersteller','By manufacturer')+'</h3>'+vendorDonut(o)+'</div><div class="st-card"><h3>'+T('Nach Farbe','By colour')+'</h3>'+colorDonut(o)+'</div></div>';
+  } else if(tab==='stock'){
+    h+='<div class="st-grid"><div class="st-card"><h3>'+T('Nach Typ','By type')+'</h3>'+table([T('Typ','Type'),T('Spulen','Spools'),T('Rest','Left')],typeRows(o.by_type))+'</div>';
+    h+='<div class="st-card"><h3>'+T('Nach Hersteller','By manufacturer')+'</h3>'+table([T('Hersteller','Manufacturer'),T('Spulen','Spools'),T('Rest','Left')],typeRows(o.by_vendor))+'</div>';
+    h+='<div class="st-card wide"><h3>'+T('Niedriger Bestand','Low stock')+'</h3>'+lowList(o.low,50)+'</div></div>';
+  } else if(tab==='cost'){
+    h+='<div class="st-kpis">'+kpi(eur(k.stock_value),T('Wert Restbestand','Stock value'))+kpi(eur(k.period_cost),T('Verbrauchskosten im Zeitraum','Cost in period'))+kpi(eur(k.total_cost),T('Kosten seit Aufzeichnung','Cost since recording'))+kpi(Math.round(k.total_g)+' g',T('Verbraucht seit Aufzeichnung','Used since recording'))+'</div>'+histHint(c);
+    h+='<div class="st-card"><h3>'+T('Kosten nach Material','Cost by material')+'</h3>';
+    h+=k.by_material.length?table([T('Material','Material'),T('Menge','Amount'),T('Kosten','Cost')],k.by_material.map(function(x){return [E(x.key),Math.round(x.grams)+' g',eur(x.cost)];})):noData();
+    h+='</div>';
+  } else {
+    h+=histHint(c)+'<div class="st-grid"><div class="st-card wide"><h3>'+T('Verbrauch pro Tag','Usage per day')+' &middot; '+Math.round(c.total_g)+' g &middot; &oslash; '+c.avg_daily_g+' g/'+T('Tag','day')+'</h3>'+(c.total_g>0?bars(c.per_day):noData())+'</div>';
+    h+='<div class="st-card"><h3>'+T('Verbrauch nach Material','Usage by material')+'</h3>'+(c.by_material.length?table([T('Material','Material'),T('Menge','Amount')],c.by_material.map(function(x){return [E(x.key),Math.round(x.grams)+' g'];})):'<div class="st-empty">-</div>')+'</div>';
+    h+='<div class="st-card"><h3>'+T('Prognose Reichweite','Forecast')+'</h3>'+(D.forecast.length?table([T('Material','Material'),T('Rest','Left'),'g/'+T('Tag','day'),T('Reicht ca.','Lasts approx.')],D.forecast.map(function(x){return [E(x.material),x.remaining+' g',x.daily,x.days_left==null?'-':x.days_left+' '+T('Tage','days')];})):'<div class="st-empty">'+T('Prognose ab dem ersten Verbrauch.','Forecast after first usage.')+'</div>')+'</div>';
+    h+='<div class="st-card wide"><h3>'+T('Drucke','Prints')+'</h3>'+(D.prints.length?table([T('Datum','Date'),T('Druck','Print'),T('Menge','Amount'),T('Kosten','Cost')],D.prints.map(function(x){return [x.day,E(x.name),Math.round(x.grams)+' g',eur(x.cost)];})):'<div class="st-empty">'+T('Noch keine Drucke aufgezeichnet &ndash; Eintr&auml;ge entstehen, sobald die Anycubic-Bridge einen Druck bucht.','No prints recorded yet &ndash; entries appear once the Anycubic bridge books a print.')+'</div>')+'</div></div>';
+  }
+  el.innerHTML=h;
+}
+function stFetch(n){ return api(ST+'/stats?days='+n); }
+function loadOv(){ stFetch(30).then(renderOv).catch(function(){}); }
+function loadPage(){
+  stFetch(days).then(function(d){ D=d; renderPage(); }).catch(function(){
+    var el=document.getElementById('stats-body');
+    if(el) el.innerHTML='<div class="st-empty">'+T('Statistik nicht verf&uuml;gbar','Statistics unavailable')+'</div>';
+  });
+}
+document.addEventListener('click',function(ev){
+  var t=ev.target; if(t==null||t.closest==null) return;
+  var b=t.closest('[data-sttab]');
+  if(b){ tab=b.getAttribute('data-sttab'); try{ localStorage.setItem('lager_stats_tab',tab); }catch(e){} renderPage(); return; }
+  var g=t.closest('[data-goto]');
+  if(g){ var nb=document.querySelector('[data-nav-target="'+g.getAttribute('data-goto')+'"]'); if(nb) nb.click(); return; }
+  var n=t.closest('[data-nav-target]');
+  if(n){ var id=n.getAttribute('data-nav-target'); if(id==='statistics') loadPage(); if(id==='overview') loadOv(); }
+});
+document.addEventListener('change',function(ev){
+  if(ev.target&&ev.target.id==='st-days'){ days=parseInt(ev.target.value,10)||30; loadPage(); }
+});
+loadOv(); loadPage();
+})();
+</script>
 </body>
 </html>
 

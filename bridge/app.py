@@ -290,11 +290,14 @@ class MappingPayload(BaseModel):
 
 # -------------------------------------------------------------------- poll --
 
+_CUR_PRINT = {"name": None}
+
+
 async def book_usage(session: aiohttp.ClientSession, spool_id: int, grams: float) -> bool:
     try:
         async with session.post(
             f"{STORAGE_BASE_URL}/spools/{spool_id}/use",
-            json={"grams": grams},
+            json={"grams": grams, "source": "bridge", "print_name": _CUR_PRINT.get("name")},
             timeout=aiohttp.ClientTimeout(total=10),
         ) as resp:
             if resp.status >= 400:
@@ -535,6 +538,7 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
     if delta_mm <= 0:
         return
 
+    _CUR_PRINT["name"] = getattr(printer, "latest_project_name", None)
     # Aktiven Slot ermitteln (ueber alle ACE-Boxen des Druckers).
     boxes = [
         b for b in (

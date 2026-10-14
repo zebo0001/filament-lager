@@ -5206,7 +5206,20 @@ function renderPage(){
     h+='<div class="st-card"><h3>'+T('Prognose Reichweite','Forecast')+'</h3>'+(D.forecast.length?table([T('Material','Material'),T('Rest','Left'),'g/'+T('Tag','day'),T('Reicht ca.','Lasts approx.')],D.forecast.map(function(x){return [E(x.material),x.remaining+' g',x.daily,x.days_left==null?'-':x.days_left+' '+T('Tage','days')];})):'<div class="st-empty">'+T('Prognose ab dem ersten Verbrauch.','Forecast after first usage.')+'</div>')+'</div>';
     h+='<div class="st-card wide"><h3>'+T('Drucke','Prints')+'</h3>'+(D.prints.length?table([T('Datum','Date'),T('Druck','Print'),T('Menge','Amount'),T('Kosten','Cost')],D.prints.map(function(x){return [x.day,E(x.name),Math.round(x.grams)+' g',eur(x.cost)];})):'<div class="st-empty">'+T('Noch keine Drucke aufgezeichnet &ndash; Eintr&auml;ge entstehen, sobald die Anycubic-Bridge einen Druck bucht.','No prints recorded yet &ndash; entries appear once the Anycubic bridge books a print.')+'</div>')+'</div></div>';
   }
-  el.innerHTML=h;
+  el.innerHTML=h; stPrintHist();
+}
+function stPrintHist(){
+  if(['overview','stock','cost'].indexOf(tab)>=0) return;
+  var el=document.getElementById('stats-body'); if(!el) return;
+  api(ST+'/prints?limit=1').then(function(d){
+    if(!d||!d.total||!d.total.n) return;
+    if(['overview','stock','cost'].indexOf(tab)>=0) return;
+    var bk=0,nn=0,sk=0;
+    (d.states||[]).forEach(function(s){ if(s.state==='booked')bk=s.n; else if(s.state==='none')nn=s.n; else if(s.state==='skipped')sk=s.n; });
+    var rows=d.per_printer.map(function(p){return [E(String(p.printer||'-').replace('Anycubic ','')),p.n,Math.round(p.g)+' g',Math.round(p.d/60)+' h'];});
+    var h='<div class="st-card wide"><h3>'+T('Druckhistorie (Cloud)','Print history (cloud)')+'</h3>'+table([T('Drucker','Printer'),T('Drucke','Prints'),T('Gewicht','Weight'),T('Druckzeit','Print time')],rows)+'<p class="hint">'+T('Abgezogen','Deducted')+': '+bk+' &middot; '+T('Keine Zuordnung','Unassigned')+': '+nn+' &middot; '+T('Ohne Abzug','No deduction')+': '+sk+'</p></div>';
+    var g=el.querySelector('.st-grid'); if(g) g.insertAdjacentHTML('beforeend',h);
+  }).catch(function(){});
 }
 function stFetch(n){ return api(ST+'/stats?days='+n); }
 function loadOv(){ stFetch(30).then(renderOv).catch(function(){}); }

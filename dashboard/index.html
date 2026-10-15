@@ -295,6 +295,9 @@
   .printer-illo.error { color: #ef4444; }
   .printer-illo-head { transform-box: fill-box; transform-origin: center; }
   .printer-illo.busy .printer-illo-head { animation: printerHeadMove 2.6s ease-in-out infinite; }
+  .printer-illo .pv-head { transform-box: view-box; }
+  @keyframes pvHeadSweep { 0%, 100% { transform: translateX(-44px); } 50% { transform: translateX(44px); } }
+  .printer-illo.busy .pv-head { animation: pvHeadSweep 3.2s ease-in-out infinite; }
   .printer-illo.busy .printer-illo-led { animation: printerLedPulse 1.1s ease-in-out infinite; }
   @keyframes printerHeadMove { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(26px); } }
   @keyframes printerLedPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
@@ -3131,8 +3134,8 @@ function buildPrinterIllustration(p, statusCls) {
     '<rect x="56" y="160" width="128" height="8" rx="2" fill="#3a475c"/>' +
     '<g style="transition:transform .8s ease" transform="translate(0,' + (-Math.round(shown * 0.8)) + ')">' +
     '<rect x="53" y="140" width="134" height="6" rx="2" fill="#2f3b50"/>' +
-    '<rect x="106" y="130" width="28" height="22" rx="3" fill="currentColor"/>' +
-    '<polygon points="116,152 124,152 120,158" fill="#cbd5e1"/></g></svg>';
+    '<g class="pv-head"><rect x="106" y="130" width="28" height="22" rx="3" fill="currentColor"/>' +
+    '<polygon points="116,152 124,152 120,158" fill="#cbd5e1"/></g></g></svg>';
   var icoPrinter = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="3" rx="1"/><path d="M6 6v13M18 6v13M3 19h18"/><rect x="10" y="9" width="4" height="3"/></svg>';
   var icoImage = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-8 8"/></svg>';
   var tabs = '<div class="pv-tabs"><button type="button" class="pv-tab' + (view === 'printer' ? ' active' : '') + '" data-pview="printer" data-pid="' + prEsc(pid) + '" title="Drucker">' + icoPrinter + '</button>' +

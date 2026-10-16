@@ -796,13 +796,29 @@ async def poll_loop() -> None:
 
 # -------------------------------------------------------------------- app --
 
+async def print_sync_loop() -> None:
+    """Importiert die Cloud-Druckhistorie periodisch (Standard alle 30 min)."""
+    import os
+    minutes = max(5, int(os.environ.get('PRINT_SYNC_MIN', '30')))
+    await asyncio.sleep(120)
+    while True:
+        try:
+            r = await prints_sync()
+            log.info('auto print sync: %s', r)
+        except Exception as e:
+            log.warning('auto print sync failed: %s', e)
+        await asyncio.sleep(minutes * 60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
     task = asyncio.create_task(poll_loop())
     live_task = asyncio.create_task(live_loop())
+    sync_task = asyncio.create_task(print_sync_loop())
     yield
     task.cancel()
+    sync_task.cancel()
 
 
 app = FastAPI(title="anycubic-bridge", lifespan=lifespan)

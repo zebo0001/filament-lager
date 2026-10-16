@@ -3154,7 +3154,7 @@ function renderPrinterCard(p) {
     boxesHtml = p.boxes.map((box, bi) => {
       const linkedUnit = unitsByPrinterId[String(p.printer_id) + ':' + String(box.box_id)];
       const slots = (box.slots || []).map((slot, si) => {
-        const empty = !slot.sku && !slot.type && !slot.material_name;
+        const empty = !slot.sku && !slot.type && !slot.material_name && !(linkedUnit && linkedUnit.slots && linkedUnit.slots.some(ss => ss.position === si && ss.spool_id));
         const hex = printerSlotColorHex(slot.color);
         const label = empty ? 'leer' : (slot.type || slot.material_name || [slot.material_type, slot.sku].filter(Boolean).join(' \u00b7 ') || 'leer');
         const match = slot.matched_spool_name ? ('<div class="sc-match">&rarr; ' + prEsc(slot.matched_spool_name) + '</div>') : '';

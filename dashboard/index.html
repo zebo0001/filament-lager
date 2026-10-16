@@ -3156,7 +3156,7 @@ function renderPrinterCard(p) {
       const slots = (box.slots || []).map((slot, si) => {
         const empty = !slot.sku && !slot.type && !slot.material_name;
         const hex = printerSlotColorHex(slot.color);
-        const label = slot.type || slot.material_name || 'leer';
+        const label = empty ? 'leer' : (slot.type || slot.material_name || [slot.material_type, slot.sku].filter(Boolean).join(' \u00b7 ') || 'leer');
         const match = slot.matched_spool_name ? ('<div class="sc-match">&rarr; ' + prEsc(slot.matched_spool_name) + '</div>') : '';
         let storInfo = '';
         if (linkedUnit && linkedUnit.slots) {
@@ -3166,12 +3166,28 @@ function renderPrinterCard(p) {
             if (storSpool) storInfo = '<div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Lager: ' + prEsc(spoolLabel(storSpool)) + '</div>';
           }
         }
-        return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
-          '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + '</div>' +
-          match + storInfo +
+        let pctHtml = '';
+      if (!empty && slot.consumables_percent != null) {
+        const pp = Math.round(slot.consumables_percent);
+        let hint = '';
+        const ss2 = linkedUnit && linkedUnit.slots ? linkedUnit.slots.find(x => x.position === si) : null;
+        const sp2 = ss2 && ss2.spool_id ? allSpools.find(x => x.id === ss2.spool_id) : null;
+        if (sp2 && sp2.remaining_weight != null) {
+          const ini = sp2.initial_weight || (sp2.filament && sp2.filament.weight) || 0;
+          if (ini > 0) {
+            const sm = Math.round(sp2.remaining_weight / ini * 100);
+            if (Math.abs(sm - pp) >= 15) hint = ' <span style="color:#e0a030" title="Spoolman: ' + sm + ' %, Drucker: ' + pp + ' %">&#9888; Abweichung (Spoolman ' + sm + ' %)</span>';
+          }
+        }
+        pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker: ' + pp + ' %' + hint + '</div>';
+      }
+      const ldHtml = (box.loaded_slot === si) ? ' <span title="aktuell eingezogen">&#9654;</span>' : '';
+      return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
+          '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + ldHtml + '</div>' +
+          match + storInfo + pctHtml +
         '</div>';
       }).join('');
-      return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + '</div><div class="printer-slots">' + (slots || '<span class="hint">Keine Slot-Daten</span>') + '</div></div>';
+      return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + (box.stale ? ' (letzter Stand)' : '') + '</div><div class="printer-slots">' + (slots || '<span class="hint">Keine Slot-Daten</span>') + '</div></div>';
     }).join('');
   }
   const actions = p.source === 'manual'
@@ -5296,7 +5312,7 @@ function badge(p){
   else if(p.state==='skipped')h+='<span class="pr-badge pr-mut">'+L('Ohne Abzug','No deduction')+'</span>';
   else if(p.state==='guess')h+='<span class="pr-badge" style="color:var(--accent)">'+L('Vermutet','Assumed')+'</span>';
   else h+='<span class="pr-badge pr-warn">'+L('Keine Zuordnung','Unassigned')+'</span>';
-  if(p.status==='failed')h+='<span class="pr-badge pr-bad" title="'+E(p.reason||'')+'">'+L('Fehlgeschlagen','Failed')+'</span>';
+  if(p.status==='running')h='<span class="pr-badge pr-mut">'+L('L\u00e4uft','Running')+'</span>'; else if(p.status==='failed')h+='<span class="pr-badge pr-bad" title="'+E(p.reason||'')+'">'+L('Fehlgeschlagen','Failed')+'</span>';
   if(p.source==='manual')h+='<span class="pr-badge pr-mut">'+L('Manuell','Manual')+'</span>';
   return h;
 }

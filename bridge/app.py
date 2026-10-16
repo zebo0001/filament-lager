@@ -365,7 +365,7 @@ async def _resolve_auth_mode(session, cookie_jar, token, preferred_mode, db=None
 
     for mode in candidates:
         api = AnycubicMQTTAPI(session=session, cookie_jar=cookie_jar, debug_logger=log)
-        api.set_authentication(auth_token=token, auth_mode=mode)
+        api.set_authentication(auth_token=token, auth_mode=mode, auto_pick_token=False)
         try:
             ok = await api.check_api_tokens()
         except Exception as exc:
@@ -401,6 +401,23 @@ async def poll_once(db: aiosqlite.Connection, session: aiohttp.ClientSession) ->
     auth_mode_raw = await get_setting(db, "auth_mode", "web")
     if not token:
         return
+
+    # #557: nur noch den dauerhaften Live-Zustand verarbeiten (keine zweite MQTT-Sitzung)
+    _lp = _live.get("printers")
+    if _lp is None:
+        log.info("poll_once: live_loop noch nicht verbunden - ueberspringe Zyklus.")
+        return
+    for printer in _lp:
+        try:
+            await process_printer(db, session, printer)
+        except Exception:
+            log.exception("Fehler beim Verarbeiten von Drucker %s", getattr(printer, "id", "?"))
+    try:
+        _printers_cache["data"] = await _serialize_printers(_lp)
+        _printers_cache["ts"] = _time507.time()
+    except Exception:
+        log.exception("Cache-Befuellung fehlgeschlagen")
+    return
 
     preferred_mode = (
         AnycubicAuthMode.SLICER if auth_mode_raw == "slicer" else AnycubicAuthMode.WEB
@@ -670,6 +687,97 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
     # groesseren Delta erneut (gleiche Semantik wie zuvor bei Buchungsfehlern).
 
 
+_live: dict = {"printers": None, "ts": 0.0}
+
+
+async def _live_prime(printers) -> None:
+    for _p in printers:
+        try:
+            await _p.update_info_from_api(True)
+        except Exception as exc:
+            log.warning("live REST refresh fehlgeschlagen: %s", exc)
+        try:
+            if str(getattr(_p, "current_status", "")).lower() in ("busy", "printing"):
+                _api = getattr(_p, "_api_parent", None)
+                _proj = await asyncio.wait_for(_api.get_latest_project(printer_id=getattr(_p, "id", None)), timeout=10)
+                if _proj is not None:
+                    _p._latest_project = _proj
+        except Exception:
+            pass
+
+
+async def live_loop() -> None:
+    """Dauerhafte Cloud-Verbindung (#557): MQTT bleibt offen und die Drucker-Objekte
+    bleiben bestehen, damit ACE-Box-0-Ereignisse (feedFilament/Print-Reports)
+    im Zustand akkumulieren - wie bei der HA-Integration."""
+    while True:
+        api = None
+        mqtt_task = None
+        try:
+            db = await get_db()
+            try:
+                enabled = (await get_setting(db, "enabled", "0")) == "1"
+                token = await get_setting(db, "token")
+                raw = await get_setting(db, "auth_mode", "web")
+            finally:
+                await db.close()
+            if not enabled or not token:
+                await asyncio.sleep(30)
+                continue
+            pref = AnycubicAuthMode.SLICER if raw == "slicer" else AnycubicAuthMode.WEB
+            jar = aiohttp.CookieJar()
+            async with aiohttp.ClientSession(cookie_jar=jar) as sess:
+                db = await get_db()
+                try:
+                    api = await _resolve_auth_mode(sess, jar, token, pref, db)
+                finally:
+                    await db.close()
+                if api is None:
+                    log.warning("live_loop: Token ungueltig oder abgelaufen.")
+                    await asyncio.sleep(60)
+                    continue
+                printers = await api.list_my_printers()
+                for _p in printers:
+                    try:
+                        api.mqtt_add_subscribed_printer(_p)
+                    except Exception:
+                        pass
+                mqtt_task = asyncio.create_task(asyncio.to_thread(api.connect_mqtt))
+                await asyncio.wait_for(api.mqtt_wait_for_connect(), timeout=20)
+                await _live_prime(printers)
+                _live["printers"] = printers
+                _live["ts"] = _time507.time()
+                log.info("live_loop: MQTT dauerhaft verbunden (%d Drucker).", len(printers))
+                while True:
+                    await asyncio.sleep(POLL_INTERVAL_SECONDS)
+                    db = await get_db()
+                    try:
+                        cur = await get_setting(db, "token")
+                    finally:
+                        await db.close()
+                    if cur != token or mqtt_task.done():
+                        break
+                    await _live_prime(printers)
+                    _live["ts"] = _time507.time()
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            log.exception("live_loop fehlgeschlagen")
+        finally:
+            _live["printers"] = None
+            if api is not None:
+                try:
+                    api.disconnect_mqtt()
+                except Exception:
+                    pass
+            if mqtt_task is not None:
+                try:
+                    await asyncio.wait_for(mqtt_task, timeout=5)
+                except Exception:
+                    pass
+        await asyncio.sleep(30)
+
+
 async def poll_loop() -> None:
     while True:
         try:
@@ -692,6 +800,7 @@ async def poll_loop() -> None:
 async def lifespan(app: FastAPI):
     await init_db()
     task = asyncio.create_task(poll_loop())
+    live_task = asyncio.create_task(live_loop())
     yield
     task.cancel()
 
@@ -776,6 +885,7 @@ async def _serialize_printers(printers) -> dict[str, Any]:  # 507fix
                     continue
                 boxes.append({
                     "box_id": getattr(box, "box_id", None),
+                "loaded_slot": getattr(box, "loaded_slot", None),
                     "slots": [
                         {
                             "slot_index": slot.slot_index,
@@ -813,6 +923,33 @@ async def _serialize_printers(printers) -> dict[str, Any]:  # 507fix
             },
                 "boxes": boxes,
             })
+        try:
+            _db = await get_db()
+            try:
+                _snap = json.loads(await get_setting(_db, "box_snapshot", "{}") or "{}")
+                _changed = False
+                for _r in result:
+                    _k = str(_r.get("name"))
+                    _sb = _snap.get(_k, {})
+                    _have = set()
+                    for _b in _r.get("boxes", []):
+                        if _b.get("box_id") is None:
+                            continue
+                        _have.add(_b["box_id"])
+                        if _b.get("slots") and _sb.get(str(_b["box_id"])) != _b:
+                            _sb[str(_b["box_id"])] = _b
+                            _changed = True
+                    for _bid, _b in _sb.items():
+                        if int(_bid) not in _have:
+                            _r.setdefault("boxes", []).append({**_b, "stale": True})
+                    _r["boxes"] = sorted(_r.get("boxes", []), key=lambda x: x.get("box_id") if x.get("box_id") is not None else -9)
+                    _snap[_k] = _sb
+                if _changed:
+                    await set_setting(_db, "box_snapshot", json.dumps(_snap))
+            finally:
+                await _db.close()
+        except Exception:
+            log.exception("box_snapshot fehlgeschlagen")
         return {"printers": result}
 
 
@@ -1022,7 +1159,7 @@ async def prints_sync(pages: int = 5) -> dict[str, Any]:
                     "start_ts": int(x.get("start_time") or x.get("create_time") or 0) or None,
                     "end_ts": int(x.get("end_time") or 0) or None,
                     "duration_min": dur,
-                    "status": "done" if ps == 2 else "failed",
+                    "status": ("running" if not x.get("end_time") else ("done" if ps == 2 else "failed")),
                     "grams": grams,
                     "length_mm": mm,
                     "thumb": x.get("img") or None,

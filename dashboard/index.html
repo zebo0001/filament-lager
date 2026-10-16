@@ -3172,17 +3172,21 @@ function renderPrinterCard(p) {
       let pctHtml = '';
       if (!empty && slot.consumables_percent != null) {
         const pp = Math.round(slot.consumables_percent);
-        let hint = '';
         const ss2 = linkedUnit && linkedUnit.slots ? linkedUnit.slots.find(x => x.position === si) : null;
         const sp2 = ss2 && ss2.spool_id ? allSpools.find(x => x.id === ss2.spool_id) : null;
-        if (sp2 && sp2.remaining_weight != null) {
-          const ini = sp2.initial_weight || (sp2.filament && sp2.filament.weight) || 0;
-          if (ini > 0) {
-            const sm = Math.round(sp2.remaining_weight / ini * 100);
-            if (Math.abs(sm - pp) >= 15) hint = ' <span style="color:#e0a030" title="Spoolman: ' + sm + ' %, Drucker: ' + pp + ' %">&#9888; Abweichung (Spoolman ' + sm + ' %)</span>';
-          }
+        const ini = sp2 ? (sp2.initial_weight || (sp2.filament && sp2.filament.weight) || 0) : 0;
+        if (sp2 && sp2.remaining_weight != null && ini > 0) {
+          const pg = Math.round(ini * pp / 100);
+          const sg = Math.round(sp2.remaining_weight);
+          const diff = sg - pg;
+          const warn = Math.abs(diff) >= ini * 0.15;
+          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker ca. ' + pg + ' g &middot; Spoolman ' + sg + ' g' + (warn ? ' <span style="color:#e0a030">&#9888;</span>' : '') + '</div>';
+          pctHtml += '<div class="sc-act" style="display:flex;gap:4px;margin-top:4px;align-items:center;flex-wrap:wrap;"><input type="number" min="1" step="1" placeholder="g" style="width:56px;font-size:11px;" data-pbi="' + sp2.id + '"><button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="input">Buchen</button>';
+          if (diff >= 5) pctHtml += '<button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="diff" data-g="' + diff + '" title="Spoolman an Drucker angleichen">Angleichen &minus;' + diff + ' g</button>';
+          pctHtml += '</div>';
+        } else {
+          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker: ' + pp + ' %</div>';
         }
-        pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker: ' + pp + ' %' + hint + '</div>';
       }
       const ldHtml = (box.loaded_slot === si) ? ' <span title="aktuell eingezogen">&#9654;</span>' : '';
       return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
@@ -3211,6 +3215,7 @@ function renderPrinterCard(p) {
 async function loadPrinters() {
   const el = document.getElementById('printers-content');
   if (!el) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT' && el.contains(document.activeElement)) return;
   try {
     const data = await api(ST + '/printers');
     unitsByPrinterId = {};
@@ -3225,6 +3230,22 @@ async function loadPrinters() {
       el.innerHTML = (data.bridge_error ? '<p class="section-note warn">Anycubic-Bridge nicht erreichbar &ndash; es werden nur manuelle Drucker angezeigt.</p>' : '') +
         printers.map(renderPrinterCard).join('');
     }
+    el.querySelectorAll('[data-pb]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-pb');
+        let g;
+        if (btn.getAttribute('data-mode') === 'diff') g = parseFloat(btn.getAttribute('data-g'));
+        else { const inp = el.querySelector('[data-pbi="' + id + '"]'); g = parseFloat(inp ? inp.value : ''); }
+        if (!g || g <= 0) { toast('Gramm eingeben', 'err'); return; }
+        if (!confirm('Spule #' + id + ': ' + g + ' g abbuchen?')) return;
+        try {
+          await api(ST + '/spools/' + id + '/use', { method: 'POST', body: JSON.stringify({ grams: g, source: 'printer-view' }) });
+          toast('Gebucht: ' + g + ' g', 'ok');
+          await loadSpools();
+          loadPrinters();
+        } catch (e) { toast('Fehler: ' + e.message, 'err'); }
+      });
+    });
     el.querySelectorAll('[data-del-printer]').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (!confirm('Diesen Drucker wirklich loeschen?')) return;

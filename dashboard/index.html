@@ -3166,7 +3166,10 @@ function renderPrinterCard(p) {
             if (storSpool) storInfo = '<div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Lager: ' + prEsc(spoolLabel(storSpool)) + '</div>';
           }
         }
-        let pctHtml = '';
+        if (box.box_id === -1 && si === (box.slots || []).length - 1 && (p.boxes || []).some(b2 => b2.box_id === 0)) {
+        return '<div class="slot-chip"><div class="sc-top"><span class="sc-dot" style="background:#4aa3ff"></span><b>ACE</b></div><div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Anschluss ACE-Box</div></div>';
+      }
+      let pctHtml = '';
       if (!empty && slot.consumables_percent != null) {
         const pp = Math.round(slot.consumables_percent);
         let hint = '';

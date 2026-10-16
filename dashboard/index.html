@@ -1438,6 +1438,80 @@ const I18N = {
 };
 
 let currentLang = localStorage.getItem('lager_lang') || 'de';
+function T(de, en) { return currentLang === 'en' ? en : de; }
+/* static-text translator: DE -> EN for strings that live in plain HTML or are rendered without T() */
+var I18N_SW = {
+'menue':'Menu','uebersicht':'Overview','lagerplaetze':'Storage locations','drucker':'Printers','spulen':'Spools','neue spule':'New spool','einkaufsliste':'Shopping list','label designer':'Label designer','gedruckte produkte':'Printed products','statistik':'Statistics','einstellungen':'Settings',
+'anycubic integration':'Anycubic integration','token slot zuordnung verbindungsstatus':'Token, slot mapping, connection status','reihenfolge anpassen':'Adjust order','abschnitte in der uebersicht neu sortieren':'Re-sort sections on the overview','info hilfe':'Info / Help','anleitung und versionsinfo':'Guide and version info',
+'alle drucker auf einen blick live aus der anycubic bridge und manuell angelegte platzhalter drucker inklusive ace slot belegung und automatischem spoolman abgleich':'All printers at a glance - live from the Anycubic bridge and manually created placeholder printers, including ACE slot assignment and automatic Spoolman reconciliation',
+'hersteller':'Manufacturer','modell':'Model','notiz':'Note','manueller drucker':'Manual printer','lade':'Loading','bereit':'Ready','stand jetzt':'As of: now','geraete wizard':'Device wizard','verknuepfter live drucker':'Linked live printer',
+'keine':'none','z b ersatzdrucker':'e.g. spare printer','z b pla':'e.g. PLA','z b schwarz':'e.g. black','z b prusament':'e.g. Prusament'
+};
+var I18N_SW_ATTR = {'drucker':'Printer','vorschau':'Preview','keine':'none','drucker oder drybox anlegen':'Create a printer or dry box','slot labels drucken':'Print slot labels'};
+var I18N_SW_RX = [[/^fertig ca\.\s*(.*)$/i,'done approx. $1']];
+var __swOrig = new WeakMap(), __swTr = new WeakMap(), __swBusy = false, __swTimer = null;
+var __swFold = {228:'ae',246:'oe',252:'ue',223:'ss'};
+function __isLet(c) { return (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 192 && c <= 591); }
+function __nk(s) {
+  var o = '', i, c; s = s.toLowerCase();
+  for (i = 0; i < s.length; i++) { c = s.charCodeAt(i); o += __swFold[c] ? __swFold[c] : s.charAt(i); }
+  return o.replace(/[^a-z0-9]+/g, ' ').trim();
+}
+function __swLookup(raw, isAttr) {
+  var t = raw.trim(); if (!t) return null;
+  var k = __nk(t); if (!k) return null;
+  var v = isAttr && I18N_SW_ATTR[k] !== undefined ? I18N_SW_ATTR[k] : I18N_SW[k];
+  if (v === undefined) {
+    for (var i = 0; i < I18N_SW_RX.length; i++) { if (I18N_SW_RX[i][0].test(t)) return raw.replace(t, t.replace(I18N_SW_RX[i][0], I18N_SW_RX[i][1])); }
+    return null;
+  }
+  var a = 0, b = t.length;
+  while (a < b && !__isLet(t.charCodeAt(a))) a++;
+  while (b > a && !__isLet(t.charCodeAt(b - 1))) b--;
+  return raw.replace(t, t.slice(0, a) + v + t.slice(b));
+}
+function i18nSweep() {
+  if (__swBusy || !document.body) return;
+  __swBusy = true;
+  try {
+    var en = currentLang === 'en';
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null), n, nodes = [];
+    while ((n = w.nextNode())) nodes.push(n);
+    nodes.forEach(function (n) {
+      var p = n.parentNode; if (!p) return;
+      var tg = p.nodeName; if (tg === 'SCRIPT' || tg === 'STYLE' || tg === 'TEXTAREA' || tg === 'NOSCRIPT') return;
+      var o = __swOrig.get(n);
+      if (o !== undefined) {
+        if (!en) { n.nodeValue = o; __swOrig.delete(n); __swTr.delete(n); return; }
+        if (n.nodeValue === __swTr.get(n)) return;
+        __swOrig.delete(n); __swTr.delete(n);
+      }
+      if (!en) return;
+      var r = __swLookup(n.nodeValue, false);
+      if (r !== null && r !== n.nodeValue) { __swOrig.set(n, n.nodeValue); __swTr.set(n, r); n.nodeValue = r; }
+    });
+    document.querySelectorAll('[placeholder],[title],[aria-label]').forEach(function (el) {
+      ['placeholder', 'title', 'aria-label'].forEach(function (a) {
+        var v = el.getAttribute(a); if (v === null) return;
+        var key = '__o_' + a, o = el[key];
+        if (o !== undefined) { if (!en) { el.setAttribute(a, o); delete el[key]; } return; }
+        if (!en) return;
+        var r = __swLookup(v, true);
+        if (r !== null && r !== v) { el[key] = v; el.setAttribute(a, r); }
+      });
+    });
+  } finally { __swBusy = false; }
+}
+function __swSchedule() { clearTimeout(__swTimer); __swTimer = setTimeout(i18nSweep, 80); }
+(function () {
+  function start() {
+    i18nSweep();
+    new MutationObserver(__swSchedule).observe(document.body, { childList: true, subtree: true, characterData: true });
+    document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-lang]'); if (!b) return; var l = b.getAttribute('data-lang'); if (l && l !== currentLang) { try { localStorage.setItem('lager_lang', l); } catch (x) {} setTimeout(function () { location.reload(); }, 150); } }, true);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
 
 function t(key) {
   const dict = I18N[currentLang] || I18N.de;
@@ -3152,7 +3226,7 @@ function buildPrinterIllustration(p, statusCls) {
 function renderPrinterCard(p) {
   
   const statusCls = printerStatusClass(p.current_status);
-  const statusText = p.current_status || (p.source === 'manual' ? 'manuell' : 'unbekannt');
+  const statusText = p.current_status || (p.source === 'manual' ? T('manuell','manual') : T('unbekannt','unknown'));
   let boxesHtml = '';
   if (p.boxes && p.boxes.length) {
     boxesHtml = p.boxes.map((box, bi) => {
@@ -3160,18 +3234,18 @@ function renderPrinterCard(p) {
       const slots = (box.slots || []).map((slot, si) => {
         const empty = !slot.sku && !slot.type && !slot.material_name && !(linkedUnit && linkedUnit.slots && linkedUnit.slots.some(ss => ss.position === si && ss.spool_id));
         const hex = printerSlotColorHex(slot.color);
-        const label = empty ? 'leer' : (slot.type || slot.material_name || [slot.material_type, slot.sku].filter(Boolean).join(' \u00b7 ') || 'leer');
+        const label = empty ? T('leer','empty') : (slot.type || slot.material_name || [slot.material_type, slot.sku].filter(Boolean).join(' \u00b7 ') || T('leer','empty'));
         const match = slot.matched_spool_name ? ('<div class="sc-match">&rarr; ' + prEsc(slot.matched_spool_name) + '</div>') : '';
         let storInfo = '';
         if (linkedUnit && linkedUnit.slots) {
           const storSlot = linkedUnit.slots.find(ss => ss.position === si);
           if (storSlot && storSlot.spool_id) {
             const storSpool = allSpools.find(sp => sp.id === storSlot.spool_id);
-            if (storSpool) storInfo = '<div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Lager: ' + prEsc(spoolLabel(storSpool)) + '</div>';
+            if (storSpool) storInfo = '<div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">' + T('Lager: ','Storage: ') + prEsc(spoolLabel(storSpool)) + '</div>';
           }
         }
         if (box.box_id === -1 && si === (box.slots || []).length - 1 && (p.boxes || []).some(b2 => b2.box_id === 0)) {
-        return '<div class="slot-chip"><div class="sc-top"><span class="sc-dot" style="background:#4aa3ff"></span><b>ACE</b></div><div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">Anschluss ACE-Box</div></div>';
+        return '<div class="slot-chip"><div class="sc-top"><span class="sc-dot" style="background:#4aa3ff"></span><b>ACE</b></div><div class="sc-storage" style="font-size:11px;opacity:.75;margin-top:2px;">' + T('Anschluss ACE-Box','ACE box port') + '</div></div>';
       }
       let pctHtml = '';
       if (!empty && slot.consumables_percent != null) {
@@ -3184,30 +3258,30 @@ function renderPrinterCard(p) {
           const sg = Math.round(sp2.remaining_weight);
           const diff = sg - pg;
           const warn = Math.abs(diff) >= ini * 0.15;
-          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker ca. ' + pg + ' g &middot; Spoolman ' + sg + ' g' + (warn ? ' <span style="color:#e0a030">&#9888;</span>' : '') + '</div>';
-          pctHtml += '<div class="sc-act" style="display:flex;gap:4px;margin-top:4px;align-items:center;flex-wrap:wrap;"><input type="number" min="1" step="1" placeholder="g" style="width:56px;font-size:11px;" data-pbi="' + sp2.id + '"><button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="input">Buchen</button>';
-          if (diff >= 5) pctHtml += '<button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="diff" data-g="' + diff + '" title="Spoolman an Drucker angleichen">Angleichen &minus;' + diff + ' g</button>';
+          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker ca. ','Printer approx. ') + pg + ' g &middot; Spoolman ' + sg + ' g' + (warn ? ' <span style="color:#e0a030">&#9888;</span>' : '') + '</div>';
+          pctHtml += '<div class="sc-act" style="display:flex;gap:4px;margin-top:4px;align-items:center;flex-wrap:wrap;"><input type="number" min="1" step="1" placeholder="g" style="width:56px;font-size:11px;" data-pbi="' + sp2.id + '"><button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="input">' + T('Buchen','Book') + '</button>';
+          if (diff >= 5) pctHtml += '<button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="diff" data-g="' + diff + '" title="' + T('Spoolman an Drucker angleichen','Adjust Spoolman to printer') + '">' + T('Angleichen','Adjust') + ' &minus;' + diff + ' g</button>';
           pctHtml += '</div>';
         } else {
-          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">Drucker: ' + pp + ' %</div>';
+          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker: ','Printer: ') + pp + ' %</div>';
         }
       }
-      const ldHtml = (box.loaded_slot === si) ? ' <span title="aktuell eingezogen">&#9654;</span>' : '';
+      const ldHtml = (box.loaded_slot === si) ? ' <span title="' + T('aktuell eingezogen','currently feeding') + '">&#9654;</span>' : '';
       return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
           '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + ldHtml + '</div>' +
           match + storInfo + pctHtml +
         '</div>';
       }).join('');
-      return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + (box.stale ? ' (letzter Stand)' : '') + '</div><div class="printer-slots">' + (slots || '<span class="hint">Keine Slot-Daten</span>') + '</div></div>';
+      return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + (box.stale ? T(' (letzter Stand)',' (last state)') : '') + '</div><div class="printer-slots">' + (slots || '<span class="hint">' + T('Keine Slot-Daten','No slot data') + '</span>') + '</div></div>';
     }).join('');
   }
   const actions = p.source === 'manual'
-    ? '<div class="printer-actions"><button class="btn secondary" data-del-printer="' + p.manual_id + '" type="button">Loeschen</button></div>'
+    ? '<div class="printer-actions"><button class="btn secondary" data-del-printer="' + p.manual_id + '" type="button">' + T('L&ouml;schen','Delete') + '</button></div>'
     : '';
   return '<div class="printer-card">' +
     buildPrinterIllustration(p, statusCls) +
     '<div class="printer-card-head">' +
-      '<div><div class="pname">' + prEsc(p.name || 'Unbenannt') + '</div><div class="psource">' + (p.source === 'manual' ? 'Manuell' : 'Anycubic-Bridge') + '</div></div>' +
+      '<div><div class="pname">' + prEsc(p.name || T('Unbenannt','Unnamed')) + '</div><div class="psource">' + (p.source === 'manual' ? T('Manuell','Manual') : 'Anycubic-Bridge') + '</div></div>' +
       '<span class="printer-status ' + statusCls + '">' + prEsc(statusText) + '</span>' +
     '</div>' +
     ((p.brand || p.model) ? ('<div class="printer-meta">' + prEsc([p.brand, p.model].filter(Boolean).join(' ')) + '</div>') : '') +
@@ -3229,9 +3303,9 @@ async function loadPrinters() {
     } catch (e) {}
     const printers = (data && data.printers) || [];
     if (!printers.length) {
-      el.innerHTML = '<div class="empty">Keine Drucker gefunden.</div>';
+      el.innerHTML = '<div class="empty">' + T('Keine Drucker gefunden.','No printers found.') + '</div>';
     } else {
-      el.innerHTML = (data.bridge_error ? '<p class="section-note warn">Anycubic-Bridge nicht erreichbar &ndash; es werden nur manuelle Drucker angezeigt.</p>' : '') +
+      el.innerHTML = (data.bridge_error ? '<p class="section-note warn">' + T('Anycubic-Bridge nicht erreichbar &ndash; es werden nur manuelle Drucker angezeigt.','Anycubic bridge unreachable &ndash; only manual printers are shown.') + '</p>' : '') +
         printers.map(renderPrinterCard).join('');
     }
     el.querySelectorAll('[data-pb]').forEach(btn => {
@@ -3240,37 +3314,37 @@ async function loadPrinters() {
         let g;
         if (btn.getAttribute('data-mode') === 'diff') g = parseFloat(btn.getAttribute('data-g'));
         else { const inp = el.querySelector('[data-pbi="' + id + '"]'); g = parseFloat(inp ? inp.value : ''); }
-        if (!g || g <= 0) { toast('Gramm eingeben', 'err'); return; }
-        if (!confirm('Spule #' + id + ': ' + g + ' g abbuchen?')) return;
+        if (!g || g <= 0) { toast(T('Gramm eingeben','Enter grams'), 'err'); return; }
+        if (!confirm(T('Spule #','Spool #') + id + ': ' + g + ' g ' + T('abbuchen?','deduct?'))) return;
         try {
           await api(ST + '/spools/' + id + '/use', { method: 'POST', body: JSON.stringify({ grams: g, source: 'printer-view' }) });
-          toast('Gebucht: ' + g + ' g', 'ok');
+          toast(T('Gebucht: ','Booked: ') + g + ' g', 'ok');
           await loadSpools();
           loadPrinters();
-        } catch (e) { toast('Fehler: ' + e.message, 'err'); }
+        } catch (e) { toast(T('Fehler: ','Error: ') + e.message, 'err'); }
       });
     });
     el.querySelectorAll('[data-del-printer]').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!confirm('Diesen Drucker wirklich loeschen?')) return;
+        if (!confirm(T('Diesen Drucker wirklich loeschen?','Really delete this printer?'))) return;
         try {
           await api(ST + '/printers/manual/' + btn.getAttribute('data-del-printer'), { method: 'DELETE' });
-          toast('Drucker geloescht', 'ok');
+          toast(T('Drucker geloescht','Printer deleted'), 'ok');
           loadPrinters();
         } catch (e) {
-          toast('Fehler: ' + e.message, 'err');
+          toast(T('Fehler: ','Error: ') + e.message, 'err');
         }
       });
     });
   } catch (e) {
-    el.innerHTML = '<div class="empty">Fehler beim Laden: ' + prEsc(e.message) + '</div>';
+    el.innerHTML = '<div class="empty">' + T('Fehler beim Laden: ','Error loading: ') + prEsc(e.message) + '</div>';
   }
 }
 
 async function createManualPrinter() {
   const nameEl = document.getElementById('pr-name');
   const name = nameEl.value.trim();
-  if (!name) { toast('Name erforderlich', 'err'); return; }
+  if (!name) { toast(T('Name erforderlich','Name required'), 'err'); return; }
   const body = {
     name: name,
     brand: document.getElementById('pr-brand').value.trim() || null,
@@ -3281,10 +3355,10 @@ async function createManualPrinter() {
   try {
     await api(ST + '/printers/manual', { method: 'POST', body: JSON.stringify(body) });
     ['pr-name','pr-brand','pr-model','pr-firmware','pr-note'].forEach(id => { document.getElementById(id).value = ''; });
-    toast('Drucker hinzugefuegt', 'ok');
+    toast(T('Drucker hinzugefuegt','Printer added'), 'ok');
     loadPrinters();
   } catch (e) {
-    toast('Fehler: ' + e.message, 'err');
+    toast(T('Fehler: ','Error: ') + e.message, 'err');
   }
 }
 

@@ -68,6 +68,21 @@ Drucker-Seite (eigener Menuepunkt im Dashboard, ab v1.4.0):
 - Idle-Drucker (status "available"/"online"/"standby") zeigen eine ruhige, nicht animierte Illustration statt der Druck-Animation
 - Lagerplaetze lassen sich praezise mit einer einzelnen ACE-Box eines Druckers verknuepfen (nicht nur pauschal mit dem Drucker) - wichtig bei mehreren Zufuehrungs-Boxen am selben Geraet
 
+Drucker-Seite, Live-Daten und Abgleich (v1.4.0):
+
+- ACE-Boxen werden mit Farbe, Material und SKU angezeigt; der Slot, der gerade eingezogen ist, ist markiert. Der ACE-Anschluss am Geraet ist als 'ACE' beschriftet.
+- Die Restmenge je Slot wird in Gramm angezeigt ('Drucker ca. 350 g - Spoolman 690 g'). Der Druckerwert ist eine Schaetzung (Restmenge in Prozent mal Startgewicht der zugeordneten Spule). Ab 15 Prozent Abweichung erscheint ein Warnhinweis.
+- Direkt am Slot kann Verbrauch gebucht werden: Gramm eingeben und 'Buchen' oder 'Angleichen' (bucht die Differenz bis zum Druckerwert, nur wenn Spoolman mehr anzeigt). Beides fragt vorher nach. Waehrend ein Druck laeuft, besser nicht angleichen.
+- Der zuletzt bekannte Stand der ACE-Box wird gespeichert und nach einem Neustart der Bridge als '(letzter Stand)' angezeigt, bis der Drucker neu meldet.
+- Laufende Drucke erscheinen in der Druckhistorie mit dem Status 'Laeuft' (nicht mehr als 'Fehlgeschlagen').
+
+Gedruckte Produkte (Druckhistorie, eigener Menuepunkt):
+
+- Importiert die Druckhistorie aus der Anycubic-Cloud (Name, Dauer, Drucker, Gewicht, Status). Die Cloud liefert keine Spulenzuordnung, deshalb wird nichts automatisch abgezogen.
+- 'Zuordnen' bucht den Verbrauch auf eine Spule (Gramm aenderbar), 'Ohne Abzug' markiert einen Druck als erledigt, 'Neuer Druck' legt manuelle Eintraege an. Filter nach Drucker, Status und Name.
+
+Statistik (eigener Menuepunkt): Verbrauch, Drucke und Prognose; Farbnamen koennen an der Spule gepflegt werden und erscheinen in der Auswertung.
+
 ## Aufbau
 
 ```
@@ -88,6 +103,16 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 ## Bekannte Einschraenkungen (Stand dieser Version)
 
 - Kamera-Scan ist nur in einem sicheren Kontext (HTTPS oder `localhost`) verfuegbar - siehe Hinweis oben.
+
+## Aenderungsverlauf
+
+Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
+
+- **v1.4.0 (2026-10-16)**: Seitenleisten-Navigation; Drucker-Seite mit Live-Daten aus der Anycubic-Bridge (ACE-Boxen, Restmenge in Gramm, Abweichungshinweis, Buchen/Angleichen am Slot); Druckhistorie 'Gedruckte Produkte'; Statistik; Farbnamen; Drybox/Drucker-Assistent; laufende Drucke nicht mehr als fehlgeschlagen.
+- **v1.3.0 (2026-09-28)**: Versionsanzeige und Aenderungsverlauf im Footer.
+- **v1.2.0 (2026-09-28)**: Ebenen und Plaetze eines bestehenden Geraets nachtraeglich aenderbar.
+- **v1.1.0 (2026-09-28)**: Restliche Feldnamen im Etikettendesigner uebersetzt; mehrere Dryboxen getestet.
+- **v1.0.0 (2026-09-27)**: Umbenennung zu 'The Filament Storage System', vollstaendige DE/EN-Uebersetzung.
 
 ## Update auf eine neuere Version
 

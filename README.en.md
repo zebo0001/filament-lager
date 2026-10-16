@@ -68,6 +68,21 @@ Printers page (dedicated dashboard section, since v1.4.0):
 - Idle printers (status "available"/"online"/"standby") show a calm, non-animated illustration instead of the printing animation
 - Storage locations can be linked to one specific ACE box on a printer (not just the printer as a whole) - important when a printer has several feed boxes
 
+Printer page, live data and reconciliation (v1.4.0):
+
+- ACE boxes are shown with colour, material and SKU; the slot currently fed is marked. The ACE port on the device is labelled 'ACE'.
+- Remaining amount per slot is shown in grams ('Printer approx. 350 g - Spoolman 690 g'). The printer value is an estimate (remaining percent times the starting weight of the assigned spool). A warning appears from 15 percent deviation.
+- Usage can be booked directly on the slot: enter grams and press 'Book' or 'Adjust' (books the difference down to the printer value, only offered when Spoolman shows more). Both ask for confirmation first. Better not to adjust while a print is running.
+- The last known ACE box state is stored and shown as '(last state)' after a bridge restart until the printer reports again.
+- Running prints show up in the print history with the status 'Running' (no longer 'Failed').
+
+Printed products (print history, own menu entry):
+
+- Imports the print history from the Anycubic cloud (name, duration, printer, weight, status). The cloud does not report which spool was used, so nothing is deducted automatically.
+- 'Assign' books the usage onto a spool (grams editable), 'No deduction' marks a print as handled, 'New print' adds manual entries. Filters by printer, status and name.
+
+Statistics (own menu entry): usage, prints and forecast; colour names can be maintained on the spool and appear in the reports.
+
 ## Structure
 
 ```
@@ -88,6 +103,16 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 ## Known limitations (as of this version)
 
 - Camera scanning is only available in a secure context (HTTPS or `localhost`) - see the note above.
+
+## Changelog
+
+The current version is shown in the dashboard footer (including the changelog).
+
+- **v1.4.0 (2026-10-16)**: sidebar navigation; printer page with live data from the Anycubic bridge (ACE boxes, remaining amount in grams, deviation hint, book/adjust on the slot); print history 'Printed products'; statistics; colour names; dry box/printer wizard; running prints no longer shown as failed.
+- **v1.3.0 (2026-09-28)**: version indicator and changelog in the footer.
+- **v1.2.0 (2026-09-28)**: levels and slots of an existing device can be changed afterwards.
+- **v1.1.0 (2026-09-28)**: remaining label designer field names translated; multiple dry boxes tested.
+- **v1.0.0 (2026-09-27)**: renamed to 'The Filament Storage System', full DE/EN translation.
 
 ## Updating to a newer version
 

@@ -1712,10 +1712,38 @@ class PrintAssign(BaseModel):
     grams: Optional[float] = None
 
 
+def _prints_win(start_ts, end_ts):
+    a = _dt.datetime.fromtimestamp(start_ts - 900).isoformat(timespec="seconds")
+    b = _dt.datetime.fromtimestamp((end_ts or start_ts) + 1800).isoformat(timespec="seconds")
+    return a, b
+
+
+def _ensure_prints_note(conn):
+    cols = [r["name"] for r in conn.execute("PRAGMA table_info(prints)").fetchall()]
+    if "note" not in cols:
+        conn.execute("ALTER TABLE prints ADD COLUMN note TEXT")
+
+
+def _reconcile_info(conn, name, a, b, cloud_g):
+    """Vergleicht die live gebuchte Summe mit der Cloud-Menge (aus der Laenge)."""
+    t = conn.execute("SELECT SUM(grams) g, COUNT(DISTINCT spool_id) n FROM usage_log WHERE print_name=? AND ts>=? AND ts<=?", (name, a, b)).fetchone()
+    booked_g = t["g"] or 0.0
+    if not cloud_g or booked_g <= 0:
+        return 0.0, None
+    diff = cloud_g - booked_g
+    if diff <= 10.0 or diff / cloud_g <= 0.2:
+        return 0.0, None
+    if t["n"] == 1:
+        return round(diff, 2), "auto-korrigiert: +%.1f g (Live %.1f g, Cloud %.1f g)" % (diff, booked_g, cloud_g)
+    return 0.0, "pruefen: Live %.1f g, Cloud %.1f g (mehrere Spulen)" % (booked_g, cloud_g)
+
+
 @app.post("/prints/import")
-def prints_import(body: PrintImport):
+async def prints_import(body: PrintImport):
     new = upd = booked = 0
+    corrections = []
     with db() as conn:
+        _ensure_prints_note(conn)
         for it in body.items:
             ex = None
             if it.cloud_id:
@@ -1726,9 +1754,22 @@ def prints_import(body: PrintImport):
                     (it.name, it.printer, it.start_ts, it.end_ts, it.duration_min, it.status, it.length_mm, it.thumb, it.reason, ex["id"]),
                 )
                 conn.execute("UPDATE prints SET grams=? WHERE id=? AND state!='booked'", (it.grams, ex["id"]))
+                cur = conn.execute("SELECT state FROM prints WHERE id=?", (ex["id"],)).fetchone()
+                if cur and cur["state"] == "none" and it.end_ts and it.start_ts and it.name and it.end_ts > _dt.datetime.now().timestamp() - 172800:
+                    wa, wb = _prints_win(it.start_ts, it.end_ts)
+                    mr = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE print_name=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (it.name, wa, wb)).fetchone()
+                    if mr:
+                        mg = mr["g"]
+                        extra, note = _reconcile_info(conn, it.name, wa, wb, it.grams)
+                        if extra > 0:
+                            corrections.append((mr["spool_id"], extra, it.name))
+                            mg = round(mg + extra, 2)
+                        conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=?, note=? WHERE id=?", (mr["spool_id"], mg, note, ex["id"]))
+                        booked += 1
                 upd += 1
                 continue
             state, spool, g = "none", None, it.grams
+            note_val = None
             if it.start_ts and it.name:
                 a = _dt.datetime.fromtimestamp(it.start_ts - 900).isoformat(timespec="seconds")
                 b = _dt.datetime.fromtimestamp((it.end_ts or it.start_ts) + 1800).isoformat(timespec="seconds")
@@ -1739,12 +1780,24 @@ def prints_import(body: PrintImport):
                 if r:
                     state, spool, g = "booked", r["spool_id"], r["g"]
                     booked += 1
+                    extra, note_val = _reconcile_info(conn, it.name, a, b, it.grams)
+                    if extra > 0:
+                        corrections.append((spool, extra, it.name))
+                        g = round(g + extra, 2)
             conn.execute(
                 "INSERT INTO prints (cloud_id,name,printer,start_ts,end_ts,duration_min,status,grams,length_mm,thumb,reason,spool_id,state,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (it.cloud_id, it.name, it.printer, it.start_ts, it.end_ts, it.duration_min, it.status, g, it.length_mm, it.thumb, it.reason, spool, state, it.source or "cloud"),
             )
             new += 1
-    return {"new": new, "updated": upd, "matched_booked": booked}
+            if note_val:
+                conn.execute("UPDATE prints SET note=? WHERE cloud_id=?", (note_val, it.cloud_id))
+    for sp, ex_g, nm in corrections:
+        try:
+            await use_spool(sp, SpoolUseRequest(grams=ex_g, source="print", print_name=nm))
+        except Exception:
+            with db() as c2:
+                c2.execute("UPDATE prints SET note=COALESCE(note,'') || ' [Nachbuchung fehlgeschlagen]' WHERE name=?", (nm,))
+    return {"new": new, "updated": upd, "matched_booked": booked, "corrected": len(corrections)}
 
 
 @app.get("/prints")

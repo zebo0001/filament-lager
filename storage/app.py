@@ -1726,7 +1726,7 @@ def _ensure_prints_note(conn):
 
 def _reconcile_info(conn, name, a, b, cloud_g):
     """Vergleicht die live gebuchte Summe mit der Cloud-Menge (aus der Laenge)."""
-    t = conn.execute("SELECT SUM(grams) g, COUNT(DISTINCT spool_id) n FROM usage_log WHERE print_name=? AND ts>=? AND ts<=?", (name, a, b)).fetchone()
+    t = conn.execute("SELECT SUM(grams) g, COUNT(DISTINCT spool_id) n FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=?", (name, a, b)).fetchone()
     booked_g = t["g"] or 0.0
     if not cloud_g or booked_g <= 0:
         return 0.0, None
@@ -1757,7 +1757,7 @@ async def prints_import(body: PrintImport):
                 cur = conn.execute("SELECT state FROM prints WHERE id=?", (ex["id"],)).fetchone()
                 if cur and cur["state"] == "none" and it.end_ts and it.start_ts and it.name and it.end_ts > _dt.datetime.now().timestamp() - 172800:
                     wa, wb = _prints_win(it.start_ts, it.end_ts)
-                    mr = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE print_name=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (it.name, wa, wb)).fetchone()
+                    mr = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (it.name, wa, wb)).fetchone()
                     if mr:
                         mg = mr["g"]
                         extra, note = _reconcile_info(conn, it.name, wa, wb, it.grams)
@@ -1774,7 +1774,7 @@ async def prints_import(body: PrintImport):
                 a = _dt.datetime.fromtimestamp(it.start_ts - 900).isoformat(timespec="seconds")
                 b = _dt.datetime.fromtimestamp((it.end_ts or it.start_ts) + 1800).isoformat(timespec="seconds")
                 r = conn.execute(
-                    "SELECT spool_id, SUM(grams) g FROM usage_log WHERE print_name=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC",
+                    "SELECT spool_id, SUM(grams) g FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC",
                     (it.name, a, b),
                 ).fetchone()
                 if r:

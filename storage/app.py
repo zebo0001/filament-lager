@@ -1711,6 +1711,7 @@ class PrintAssign(BaseModel):
     spool_id: int
     grams: Optional[float] = None
     force: bool = False
+    parts: Optional[list] = None
 
 
 def _prints_win(start_ts, end_ts):
@@ -1725,18 +1726,38 @@ def _ensure_prints_note(conn):
         conn.execute("ALTER TABLE prints ADD COLUMN note TEXT")
 
 
-def _reconcile_info(conn, name, a, b, cloud_g):
-    """Vergleicht die live gebuchte Summe mit der Cloud-Menge (aus der Laenge)."""
-    t = conn.execute("SELECT SUM(grams) g, COUNT(DISTINCT spool_id) n FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=?", (name, a, b)).fetchone()
-    booked_g = t["g"] or 0.0
+def _slot_spool_for_printer(conn, printer):
+    """Spule im Slot eines Einzel-Slot-Druckers (z.B. Kobra 3 Max), sonst None."""
+    pl = (printer or '').lower()
+    if not pl:
+        return None
+    for u in conn.execute("SELECT id, name FROM storage_units WHERE type='printer'").fetchall():
+        nm = (u['name'] or '').lower()
+        if nm and nm in pl:
+            ids = [u['id']] + [x['id'] for x in conn.execute('SELECT id FROM storage_units WHERE parent_unit_id=?', (u['id'],)).fetchall()]
+            rows = conn.execute('SELECT spool_id FROM slots WHERE unit_id IN (%s)' % ','.join('?' * len(ids)), ids).fetchall()
+            if len(rows) == 1 and rows[0]['spool_id']:
+                return rows[0]['spool_id']
+            return None
+    return None
+
+
+def _reconcile_info(conn, name, a, b, cloud_g, printer=None):
+    """Vergleicht die live gebuchte Summe mit der Cloud-Menge. Rueckgabe: (Nachbuchung g, Notiz, Ziel-Spule)."""
+    rows = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (name, a, b)).fetchall()
+    booked_g = sum((r['g'] or 0.0) for r in rows)
     if not cloud_g or booked_g <= 0:
-        return 0.0, None
+        return 0.0, None, None
     diff = cloud_g - booked_g
     if diff <= 10.0 or diff / cloud_g <= 0.2:
-        return 0.0, None
-    if t["n"] == 1:
-        return round(diff, 2), "auto-korrigiert: +%.1f g (Live %.1f g, Cloud %.1f g)" % (diff, booked_g, cloud_g)
-    return 0.0, "pruefen: Live %.1f g, Cloud %.1f g (mehrere Spulen)" % (booked_g, cloud_g)
+        return 0.0, None, None
+    spools = [r['spool_id'] for r in rows]
+    tgt = _slot_spool_for_printer(conn, printer)
+    if len(spools) == 1 and (tgt is None or tgt == spools[0]):
+        return round(diff, 2), 'auto-korrigiert: +%.1f g (Live %.1f g, Cloud %.1f g)' % (diff, booked_g, cloud_g), spools[0]
+    if tgt:
+        return round(diff, 2), 'Spulenwechsel, Rest auf Spule %d: +%.1f g (Live %.1f g auf %d Spulen, Cloud %.1f g)' % (tgt, diff, booked_g, len(spools), cloud_g), tgt
+    return 0.0, 'pruefen: Live %.1f g auf %d Spulen, Cloud %.1f g (Rest %.1f g)' % (booked_g, len(spools), cloud_g, diff), None
 
 
 @app.post("/prints/import")
@@ -1761,9 +1782,9 @@ async def prints_import(body: PrintImport):
                     mr = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (it.name, wa, wb)).fetchone()
                     if mr:
                         mg = mr["g"]
-                        extra, note = _reconcile_info(conn, it.name, wa, wb, it.grams)
+                        extra, note, tgt = _reconcile_info(conn, it.name, wa, wb, it.grams, it.printer)
                         if extra > 0:
-                            corrections.append((mr["spool_id"], extra, it.name))
+                            corrections.append((tgt or mr["spool_id"], extra, it.name))
                             mg = round(mg + extra, 2)
                         conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=?, note=? WHERE id=?", (mr["spool_id"], mg, note, ex["id"]))
                         booked += 1
@@ -1781,9 +1802,9 @@ async def prints_import(body: PrintImport):
                 if r:
                     state, spool, g = "booked", r["spool_id"], r["g"]
                     booked += 1
-                    extra, note_val = _reconcile_info(conn, it.name, a, b, it.grams)
+                    extra, note_val, tgt = _reconcile_info(conn, it.name, a, b, it.grams, it.printer)
                     if extra > 0:
-                        corrections.append((spool, extra, it.name))
+                        corrections.append((tgt or spool, extra, it.name))
                         g = round(g + extra, 2)
             conn.execute(
                 "INSERT INTO prints (cloud_id,name,printer,start_ts,end_ts,duration_min,status,grams,length_mm,thumb,reason,spool_id,state,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -1848,6 +1869,21 @@ async def prints_assign(pid: int, body: PrintAssign):
             lv = conn.execute("SELECT SUM(grams) g, GROUP_CONCAT(DISTINCT spool_id) s FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=?", (r["name"], wa, wb)).fetchone()
         if lv and lv["g"]:
             raise HTTPException(409, "Live bereits gebucht: %.1f g (Spule %s). Mit force=true trotzdem buchen." % (lv["g"], lv["s"]))
+    if body.parts:
+        tot = 0.0
+        for p in body.parts:
+            if not p.get("spool_id") or float(p.get("grams") or 0) <= 0:
+                raise HTTPException(400, "Gramm fehlen")
+        for p in body.parts:
+            gg = float(p["grams"])
+            await use_spool(int(p["spool_id"]), SpoolUseRequest(grams=gg, source="print", print_name=r["name"]))
+            tot += gg
+        main = max(body.parts, key=lambda p: float(p["grams"]))["spool_id"]
+        note = "Aufteilung: " + ", ".join("Spule %s %.1f g" % (p["spool_id"], float(p["grams"])) for p in body.parts)
+        with db() as conn:
+            _ensure_prints_note(conn)
+            conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=?, note=? WHERE id=?", (int(main), round(tot, 2), note, pid))
+        return {"ok": True}
     g = body.grams if body.grams is not None else r["grams"]
     if not g or g <= 0:
         raise HTTPException(400, "Gramm fehlen")

@@ -1710,11 +1710,12 @@ class PrintImport(BaseModel):
 class PrintAssign(BaseModel):
     spool_id: int
     grams: Optional[float] = None
+    force: bool = False
 
 
 def _prints_win(start_ts, end_ts):
     a = _dt.datetime.fromtimestamp(start_ts - 900).isoformat(timespec="seconds")
-    b = _dt.datetime.fromtimestamp((end_ts or start_ts) + 1800).isoformat(timespec="seconds")
+    b = _dt.datetime.fromtimestamp((end_ts or _dt.datetime.now().timestamp()) + 1800).isoformat(timespec="seconds")
     return a, b
 
 
@@ -1841,6 +1842,12 @@ async def prints_assign(pid: int, body: PrintAssign):
         raise HTTPException(404, "Druck nicht gefunden")
     if r["state"] == "booked":
         raise HTTPException(409, "Bereits abgezogen")
+    if not body.force and r["start_ts"]:
+        wa, wb = _prints_win(r["start_ts"], r["end_ts"])
+        with db() as conn:
+            lv = conn.execute("SELECT SUM(grams) g, GROUP_CONCAT(DISTINCT spool_id) s FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=?", (r["name"], wa, wb)).fetchone()
+        if lv and lv["g"]:
+            raise HTTPException(409, "Live bereits gebucht: %.1f g (Spule %s). Mit force=true trotzdem buchen." % (lv["g"], lv["s"]))
     g = body.grams if body.grams is not None else r["grams"]
     if not g or g <= 0:
         raise HTTPException(400, "Gramm fehlen")

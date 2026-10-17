@@ -1567,8 +1567,31 @@ function toast(msg, kind) {
   t._timer = setTimeout(() => t.className = 'toast', 2500);
 }
 
+async function swapPrompt(url, opts) {
+  const sid = parseInt(url.slice((ST + '/slots/').length), 10);
+  let body = {};
+  try { body = JSON.parse(opts.body || '{}'); } catch (e) {}
+  let slot = null, unit = null;
+  for (const u of allUnits) { for (const s of (u.slots || [])) { if (s.id === sid) { slot = s; unit = u; } } }
+  if (!slot || !slot.spool_id || body.spool_id === slot.spool_id) return;
+  let pu = unit;
+  if (pu.type !== 'printer' && pu.parent_unit_id) pu = allUnits.find(function (x) { return x.id === pu.parent_unit_id; }) || pu;
+  if (!pu || pu.type !== 'printer') return;
+  const pr = await api(ST + '/prints?sort=new&limit=10');
+  const nm = (pu.name || '').toLowerCase();
+  const run = ((pr && pr.items) || []).find(function (p) { return p.status === 'running' && nm && (p.printer || '').toLowerCase().indexOf(nm) >= 0; });
+  if (!run) return;
+  const v = window.prompt(T('Auf diesem Drucker l\u00e4uft "' + run.name + '". Wie viel Filament (g) hat Spule #' + slot.spool_id + ' daf\u00fcr noch nicht gebucht geliefert? Leer lassen = nichts buchen.', 'This printer is running "' + run.name + '". How many grams (not yet booked) did spool #' + slot.spool_id + ' deliver for this print? Leave empty = book nothing.'), '');
+  if (v === null || String(v).trim() === '') return;
+  const g = parseFloat(String(v).replace(',', '.'));
+  if (!(g > 0)) return;
+  await api(ST + '/spools/' + slot.spool_id + '/use', { method: 'POST', body: JSON.stringify({ grams: g, source: 'print', print_name: run.name }) });
+  toast(T('Gebucht: ', 'Booked: ') + g + ' g -> #' + slot.spool_id, 'ok');
+}
+
 async function api(url, opts) {
   opts = opts || {};
+  if (opts.method === 'PUT' && typeof url === 'string' && url.indexOf(ST + '/slots/') === 0) { try { await swapPrompt(url, opts); } catch (e) {} }
   opts.headers = Object.assign({'Content-Type': 'application/json'}, opts.headers || {});
   const res = await fetch(url, opts);
   if (!res.ok) {
@@ -5448,7 +5471,7 @@ function overlay(inner){var o=document.createElement('div');o.className='pr-ov';
 function spLabel(s){var f=s.filament||{};return '#'+s.id+' '+((f.vendor||{}).name||'')+' '+(f.name||'')+' '+(f.material||'')+' \u00b7 '+Math.round(s.remaining_weight||0)+' g';}
 async function openAssign(p){
   if(!st.spools){st.spools=await pj(SP+'/spool');}
-  var sel=null,o=overlay('<h3>'+L('Spule zuordnen','Assign spool')+'</h3><div class="pr-meta">'+E(p.name)+'</div><label>'+L('Verbrauch (g)','Usage (g)')+'</label><input id="pa-g" type="number" step="0.1" value="'+(p.grams||'')+'"><input id="pa-q" placeholder="'+L('Spule suchen','Search spool')+'"><div id="pa-l"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="pr-btn sec" id="pa-c">'+L('Abbrechen','Cancel')+'</button><button class="pr-btn" id="pa-ok">'+L('Abziehen','Deduct')+'</button></div>');
+  var sel=null,o=overlay('<h3>'+L('Spule zuordnen','Assign spool')+'</h3><div class="pr-meta">'+E(p.name)+'</div><label>'+L('Verbrauch (g)','Usage (g)')+'</label><input id="pa-g" type="number" step="0.1" value="'+(p.grams||'')+'"><input id="pa-q" placeholder="'+L('Spule suchen','Search spool')+'"><div id="pa-l"></div><label>'+L('2. Spule (ID, optional)','2nd spool (ID, optional)')+'</label><input id="pa-s2" type="number"><label>'+L('Gramm 2. Spule','Grams 2nd spool')+'</label><input id="pa-g2" type="number" step="0.1"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="pr-btn sec" id="pa-c">'+L('Abbrechen','Cancel')+'</button><button class="pr-btn" id="pa-ok">'+L('Abziehen','Deduct')+'</button></div>');
   function list(){var q=o.querySelector('#pa-q').value.toLowerCase();var l=st.spools.filter(function(s){return spLabel(s).toLowerCase().indexOf(q)>=0;}).slice(0,60);o.querySelector('#pa-l').innerHTML=l.map(function(s){return '<div class="pr-sp'+(sel===s.id?' sel':'')+'" data-sid="'+s.id+'">'+E(spLabel(s))+'</div>';}).join('');}
   list();
   o.querySelector('#pa-q').addEventListener('input',list);
@@ -5458,7 +5481,8 @@ async function openAssign(p){
     var g=parseFloat(o.querySelector('#pa-g').value);
     if(!sel){alert(L('Bitte eine Spule w\u00e4hlen.','Please pick a spool.'));return;}
     if(!(g>0)){alert(L('Gramm fehlen.','Grams missing.'));return;}
-    try{await pj(ST+'/prints/'+p.id+'/assign','POST',{spool_id:sel,grams:g});o.remove();st.spools=null;await load();}catch(e){alert(e.message);}
+    var s2=parseInt(o.querySelector('#pa-s2').value,10),g2=parseFloat(o.querySelector('#pa-g2').value)||0;var body={spool_id:sel,grams:g};if(s2>0&&g2>0){if(!(g-g2>0)){alert(L('Gramm 1. Spule zu klein.','1st spool grams too small.'));return;}body={spool_id:sel,force:true,parts:[{spool_id:sel,grams:Math.round((g-g2)*100)/100},{spool_id:s2,grams:g2}]};}
+    try{await pj(ST+'/prints/'+p.id+'/assign','POST',body);o.remove();st.spools=null;await load();}catch(e){alert(e.message);}
   };
 }
 function openNew(){

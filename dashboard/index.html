@@ -5414,6 +5414,7 @@ function badge(p){
   else if(p.state==='skipped')h+='<span class="pr-badge pr-mut">'+L('Ohne Abzug','No deduction')+'</span>';
   else if(p.state==='guess')h+='<span class="pr-badge" style="color:var(--accent)">'+L('Vermutet','Assumed')+'</span>';
   else h+='<span class="pr-badge pr-warn">'+L('Keine Zuordnung','Unassigned')+'</span>';
+if(p.note)h+='<span class="pr-badge pr-mut" title="'+E(p.note)+'">'+(p.note.indexOf('pruefen')===0?L('Pr\u00fcfen','Check'):L('Korrigiert','Corrected'))+'</span>';
   if(p.status==='running')h='<span class="pr-badge pr-mut">'+L('L\u00e4uft','Running')+'</span>'; else if(p.status==='failed')h+='<span class="pr-badge pr-bad" title="'+E(p.reason||'')+'">'+L('Fehlgeschlagen','Failed')+'</span>';
   if(p.source==='manual')h+='<span class="pr-badge pr-mut">'+L('Manuell','Manual')+'</span>';
   return h;

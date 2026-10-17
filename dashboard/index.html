@@ -2875,7 +2875,7 @@ function applyExternalFilament(item) {
   document.getElementById('ns-fil-extruder-temp').value = item.extruder_temp != null ? item.extruder_temp : '';
   document.getElementById('ns-fil-bed-temp').value = item.bed_temp != null ? item.bed_temp : '';
   if (item.weight != null) document.getElementById('ns-initial-weight').value = item.weight;
-  if (item.spool_weight != null) document.getElementById('ns-spool-weight').value = item.spool_weight;
+  if (item.spool_weight != null) document.getElementById('ns-spool-weight').value = (item.spool_weight === 127 && JSON.stringify(item).toLowerCase().indexOf('anycubic') >= 0) ? 210 : item.spool_weight;
 
   const vendorSelect = document.getElementById('ns-fil-vendor-select');
   const wantName = (item.manufacturer || '').trim().toLowerCase();

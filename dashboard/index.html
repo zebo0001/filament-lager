@@ -461,6 +461,7 @@ main>.panel.active{display:block;}
 </style>
 </head>
 <body>
+<div id="conn-banner" style="display:none;position:sticky;top:0;z-index:9000;background:#7f1d1d;color:#fff;text-align:center;padding:.5rem 1rem;font-size:.9rem"></div>
 
 <div class="hero">
 <div class="hero-top">
@@ -3170,6 +3171,30 @@ async function offerStorage(ids) {
     for (const sx of sels) { if (!sx.value) continue; const f = free.find(function (x) { return String(x.id) === sx.value; }); await assignToSlot(parseInt(sx.dataset.sid, 10), parseInt(sx.value, 10), null, f ? f.label : ''); }
   };
 }
+window.__anyConn = { bad: false, msg: '' };
+async function checkAnycubicConn() {
+  let bad = false, msg = '';
+  try {
+    const r1 = await fetch('/api/anycubic/settings');
+    if (r1.status === 404) { window.__anyConn = { bad: false, msg: '' }; return; }
+    if (!r1.ok) { throw new Error('bridge ' + r1.status); }
+    const st = await r1.json();
+    if (st && st.enabled) {
+      if (!st.token_present) { bad = true; msg = T('Kein Anycubic-Token hinterlegt.', 'No Anycubic token stored.'); }
+      else if (typeof st.days_remaining === 'number' && st.days_remaining <= 0) { bad = true; msg = T('Anycubic-Token abgelaufen. Bitte neu anmelden (Einstellungen).', 'Anycubic token expired. Please sign in again (Settings).'); }
+      else {
+        const cn = await (await fetch('/api/anycubic/connection')).json();
+        const age = cn.last_update_age_seconds;
+        if (!cn.live) { bad = true; msg = T('Anycubic-Livedaten (MQTT) nicht verbunden. Verbrauch wird evtl. nicht live gebucht.', 'Anycubic live data (MQTT) not connected. Usage may not be booked live.'); }
+        else if (age != null && age > 600) { bad = true; msg = T('Anycubic-Livedaten seit ' + Math.round(age / 60) + ' min nicht aktualisiert.', 'Anycubic live data not updated for ' + Math.round(age / 60) + ' min.'); }
+      }
+    }
+  } catch (e) { bad = true; msg = T('Anycubic-Bridge nicht erreichbar.', 'Anycubic bridge unreachable.'); }
+  window.__anyConn = { bad: bad, msg: msg };
+  const el = document.getElementById('conn-banner');
+  if (el) { el.style.display = bad ? 'block' : 'none'; el.textContent = bad ? ('\u26a0 ' + msg) : ''; }
+}
+setTimeout(checkAnycubicConn, 2000); setInterval(checkAnycubicConn, 30000);
 document.getElementById('new-spool-btn').addEventListener('click', openNewSpoolDialog);
 document.getElementById('spool-search').addEventListener('input', (e) => {
   spoolSearchText = e.target.value;
@@ -3343,6 +3368,7 @@ function renderPrinterCard(p) {
     '<div class="printer-card-head">' +
       '<div><div class="pname">' + prEsc(p.name || T('Unbenannt','Unnamed')) + '</div><div class="psource">' + (p.source === 'manual' ? T('Manuell','Manual') : 'Anycubic-Bridge') + '</div></div>' +
       '<span class="printer-status ' + statusCls + '">' + prEsc(statusText) + '</span>' +
+      ((p.source !== 'manual' && window.__anyConn && window.__anyConn.bad) ? '<span class="printer-status error" title="' + prEsc(window.__anyConn.msg) + '">' + T('Verbindung getrennt', 'Disconnected') + '</span>' : '') +
     '</div>' +
     ((p.brand || p.model) ? ('<div class="printer-meta">' + prEsc([p.brand, p.model].filter(Boolean).join(' ')) + '</div>') : '') +
     '<div class="printer-boxes">' + boxesHtml + '</div>' +

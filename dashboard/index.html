@@ -523,7 +523,7 @@ main>.panel.active{display:block;}
 <h2 data-i18n="panel.spools">Spulen</h2>
     <p class="hint" data-i18n="sp.hint">Standort kommt direkt aus den Lagerplätzen &mdash; kein manuelles Eintippen mehr. Über &bdquo;Auf Drucker/ACE&ldquo; bzw. &bdquo;In Drybox&ldquo; wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert &bdquo;Rolle leer&ldquo; sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.</p>
     <div class="spool-toolbar">
-      <input type="text" id="spool-search" class="spool-search-input" placeholder="Suche: Name, Material, Hersteller, Farbe...">
+      <input type="text" id="spool-search" class="spool-search-input" data-i18n-placeholder="sp.searchPlaceholder" placeholder="Suche: Name, Material, Hersteller, Farbe...">
     </div>
     <div id="spool-content"><div class="empty">Lade&hellip;</div></div>
     <div id="spool-pagination" class="pagination"></div>
@@ -1030,6 +1030,7 @@ const I18N = {
     'ns.newFilamentTypeBtn': 'Neuen Filament-Typ anlegen',
     'ns.chooseFilamentType': 'Filament-Typ wählen',
     'ns.searchPlaceholder': 'Suche nach Hersteller, Material, Name…',
+    'sp.searchPlaceholder': 'Suche: Name, Material, Hersteller, Farbe...',
     'ns.newFilamentTypeLabel': 'Neuer Filament-Typ',
     'ns.dbSearchPlaceholder': 'SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA…)',
   'common.error': 'Fehler',
@@ -1325,6 +1326,7 @@ const I18N = {
     'ns.newFilamentTypeBtn': 'Create new filament type',
     'ns.chooseFilamentType': 'Choose filament type',
     'ns.searchPlaceholder': 'Search by vendor, material, name…',
+    'sp.searchPlaceholder': 'Search: name, material, vendor, colour...',
     'ns.newFilamentTypeLabel': 'New filament type',
     'ns.dbSearchPlaceholder': 'Search SpoolmanDB (e.g. Prusament, eSun PLA…)',
   'common.error': 'Error',
@@ -1678,7 +1680,7 @@ function renderSpoolTable() {
   const filtered = allSpools.filter(s => spoolMatchesSearch(s, q));
 
   if (!filtered.length) {
-    el.innerHTML = '<div class="empty">Keine Spulen gefunden fuer &bdquo;' + spoolSearchText + '&ldquo;.</div>';
+    el.innerHTML = '<div class="empty">' + T('Keine Spulen gefunden fuer &bdquo;','No spools found for &ldquo;') + E(spoolSearchText) + T('&ldquo;.','&rdquo;.') + '</div>';
     if (pagEl) pagEl.innerHTML = '';
     return;
   }

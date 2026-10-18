@@ -840,6 +840,15 @@ async def health() -> dict[str, Any]:
     return {"status": "ok"}
 
 
+@app.get("/api/connection")
+async def connection_status() -> dict[str, Any]:
+    ts = _live.get("ts") or 0.0
+    return {
+        "live": _live.get("printers") is not None,
+        "last_update_age_seconds": (round(_time507.time() - ts) if ts else None),
+    }
+
+
 @app.get("/api/settings")
 async def read_settings() -> dict[str, Any]:
     db = await get_db()

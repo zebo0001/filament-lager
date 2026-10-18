@@ -3195,6 +3195,35 @@ async function checkAnycubicConn() {
   if (el) { el.style.display = bad ? 'block' : 'none'; el.textContent = bad ? ('\u26a0 ' + msg) : ''; }
 }
 setTimeout(checkAnycubicConn, 2000); setInterval(checkAnycubicConn, 30000);
+async function updateLivePrint() {
+  const box = document.getElementById('live-print-card');
+  if (!box) return;
+  let list = [];
+  try {
+    const data = await api(ST + '/printers');
+    list = ((data && data.printers) || []).filter(function (p) {
+      const pr = p.progress || null;
+      return p.source !== 'manual' && printerStatusClass(p.current_status) === 'busy' && pr && typeof pr.progress_percentage === 'number';
+    });
+  } catch (e) { return; }
+  if (!list.length) { box.classList.remove('show'); box.innerHTML = ''; return; }
+  box.innerHTML = '<strong>' + T('Live-Druck', 'Live print') + '</strong>' + list.map(function (p) {
+    const pr = p.progress;
+    const pct = Math.max(0, Math.min(100, Math.round(pr.progress_percentage)));
+    const rem = typeof pr.remaining_minutes === 'number' ? pr.remaining_minutes : null;
+    const remTxt = rem != null ? (rem >= 60 ? Math.floor(rem / 60) + 'h ' + (rem % 60) + 'min' : rem + ' min') : '';
+    const fin = formatPrinterCompletion(pr.approximate_completion_time);
+    const img = p.thumb ? '<img src="' + prEsc(p.thumb) + '" referrerpolicy="no-referrer" style="width:72px;height:72px;object-fit:cover;border-radius:.5rem;flex:none" onerror="this.style.display=\'none\'">' : '';
+    return '<div style="display:flex;gap:.8rem;align-items:center;margin-top:.6rem">' + img +
+      '<div style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + prEsc(pr.project_name || '-') + '</div>' +
+      '<div class="hint" style="margin:.1rem 0 .4rem">' + prEsc(p.name || '') + (remTxt ? ' &middot; ' + T('noch ', '') + remTxt + (T('', ' left')) : '') + (fin ? ' &middot; ' + T('fertig ', 'done ') + prEsc(fin) : '') + '</div>' +
+      '<div style="height:8px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden"><div style="height:100%;width:' + pct + '%;background:rgb(56,189,248)"></div></div></div>' +
+      '<div style="font-size:1.3rem;font-weight:700;flex:none">' + pct + '%</div></div>';
+  }).join('');
+  box.classList.add('show');
+}
+setTimeout(updateLivePrint, 3000);
+setInterval(updateLivePrint, 20000);
 document.getElementById('new-spool-btn').addEventListener('click', openNewSpoolDialog);
 document.getElementById('spool-search').addEventListener('input', (e) => {
   spoolSearchText = e.target.value;

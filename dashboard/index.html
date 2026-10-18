@@ -830,6 +830,8 @@ main>.panel.active{display:block;}
 <div><label for="ns-initial-weight" data-i18n="sd.initialWeight">Anfangsgewicht (g)</label><input type="number" id="ns-initial-weight" step="1" min="0" value="1000"></div>
 <div><label for="ns-spool-weight" data-i18n="sd.spoolWeight">Leerspulengewicht (g)</label><input type="number" id="ns-spool-weight" step="1" min="0"></div>
 <div><label for="ns-lot-nr" data-i18n="sd.lotNr">Lot-Nr.</label><input type="text" id="ns-lot-nr"></div>
+<div><label for="ns-count" data-i18n="ns.count">Anzahl Spulen</label><input type="number" id="ns-count" min="1" max="20" step="1" value="1"></div>
+<div><label for="ns-gross" data-i18n="ns.gross">Gewogen inkl. Spule (g, optional, nur bei Anzahl 1)</label><input type="number" id="ns-gross" min="0" step="1"></div>
 </div>
 <div id="ns-extra-fields"></div>
 
@@ -1031,6 +1033,8 @@ const I18N = {
     'ns.chooseFilamentType': 'Filament-Typ wählen',
     'ns.searchPlaceholder': 'Suche nach Hersteller, Material, Name…',
     'sp.searchPlaceholder': 'Suche: Name, Material, Hersteller, Farbe...',
+    'ns.count': 'Anzahl Spulen',
+    'ns.gross': 'Gewogen inkl. Spule (g, optional, nur bei Anzahl 1)',
     'ns.newFilamentTypeLabel': 'Neuer Filament-Typ',
     'ns.dbSearchPlaceholder': 'SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA…)',
   'common.error': 'Fehler',
@@ -1327,6 +1331,8 @@ const I18N = {
     'ns.chooseFilamentType': 'Choose filament type',
     'ns.searchPlaceholder': 'Search by vendor, material, name…',
     'sp.searchPlaceholder': 'Search: name, material, vendor, colour...',
+    'ns.count': 'Number of spools',
+    'ns.gross': 'Weighed incl. spool (g, optional, only for count 1)',
     'ns.newFilamentTypeLabel': 'New filament type',
     'ns.dbSearchPlaceholder': 'Search SpoolmanDB (e.g. Prusament, eSun PLA…)',
   'common.error': 'Error',
@@ -1680,7 +1686,7 @@ function renderSpoolTable() {
   const filtered = allSpools.filter(s => spoolMatchesSearch(s, q));
 
   if (!filtered.length) {
-    el.innerHTML = '<div class="empty">' + T('Keine Spulen gefunden fuer &bdquo;','No spools found for &ldquo;') + E(spoolSearchText) + T('&ldquo;.','&rdquo;.') + '</div>';
+    el.innerHTML = '<div class="empty">' + T('Keine Spulen gefunden fuer &bdquo;','No spools found for &ldquo;') + prEsc(spoolSearchText) + T('&ldquo;.','&rdquo;.') + '</div>';
     if (pagEl) pagEl.innerHTML = '';
     return;
   }
@@ -3007,6 +3013,8 @@ async function openNewSpoolDialog() {
   document.getElementById('ns-initial-weight').value = '1000';
   document.getElementById('ns-spool-weight').value = '';
   document.getElementById('ns-lot-nr').value = '';
+  document.getElementById('ns-count').value = '1';
+  document.getElementById('ns-gross').value = '';
 
   document.getElementById('ns-extra-fields').innerHTML =
     (spoolFieldDefs && spoolFieldDefs.length)
@@ -3126,8 +3134,13 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
     const extraPatch = collectExtraFieldValues(spoolFieldDefs, 'ns', {});
     if (Object.keys(extraPatch).length) spoolBody.extra = extraPatch;
 
-    await api(SP + '/spool', { method: 'POST', body: JSON.stringify(spoolBody) });
-    toast(t('ns.spoolCreated'), 'ok');
+    const _cnt = Math.max(1, Math.min(20, parseInt(document.getElementById('ns-count').value, 10) || 1));
+    const _gross = document.getElementById('ns-gross').value;
+    if (_cnt === 1 && _gross !== '' && spoolBody.initial_weight != null) { const _rem = Math.max(0, parseFloat(_gross) - (spoolBody.spool_weight || 0)); spoolBody.used_weight = Math.max(0, Math.round((spoolBody.initial_weight - _rem) * 10) / 10); }
+    const _newIds = [];
+    for (let _i = 0; _i < _cnt; _i++) { const _r = await api(SP + '/spool', { method: 'POST', body: JSON.stringify(spoolBody) }); if (_r && _r.id) _newIds.push(_r.id); }
+    setTimeout(function () { offerStorage(_newIds); }, 0);
+    toast(t('ns.spoolCreated') + (_cnt > 1 ? ' (' + _cnt + 'x)' : ''), 'ok');
     closeNewSpoolDialog();
     await loadSpools();
   } catch (e) {
@@ -3135,6 +3148,28 @@ document.getElementById('new-spool-save').addEventListener('click', async () => 
   }
 });
 
+async function offerStorage(ids) {
+  if (!ids || !ids.length) return;
+  try { await loadSpools(); await loadDevices(); } catch (e) {}
+  const free = [];
+  allUnits.filter(function (u) { return u.type === 'drybox'; }).sort(function (a, b) { return a.id - b.id; }).forEach(function (u) {
+    (u.slots || []).slice().sort(function (a, b) { return (a.level - b.level) || (a.position - b.position); }).forEach(function (sl) { if (!sl.spool_id) free.push({ id: sl.id, label: unitSlotLabel(u, sl) }); });
+  });
+  if (!free.length) { toast(T('Kein freier Drybox-Platz vorhanden', 'No free drybox slot available'), 'err'); return; }
+  const o = document.createElement('div');
+  o.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center';
+  const opts = function (sel) { return '<option value="">' + T('-- nicht einlagern --', '-- do not store --') + '</option>' + free.map(function (f, i) { return '<option value="' + f.id + '"' + (i === sel ? ' selected' : '') + '>' + prEsc(f.label) + '</option>'; }).join(''); };
+  const rows = ids.map(function (id, i) { const sp = allSpools.find(function (x) { return x.id === id; }); return '<div style="margin:8px 0"><div style="margin-bottom:4px">#' + id + ' ' + prEsc(sp ? spoolLabel(sp) : '') + '</div><select data-sid="' + id + '" style="width:100%">' + opts(i < free.length ? i : -1) + '</select></div>'; }).join('');
+  o.innerHTML = '<div style="background:#1a2234;color:#e6edf7;border-radius:12px;padding:20px;max-width:460px;width:92%;max-height:85vh;overflow:auto"><h3 style="margin:0 0 6px">' + T('Wohin mit der neuen Spule?', 'Where should the new spool go?') + '</h3><div style="opacity:.7;font-size:.9em">' + T('Vorschlag: nchste freie Pltze in der Drybox. ndern oder überspringen ist mgggggglich.', 'Suggestion: next free drybox slots. You can change or skip.') + '</div>' + rows + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px"><button type="button" id="os-skip">' + T('Spter', 'Later') + '</button><button type="button" id="os-ok">' + T('Einlagern', 'Store') + '</button></div></div>';
+  document.body.appendChild(o);
+  o.querySelector('#os-skip').onclick = function () { o.remove(); };
+  o.querySelector('#os-ok').onclick = async function () {
+    const sels = Array.prototype.slice.call(o.querySelectorAll('select')); const used = new Set();
+    for (const sx of sels) { if (sx.value) { if (used.has(sx.value)) { toast(T('Platz doppelt gewhlt', 'Slot selected twice'), 'err'); return; } used.add(sx.value); } }
+    o.remove();
+    for (const sx of sels) { if (!sx.value) continue; const f = free.find(function (x) { return String(x.id) === sx.value; }); await assignToSlot(parseInt(sx.dataset.sid, 10), parseInt(sx.value, 10), null, f ? f.label : ''); }
+  };
+}
 document.getElementById('new-spool-btn').addEventListener('click', openNewSpoolDialog);
 document.getElementById('spool-search').addEventListener('input', (e) => {
   spoolSearchText = e.target.value;

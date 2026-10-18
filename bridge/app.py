@@ -564,6 +564,7 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         ) if b is not None
     ]
 
+    log.info("BOOKDBG printer=%s task=%s delta_mm=%.1f boxes=%s", printer_id, task_id, delta_mm, [(getattr(b, "box_id", None), getattr(b, "loaded_slot", None), len(getattr(b, "slots", None) or [])) for b in (boxes or [])])
     def _resolve_slot_from_loaded():
         for box in boxes:
             loaded_slot = getattr(box, "loaded_slot", -1)
@@ -615,6 +616,7 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         spool_id = mapping["spool_id"] if mapping is not None else None
         if spool_id is None:
             spool_id = await _resolve_spool_via_storage_link(session, printer_id, box_id, slot_index)
+        log.info("BOOKDBG label=%s mapping=%s spool=%s grams=%.2f", label, mapping is not None, spool_id, grams)
         if spool_id is None:
             log.debug("Kein Mapping fuer Slot %s (Drucker %s) -- ueberspringe Buchung.", label, printer_id)
             return True

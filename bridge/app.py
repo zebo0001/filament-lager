@@ -668,6 +668,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             grams = grams_from_mm(delta_mm, material)
             if grams > 0:
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
+        else:
+            log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
     else:
         # Keine Slicer-Materialinfo verfuegbar (z.B. lokal gesliced) -- Fallback
         # auf den aktuell eingezogenen Slot, wie zuvor.
@@ -676,6 +678,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             grams = grams_from_mm(delta_mm, material)
             if grams > 0:
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
+        else:
+            log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
 
     if all_ok:
         await db.execute(

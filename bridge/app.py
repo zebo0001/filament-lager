@@ -349,6 +349,30 @@ async def _resolve_spool_via_storage_link(session: aiohttp.ClientSession, printe
     return None
 
 
+async def _resolve_external_spool(session: aiohttp.ClientSession, printer_id: str) -> int | None:
+    """Aussenspule (z.B. Kobra X Druckerplatz): Drucker-Lagerplatz mit genau einer Spule."""
+    try:
+        async with session.get(f"{STORAGE_BASE_URL}/units", timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            if resp.status >= 400:
+                return None
+            data = await resp.json()
+    except Exception as exc:
+        log.debug("Externe Spule: Abruf der Units fehlgeschlagen: %s", exc)
+        return None
+    units = data.get("units", data) if isinstance(data, dict) else data
+    if not isinstance(units, list):
+        return None
+    for unit in units:
+        if not isinstance(unit, dict) or unit.get("type") != "printer":
+            continue
+        if str(unit.get("bridge_printer_id") or "") != str(printer_id):
+            continue
+        filled = [sl.get("spool_id") for sl in (unit.get("slots") or []) if sl.get("spool_id") is not None]
+        if len(filled) == 1:
+            return int(filled[0])
+    return None
+
+
 async def _resolve_auth_mode(session, cookie_jar, token, preferred_mode, db=None):
     """Probiert zuerst den bevorzugten Modus, dann den jeweils anderen.
 
@@ -671,7 +695,16 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             if grams > 0:
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
         else:
-            log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
+            _ext = await _resolve_external_spool(session, printer_id)
+            if _ext is not None:
+                _mat = (materials[0].get("material_type") if materials else None) or "PLA"
+                _g = grams_from_mm(delta_mm, _mat)
+                if _g > 0:
+                    _ok = await book_usage(session, _ext, _g)
+                    log.info("BOOKDBG external spool=%s grams=%.2f ok=%s", _ext, _g, _ok)
+                    all_ok = bool(_ok) and all_ok
+            else:
+                log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
     else:
         # Keine Slicer-Materialinfo verfuegbar (z.B. lokal gesliced) -- Fallback
         # auf den aktuell eingezogenen Slot, wie zuvor.
@@ -681,7 +714,16 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             if grams > 0:
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
         else:
-            log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
+            _ext = await _resolve_external_spool(session, printer_id)
+            if _ext is not None:
+                _mat = (materials[0].get("material_type") if materials else None) or "PLA"
+                _g = grams_from_mm(delta_mm, _mat)
+                if _g > 0:
+                    _ok = await book_usage(session, _ext, _g)
+                    log.info("BOOKDBG external spool=%s grams=%.2f ok=%s", _ext, _g, _ok)
+                    all_ok = bool(_ok) and all_ok
+            else:
+                log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
 
     if all_ok:
         await db.execute(

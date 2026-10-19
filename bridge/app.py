@@ -373,6 +373,33 @@ async def _resolve_external_spool(session: aiohttp.ClientSession, printer_id: st
     return None
 
 
+async def _ordered_slots(session, printer_id):
+    """Slicer-Reihenfolge (nach Sync): belegte Druckerplaetze, danach ACE-Slots.
+    Liefert [(box_id, position, spool_id)] oder None."""
+    try:
+        async with session.get(f"{STORAGE_BASE_URL}/units", timeout=aiohttp.ClientTimeout(total=10)) as resp:
+            if resp.status >= 400:
+                return None
+            data = await resp.json()
+    except Exception as exc:
+        log.debug("ordered_slots: Units-Abruf fehlgeschlagen: %s", exc)
+        return None
+    units = data.get("units", data) if isinstance(data, dict) else data
+    if not isinstance(units, list):
+        return None
+    mine = [u for u in units if isinstance(u, dict) and str(u.get("bridge_printer_id") or "") == str(printer_id)]
+    mine.sort(key=lambda u: 0 if u.get("type") == "printer" else 1)
+    out = []
+    for u in mine:
+        bid = u.get("bridge_box_id")
+        if bid is None:
+            return None
+        for sl in sorted(u.get("slots") or [], key=lambda x: x.get("position", 0)):
+            if sl.get("spool_id") is not None:
+                out.append((int(bid), int(sl.get("position", 0)), int(sl["spool_id"])))
+    return out or None
+
+
 async def _resolve_auth_mode(session, cookie_jar, token, preferred_mode, db=None):
     """Probiert zuerst den bevorzugten Modus, dann den jeweils anderen.
 
@@ -697,6 +724,26 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 if global_index is None:
                     global_index = m.get("paint_index")
                     _paint = True
+                if _paint and global_index is not None:
+                    _ord = await _ordered_slots(session, printer_id)
+                    if _ord is not None:
+                        try:
+                            _gi = int(global_index)
+                        except (TypeError, ValueError):
+                            _gi = -1
+                        if 0 <= _gi < len(_ord):
+                            _bid, _pos, _sp = _ord[_gi]
+                            if not _color_ok(m.get("paint_color"), _slot_color(_bid, _pos)):
+                                log.warning("COLORMISMATCH idx=%s box=%s pos=%s: Cloud %s vs Slot %s -- NICHT gebucht (Sync vergessen?)", _gi, _bid, _pos, m.get("paint_color"), _slot_color(_bid, _pos))
+                                continue
+                            _g = grams_from_mm(delta_mm_for_slot, m.get("material_type") or "PLA")
+                            if _g > 0:
+                                _ok = await book_usage(session, _sp, _g)
+                                log.info("BOOKDBG ordered idx=%s box=%s pos=%s spool=%s grams=%.2f ok=%s", _gi, _bid, _pos, _sp, _g, _ok)
+                                all_ok = bool(_ok) and all_ok
+                        else:
+                            log.warning("Index %s ausserhalb der Slotliste (%s Eintraege) -- NICHT gebucht", _gi, len(_ord))
+                        continue
                 if _paint and global_index == 0:
                     if not _color_ok(m.get("paint_color"), _slot_color(-1, 0)):
                         log.warning("COLORMISMATCH extern: Cloud %s vs Slot %s -- NICHT gebucht (Sync vergessen?)", m.get("paint_color"), _slot_color(-1, 0))

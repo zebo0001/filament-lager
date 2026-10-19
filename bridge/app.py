@@ -616,7 +616,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         except (TypeError, ValueError):
             return None, None, None
         offset = 0
-        for box in boxes:
+        _real = [b for b in boxes if (getattr(b, "box_id", None) is not None and getattr(b, "box_id") >= 0)]
+        for box in (_real or boxes):
             slots = getattr(box, "slots", None) or []
             if offset <= global_index < offset + len(slots):
                 local_index = global_index - offset

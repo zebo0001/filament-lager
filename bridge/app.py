@@ -603,6 +603,24 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 return box_id, loaded_slot, material
         return None, None, None
 
+    def _slot_color(_bid, _si):
+        for _b in boxes:
+            if getattr(_b, "box_id", None) == _bid:
+                try:
+                    return list(_b.slots[_si].color)
+                except Exception:
+                    return None
+        return None
+
+    def _color_ok(_pc, _sc, _tol=60):
+        try:
+            if not _pc or not _sc or list(_sc)[:3] == [0, 0, 0]:
+                return True
+            _d = sum((int(x) - int(y)) ** 2 for x, y in zip(_pc[:3], _sc[:3])) ** 0.5
+            return _d <= _tol
+        except Exception:
+            return True
+
     def _resolve_slot_for_global_index(global_index):
         # paint_infos liefert ggf. einen Index relativ zur Slicer-Materialliste
         # bzw. zum spool_index/ams_index-Feld -- hier best effort ueber die
@@ -680,6 +698,9 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                     global_index = m.get("paint_index")
                     _paint = True
                 if _paint and global_index == 0:
+                    if not _color_ok(m.get("paint_color"), _slot_color(-1, 0)):
+                        log.warning("COLORMISMATCH extern: Cloud %s vs Slot %s -- NICHT gebucht (Sync vergessen?)", m.get("paint_color"), _slot_color(-1, 0))
+                        continue
                     _ext = await _resolve_external_spool(session, printer_id)
                     _mt = m.get("material_type") or "PLA"
                     _g = grams_from_mm(delta_mm_for_slot, _mt)
@@ -696,6 +717,9 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                         "Mehrfarb-Material (Index %r) konnte keinem ACE-Slot zugeordnet werden -- ueberspringe.",
                         global_index,
                     )
+                    continue
+                if not _color_ok(m.get("paint_color"), _slot_color(box_id, slot_index)):
+                    log.warning("COLORMISMATCH box=%s slot=%s: Cloud %s vs Slot %s -- NICHT gebucht (Sync vergessen?)", box_id, slot_index, m.get("paint_color"), _slot_color(box_id, slot_index))
                     continue
                 grams = grams_from_mm(delta_mm_for_slot, material or m.get("material_type"))
                 if grams > 0:

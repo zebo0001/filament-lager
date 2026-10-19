@@ -713,7 +713,17 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
     if len(materials) > 1:
         total_used = sum(float(m["filament_used"]) for m in materials)
         if total_used > 0:
-            for m in materials:
+            log.info("BOOKDBG mats=%s", [(round(float(x.get("filament_used") or 0), 2), x.get("paint_color"), x.get("paint_index")) for x in materials])
+            _lm_done = False
+            _lb, _ls, _lm = _resolve_slot_from_loaded()
+            if _lb is not None and _ls is not None:
+                _lg = grams_from_mm(delta_mm, _lm or (materials[0].get("material_type") if materials else None) or "PLA")
+                if _lg > 0:
+                    _lok = await _book_slot(_lb, _ls, _lm, _lg, f"box={_lb} slot={_ls}")
+                    log.info("BOOKDBG loaded-multi box=%s slot=%s grams=%.2f ok=%s", _lb, _ls, _lg, _lok)
+                    all_ok = bool(_lok) and all_ok
+                _lm_done = True
+            for m in ([] if _lm_done else materials):
                 log.info("BOOKDBG mat=%s", {k: v for k, v in m.items() if "url" not in str(k).lower() and "thumb" not in str(k).lower()})
                 share = float(m["filament_used"]) / total_used
                 delta_mm_for_slot = delta_mm * share

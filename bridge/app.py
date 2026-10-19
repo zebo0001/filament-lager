@@ -669,13 +669,27 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         total_used = sum(float(m["filament_used"]) for m in materials)
         if total_used > 0:
             for m in materials:
+                log.info("BOOKDBG mat=%s", {k: v for k, v in m.items() if "url" not in str(k).lower() and "thumb" not in str(k).lower()})
                 share = float(m["filament_used"]) / total_used
                 delta_mm_for_slot = delta_mm * share
                 global_index = m.get("spool_index")
                 if global_index is None:
                     global_index = m.get("ams_index")
+                _paint = False
                 if global_index is None:
                     global_index = m.get("paint_index")
+                    _paint = True
+                if _paint and global_index == 0:
+                    _ext = await _resolve_external_spool(session, printer_id)
+                    _mt = m.get("material_type") or "PLA"
+                    _g = grams_from_mm(delta_mm_for_slot, _mt)
+                    if _ext is not None and _g > 0:
+                        _ok = await book_usage(session, _ext, _g)
+                        log.info("BOOKDBG external(multi) spool=%s grams=%.2f ok=%s", _ext, _g, _ok)
+                        all_ok = bool(_ok) and all_ok
+                    continue
+                if _paint and global_index is not None:
+                    global_index = global_index - 1
                 box_id, slot_index, material = _resolve_slot_for_global_index(global_index)
                 if box_id is None or slot_index is None:
                     log.debug(

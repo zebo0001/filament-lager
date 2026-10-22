@@ -675,6 +675,41 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             offset += len(slots)
         return None, None, None
 
+    async def _resolve_spool_by_color(paint, mtype):
+        # v63: Kobra X meldet loaded_slot=-1 -> Slot per Farbe+Material bestimmen
+        if not paint:
+            return None, None, None
+        spools = {}
+        for _b in boxes:
+            _bid = getattr(_b, "box_id", None)
+            if _bid is None:
+                continue
+            for _i, _s in enumerate(getattr(_b, "slots", None) or []):
+                try:
+                    _sc = list(_s.color)
+                    if not _sc or _sc[:3] == [0, 0, 0]:
+                        continue
+                    _d = sum((int(x) - int(y)) ** 2 for x, y in zip(list(paint)[:3], _sc[:3])) ** 0.5
+                    if _d > 60:
+                        continue
+                    _mt = str(getattr(_s, "material_type", "") or "").upper()
+                    if mtype and _mt and _mt[:3] != str(mtype).upper()[:3]:
+                        continue
+                except Exception:
+                    continue
+                _cur = await db.execute("SELECT spool_id FROM mappings WHERE printer_id = ? AND box_id = ? AND slot_index = ?", (printer_id, _bid, _i))
+                _row = await _cur.fetchone()
+                _sid = _row["spool_id"] if _row is not None else None
+                if _sid is None:
+                    _sid = await _resolve_spool_via_storage_link(session, printer_id, _bid, _i)
+                if _sid is not None:
+                    spools[int(_sid)] = (_bid, _i)
+        log.info("BOOKDBG v63 color-candidates paint=%s mat=%s -> %s", paint, mtype, spools)
+        if len(spools) == 1:
+            _sid = next(iter(spools))
+            return _sid, spools[_sid][0], spools[_sid][1]
+        return None, None, None
+
     async def _book_slot(box_id, slot_index, material, grams, label):
         if box_id is None or slot_index is None or grams <= 0:
             return True
@@ -792,15 +827,22 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
         else:
             _ext = await _resolve_external_spool(session, printer_id)
+            _pc63 = materials[0].get("paint_color") if materials else None
+            _mt63 = (materials[0].get("material_type") if materials else None) or "PLA"
+            if _ext is None:
+                _ext, _b63, _i63 = await _resolve_spool_by_color(_pc63, _mt63)
+                log.info("BOOKDBG v63 color-resolve spool=%s box=%s slot=%s", _ext, _b63, _i63)
             if _ext is not None:
-                _mat = (materials[0].get("material_type") if materials else None) or "PLA"
-                _g = grams_from_mm(delta_mm, _mat)
+                _g = grams_from_mm(delta_mm, _mt63)
                 if _g > 0:
                     _ok = await book_usage(session, _ext, _g)
                     log.info("BOOKDBG external spool=%s grams=%.2f ok=%s", _ext, _g, _ok)
                     all_ok = bool(_ok) and all_ok
             else:
                 log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
+                _st63 = str(getattr(printer, "current_status", "")).lower()
+                if "busy" in _st63 or "print" in _st63:
+                    all_ok = False
     else:
         # Keine Slicer-Materialinfo verfuegbar (z.B. lokal gesliced) -- Fallback
         # auf den aktuell eingezogenen Slot, wie zuvor.
@@ -811,15 +853,22 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 all_ok = await _book_slot(box_id, slot_index, material, grams, f"box={box_id} slot={slot_index}") and all_ok
         else:
             _ext = await _resolve_external_spool(session, printer_id)
+            _pc63 = materials[0].get("paint_color") if materials else None
+            _mt63 = (materials[0].get("material_type") if materials else None) or "PLA"
+            if _ext is None:
+                _ext, _b63, _i63 = await _resolve_spool_by_color(_pc63, _mt63)
+                log.info("BOOKDBG v63 color-resolve spool=%s box=%s slot=%s", _ext, _b63, _i63)
             if _ext is not None:
-                _mat = (materials[0].get("material_type") if materials else None) or "PLA"
-                _g = grams_from_mm(delta_mm, _mat)
+                _g = grams_from_mm(delta_mm, _mt63)
                 if _g > 0:
                     _ok = await book_usage(session, _ext, _g)
                     log.info("BOOKDBG external spool=%s grams=%.2f ok=%s", _ext, _g, _ok)
                     all_ok = bool(_ok) and all_ok
             else:
                 log.warning("Kein aktiver Slot (loaded_slot) fuer Drucker %s, Druck %r, +%.1f mm -- Verbrauch NICHT gebucht.", printer_id, _CUR_PRINT.get("name"), delta_mm)
+                _st63 = str(getattr(printer, "current_status", "")).lower()
+                if "busy" in _st63 or "print" in _st63:
+                    all_ok = False
 
     if all_ok:
         await db.execute(

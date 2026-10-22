@@ -305,7 +305,13 @@
   .slot-chip .sc-top { display: flex; align-items: center; gap: .35rem; font-weight: 600; }
   .slot-chip .sc-dot { width: .6rem; height: .6rem; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,.3); }
   .slot-chip .sc-match { color: var(--accent); font-size: .72rem; }
-  .slot-chip.empty { opacity: .5; }
+  .slot-chip.spooly { flex-direction: row; align-items: center; gap: .6rem; min-width: 200px; position: relative; }
+.slot-chip.spooly.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.slot-chip .sp-ring { --p: 100; width: 2.6rem; height: 2.6rem; border-radius: 50%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255,255,255,.12) 0); }
+.slot-chip .sp-ring::before { content: ''; position: absolute; inset: .3rem; border-radius: 50%; background: #1a2234; }
+.slot-chip .sp-ring span { position: relative; font-size: .68rem; font-weight: 700; }
+.slot-chip .sp-body { display: flex; flex-direction: column; min-width: 0; }
+.slot-chip.empty { opacity: .5; }
   .printer-actions { display: flex; gap: .5rem; margin-top: .6rem; }
   .printer-add-form { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; margin-bottom: 1rem; }
   .printer-add-form > div { display: flex; flex-direction: column; gap: .25rem; }
@@ -3380,11 +3386,11 @@ function renderPrinterCard(p) {
           pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker: ','Printer: ') + pp + ' %</div>';
         }
       }
-      const ldHtml = (box.loaded_slot === si) ? ' <span title="' + T('aktuell eingezogen','currently feeding') + '">&#9654;</span>' : '';
-      return '<div class="slot-chip' + (empty ? ' empty' : '') + '">' +
-          '<div class="sc-top"><span class="sc-dot" style="background:' + hex + '"></span>' + prEsc(label) + ldHtml + '</div>' +
-          match + storInfo + pctHtml +
-        '</div>';
+      const rpv = (!empty && slot.consumables_percent != null) ? Math.max(0, Math.min(100, Math.round(slot.consumables_percent))) : null;
+const ldHtml = (box.loaded_slot === si) ? ' <span title="' + T('aktuell eingezogen','currently feeding') + '">&#9654;</span>' : '';
+      return '<div class="slot-chip spooly' + (empty ? ' empty' : '') + (box.loaded_slot === si ? ' active' : '') + '"><div class="sp-ring" style="--c:' + hex + ';--p:' + (rpv != null ? rpv : (empty ? 0 : 100)) + '"><span>' + (rpv != null ? rpv + '%' : '') + '</span></div>' +
+          '<div class="sp-body"><div class="sc-top">' + prEsc(label) + ldHtml + '</div>' +
+          match + storInfo + pctHtml + '</div></div>';
       }).join('');
       return '<div><div class="printer-box-label">' + prEsc(box.name || ('Box ' + (bi+1))) + (box.stale ? T(' (letzter Stand)',' (last state)') : '') + '</div><div class="printer-slots">' + (slots || '<span class="hint">' + T('Keine Slot-Daten','No slot data') + '</span>') + '</div></div>';
     }).join('');

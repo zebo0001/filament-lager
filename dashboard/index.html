@@ -3380,7 +3380,43 @@ function buildPrinterIllustration(p, statusCls) {
     aceSvg += '<path d="M150 70 C150 92 196 84 196 100" stroke="#0b1220" stroke-width="6" fill="none" stroke-linecap="round"/>' +
       '<path d="M150 70 C150 92 196 84 196 100" stroke="' + hoseCol + '" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
   }
-  var printerSvg = '<svg class="pv-svg" viewBox="0 ' + vbY + ' 300 ' + vbH + '" fill="none" xmlns="http://www.w3.org/2000/svg">' + aceSvg +
+  var extSvg = '';
+var extList = [];
+var paUnits = window.__paUnits || [];
+var pu = null;
+for (var ui = 0; ui < paUnits.length; ui++) {
+  var uu = paUnits[ui];
+  if (uu.type === 'printer' && !uu.parent_unit_id && ((uu.bridge_printer_id && String(uu.bridge_printer_id) === String(p.printer_id)) || String(uu.name || '').toLowerCase() === String(p.name || '').toLowerCase())) { pu = uu; break; }
+}
+if (pu) {
+  var feedPos = (pu.ace_feed_slot !== null && pu.ace_feed_slot !== undefined) ? pu.ace_feed_slot - 1 : -99;
+  (pu.slots || []).forEach(function (sl2) {
+    if (sl2.spool_id === null || sl2.spool_id === undefined || sl2.position === feedPos || extList.length >= 4) return;
+    var sp = null;
+    for (var si2 = 0; si2 < (allSpools || []).length; si2++) { if (allSpools[si2].id === sl2.spool_id) { sp = allSpools[si2]; break; } }
+    var fl = (sp && sp.filament) || {};
+    var hx = String(fl.color_hex || '808080').replace('#', '');
+    extList.push({ hex: '#' + hx, title: ((fl.vendor && fl.vendor.name) ? fl.vendor.name + ' ' : '') + (fl.name || ('#' + sl2.spool_id)) });
+  });
+}
+var extActive = (building && extList.length === 1 && (!ace || ace.loaded_slot < 0)) ? 0 : -1;
+extList.forEach(function (ex, k) {
+  var left = (k % 2 === 0);
+  var row = Math.floor(k / 2);
+  var ecx = left ? 34 : 266, ecy = 140 + row * 44, er = 17;
+  var edge = left ? 68 : 232;
+  var eact = (k === extActive);
+  var tx = left ? 74 : 226, pd = 'M' + ecx + ' ' + (ecy - er) + ' C' + ecx + ' ' + (ecy - er - 40) + ' ' + tx + ' 78 ' + tx + ' 100';
+    extSvg += '<path d="' + pd + '" fill="none" stroke="#0b1220" stroke-width="5" stroke-linecap="round"/>' +
+    '<path d="' + pd + '" fill="none" stroke="' + ex.hex + '" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<g class="pa-spool' + (eact ? ' act' : '') + '"><title>' + prEsc(ex.title) + '</title>' +
+    '<circle cx="' + ecx + '" cy="' + ecy + '" r="' + er + '" fill="' + ex.hex + '" stroke="rgba(255,255,255,.35)" stroke-width="1"/>' +
+    '<circle cx="' + ecx + '" cy="' + ecy + '" r="' + (er * 0.62) + '" fill="rgba(0,0,0,.28)"/>' +
+    '<circle cx="' + ecx + '" cy="' + ecy + '" r="' + (er * 0.3) + '" fill="#0f1624" stroke="rgba(255,255,255,.3)" stroke-width=".8"/>' +
+    (eact ? '<circle class="pa-act-ring" cx="' + ecx + '" cy="' + ecy + '" r="' + (er + 3) + '" fill="none" stroke="var(--accent)" stroke-width="2"/>' : '') +
+    '</g>';
+});
+var printerSvg = '<svg class="pv-svg" viewBox="0 ' + vbY + ' 300 ' + vbH + '" fill="none" xmlns="http://www.w3.org/2000/svg">' + aceSvg + extSvg +
     '<g transform="translate(30,70)">' +
     '<rect x="38" y="172" width="164" height="14" rx="4" fill="#1b2433" stroke="rgba(255,255,255,.14)"/>' +
     '<rect x="44" y="34" width="9" height="138" rx="2" fill="#243044"/>' +
@@ -3562,7 +3598,7 @@ async function loadPrinters() {
     const data = await api(ST + '/printers');
     unitsByPrinterId = {};
     try {
-      const unitsData = await api(ST + '/units');
+      const unitsData = await api(ST + '/units'); window.__paUnits = unitsData;
       (unitsData || []).forEach(u => { if ((u.type === 'printer' || u.type === 'ace') && u.bridge_printer_id) unitsByPrinterId[String(u.bridge_printer_id) + ':' + String(u.bridge_box_id)] = u; });
     } catch (e) {}
     const printers = (data && data.printers) || [];

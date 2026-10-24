@@ -114,6 +114,7 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.7.0 (2026-10-24)**: New: maintenance log - per-printer plan based on print hours, condition score, forecast, nozzle and build plate with own runtime (abrasive materials count triple), spare parts, costs, major service, PDF service booklet.
 - **v1.6.1 (2026-10-24)**: External spools beside the printer, storage view with sticky printer column next to the dryboxes, full-width responsive layout.
 - **v1.6.0 (2026-10-24)**: New printer view: ACE on top with hose, spools in real colours, glowing active slot, big progress with layer x/y and info rows.
 - **v1.5.1 (2026-10-24)**: ACE/AMS reliably shown inside the printer frame, "add ACE/AMS" button, warning for an ACE without a printer.

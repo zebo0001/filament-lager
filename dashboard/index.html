@@ -510,6 +510,7 @@ main>.panel.active{display:block;}
     <button class="nav-item" data-nav-target="labels" type="button"><span class="nav-icon">&#127991;</span><span class="nav-label">Label-Designer</span></button>
     <button class="nav-item" data-nav-target="products" type="button"><span class="nav-icon">&#128506;</span><span class="nav-label">Gedruckte Produkte</span></button>
     <button class="nav-item" data-nav-target="statistics" type="button"><span class="nav-icon">&#128202;</span><span class="nav-label">Statistik</span></button>
+    <button class="nav-item" data-nav-target="maintenance" type="button"><span class="nav-icon">&#128295;</span><span class="nav-label">Wartungsbuch</span></button>
     <button class="nav-item" data-nav-target="settings" type="button"><span class="nav-icon">&#9881;</span><span class="nav-label">Einstellungen</span></button>
   </nav>
 </aside>
@@ -707,7 +708,351 @@ main>.panel.active{display:block;}
   <div id="stats-tabs"></div>
   <div id="stats-body"><p class="hint">...</p></div>
 </div>
+<div class="panel" data-panel="maintenance" id="mt-panel">
+<style id="mt-style">
+#mt-panel .mt-tabs{display:flex;gap:.5rem;margin:.2rem 0 1rem;flex-wrap:wrap}
+#mt-panel .mt-tab{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:.6rem;padding:.45rem .9rem;cursor:pointer;font-size:.88rem}
+#mt-panel .mt-tab.active{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.1)}
+#mt-panel .mt-card{background:var(--card);border:1px solid var(--border);border-radius:.8rem;padding:1rem 1.1rem}
+#mt-panel .mt-hero{display:flex;gap:1.4rem;align-items:center;margin-bottom:1rem}
+#mt-panel .mt-hero h3{margin:.1rem 0 .3rem;font-size:1.5rem}
+#mt-panel .mt-sub{color:var(--muted);font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}
+#mt-panel .mt-grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:1rem;align-items:start}
+@media(max-width:900px){#mt-panel .mt-grid{grid-template-columns:1fr}}
+#mt-panel .mt-col{display:flex;flex-direction:column;gap:.8rem;min-width:0}
+#mt-panel .mt-h{color:var(--muted);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;margin:.4rem 0 .1rem;display:flex;justify-content:space-between}
+#mt-panel .mt-next{display:flex;gap:1.1rem;align-items:center;border-color:rgba(56,189,248,.45)}
+#mt-panel .mt-next h4{margin:.2rem 0;font-size:1.15rem}
+#mt-panel .mt-row{display:flex;align-items:center;gap:.8rem;padding:.65rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:var(--card);cursor:pointer}
+#mt-panel .mt-row:hover{border-color:rgba(255,255,255,.2)}
+#mt-panel .mt-row .t{flex:1;min-width:0}
+#mt-panel .mt-row .t b{display:block;font-size:.95rem}
+#mt-panel .mt-row .t span{font-size:.78rem;color:var(--muted)}
+#mt-panel .mt-dot{width:.7rem;height:.7rem;border-radius:50%;flex:none}
+#mt-panel .due{color:var(--danger)}#mt-panel .soon{color:var(--warn)}#mt-panel .ok{color:var(--ok)}
+#mt-panel .mt-dot.due{background:var(--danger)}#mt-panel .mt-dot.soon{background:var(--warn)}#mt-panel .mt-dot.ok{background:var(--ok)}
+#mt-panel .mt-btn{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:.55rem;padding:.4rem .8rem;cursor:pointer;font-size:.84rem}
+#mt-panel .mt-btn.pri{background:var(--accent);color:#04202e;border-color:var(--accent);font-weight:600}
+#mt-panel .mt-btn.danger{color:var(--danger);border-color:rgba(248,113,113,.4)}
+#mt-panel .mt-btn.sm{padding:.25rem .55rem;font-size:.78rem}
+#mt-panel .mt-printer{display:flex;gap:.9rem;align-items:center;cursor:pointer}
+#mt-panel .mt-printer b{display:block}#mt-panel .mt-printer span{font-size:.78rem;color:var(--muted)}
+#mt-panel .mt-bar{height:.4rem;border-radius:.3rem;background:rgba(255,255,255,.08);overflow:hidden;margin-top:.35rem}
+#mt-panel .mt-bar i{display:block;height:100%}
+#mt-panel .mt-badge{font-size:.66rem;border-radius:.4rem;padding:.05rem .4rem;background:rgba(255,255,255,.08);color:var(--muted);margin-left:.4rem;vertical-align:middle}
+#mt-panel table.mt-tbl{width:100%;border-collapse:collapse;font-size:.88rem}
+#mt-panel .mt-tbl th{color:var(--muted);text-align:left;font-weight:400;padding:.4rem .5rem;font-size:.76rem}
+#mt-panel .mt-tbl td{padding:.45rem .5rem;border-top:1px solid var(--border)}
+#mt-panel .mt-kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem .9rem;font-size:.86rem}
+#mt-panel .mt-kv dt{color:var(--muted)}#mt-panel .mt-kv dd{margin:0}
+#mt-panel .mt-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+#mt-panel .mt-empty{color:var(--muted);font-size:.86rem;padding:.6rem 0}
+.mt-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem}
+.mt-md{background:#16213a;border:1px solid var(--border);border-radius:.9rem;padding:1.2rem;width:min(420px,100%);max-height:90vh;overflow:auto;color:var(--text)}
+.mt-md h3{margin:0 0 .8rem}.mt-md label{display:block;font-size:.78rem;color:var(--muted);margin:.55rem 0 .15rem}
+.mt-md input,.mt-md select,.mt-md textarea{width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);border-radius:.45rem;padding:.45rem .55rem}
+.mt-md .mt-bt{display:flex;gap:.5rem;justify-content:flex-end;margin-top:1rem}
+</style>
+<h2 data-i18n-skip>Wartungsbuch</h2>
+<div id="mt-root"><p class="hint">...</p></div>
+</div>
+
 </main>
+<script id="mt-script">
+(function(){
+var MT = {tab:'overview', printer:null};
+var EN = {
+ 'Schienen/Führungen reinigen und ölen':'Clean and oil rails/guides','Z-Spindel reinigen und fetten':'Clean and grease Z lead screw',
+ 'Düse und Heizblock reinigen':'Clean nozzle and heater block','Druckplatte reinigen':'Clean build plate','Lüfter entstauben':'Dust off fans',
+ 'Filament-Cutter prüfen':'Check filament cutter','PTFE-Schlauch auf Verschleiß prüfen':'Check PTFE tube for wear',
+ 'Riemenspannung prüfen':'Check belt tension','Umlenkrollen ölen':'Oil idler pulleys','Düsen-Abstreifer reinigen':'Clean nozzle wiper',
+ 'Düse (Messing)':'Nozzle (brass)','Druckplatte (PEI)':'Build plate (PEI)'
+};
+function lang(){ return (typeof currentLang!=='undefined' && currentLang==='en') ? 'en' : 'de'; }
+function tt(de,en){ return lang()==='en' ? en : de; }
+function ti(s){ return (lang()==='en' && EN[s]) ? EN[s] : s; }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+function nf(n,d){ return Number(n||0).toLocaleString(lang()==='en'?'en':'de',{maximumFractionDigits:d==null?1:d}); }
+function eur(n){ return nf(n,2)+' €'; }
+function base(){ return (typeof ST!=='undefined' ? ST : '/api/storage') + '/maintenance'; }
+function call(path, method, body){ var o={}; if(method) o.method=method; if(body!==undefined) o.body=JSON.stringify(body); return api(base()+path, o); }
+function root(){ return document.getElementById('mt-root'); }
+function scol(s){ return s>=80?'var(--ok)':(s>=60?'var(--warn)':'var(--danger)'); }
+function ring(score,size){
+  var r=size*0.4, c=2*Math.PI*r, off=c*(1-Math.max(0,Math.min(100,score))/100), w=size*0.09;
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 '+size+' '+size+'" style="flex:none">'
+   +'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="'+w+'"/>'
+   +'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+scol(score)+'" stroke-width="'+w+'" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>'
+   +'<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="var(--text)" font-size="'+size*0.28+'" font-weight="700">'+score+'</text></svg>';
+}
+function remTxt(i){
+  var rem=i.remaining_h;
+  if(i.status==='due') return tt('Jetzt fällig','Due now')+' · '+nf(-rem)+' h '+tt('überfällig','overdue');
+  var eta='';
+  if(i.eta_days!=null){
+    var dd=new Date(Date.now()+i.eta_days*86400000).toLocaleDateString(lang()==='en'?'en':'de',{day:'2-digit',month:'2-digit'});
+    eta=' · '+tt('ca. in ','approx. in ')+i.eta_days+' '+(i.eta_days===1?tt('Tag','day'):tt('Tagen','days'))+' ('+dd+')';
+  }
+  return tt('In ','In ')+nf(rem)+' h'+eta+(i.interval_h?' · '+tt('alle ','every ')+nf(i.interval_h,0)+' h':'');
+}
+function doService(p){
+  modal(tt('Großer Service','Major service'),[
+    {label:tt('Setzt ALLE aktiven Aufgaben dieses Druckers auf „jetzt erledigt“. Kosten (€, optional)','Resets ALL active tasks of this printer to “done now”. Cost (€, optional)'),type:'number',step:'0.01',value:''},
+    {label:tt('Notiz','Note'),type:'textarea'}
+  ],async function(v){ try{ await call('/printer/'+encodeURIComponent(p)+'/service','POST',{cost:num(v[0]),note:v[1]||null}); refresh(); }catch(e){fail(e);} });
+}
+function matCard(s){
+  var m=s.materials_kg||{}, tot=(m.normal||0)+(m.outgassing||0)+(m.abrasive||0);
+  if(!tot) return '';
+  function row(k,l,c){ var v=m[k]||0; return '<div style="margin:.3rem 0"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span>'+l+'</span><b>'+nf(v,2)+' kg</b></div><div class="mt-bar"><i style="width:'+Math.round(100*v/tot)+'%;background:'+c+'"></i></div></div>'; }
+  return '<div class="mt-h"><span>'+tt('Material','Material')+'</span><span>'+nf(tot,2)+' kg</span></div><div class="mt-card">'
+    +row('normal',tt('Normal (PLA/PETG/TPU)','Normal (PLA/PETG/TPU)'),'var(--ok)')
+    +row('outgassing',tt('Ausgasend (ABS/ASA/PC)','Outgassing (ABS/ASA/PC)'),'var(--warn)')
+    +row('abrasive',tt('Abrasiv (CF/GF/Glow/Metall)','Abrasive (CF/GF/glow/metal)'),'var(--danger)')
+    +((m.abrasive||0)>0?'<div style="color:var(--muted);font-size:.74rem;margin-top:.4rem">'+tt('Abrasive Druckstunden zählen dreifach auf die Düsen-Laufzeit.','Abrasive print hours count triple towards nozzle runtime.')+'</div>':'')+'</div>';
+}
+function srcBadge(s){ if(s==='vendor') return '<span class="mt-badge">'+tt('Hersteller','Vendor')+'</span>'; if(s==='community') return '<span class="mt-badge">Community</span>'; return ''; }
+
+/* ---------- Modal ---------- */
+function modal(title, fields, onOk, extra){
+  var ov=document.createElement('div'); ov.className='mt-ov';
+  var h='<div class="mt-md"><h3>'+esc(title)+'</h3>';
+  fields.forEach(function(f,i){
+    h+='<label>'+esc(f.label)+'</label>';
+    if(f.type==='select'){ h+='<select id="mtf'+i+'">'+f.options.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(f.value)?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>'; }
+    else if(f.type==='textarea'){ h+='<textarea id="mtf'+i+'" rows="3">'+esc(f.value||'')+'</textarea>'; }
+    else { h+='<input id="mtf'+i+'" type="'+(f.type||'text')+'" value="'+esc(f.value==null?'':f.value)+'"'+(f.step?' step="'+f.step+'"':'')+'>'; }
+  });
+  h+='<div class="mt-bt">'+(extra?'<button class="mt-btn danger" id="mtx" style="margin-right:auto">'+esc(extra.label)+'</button>':'')
+    +'<button class="mt-btn" id="mtc">'+tt('Abbrechen','Cancel')+'</button><button class="mt-btn pri" id="mto">OK</button></div></div>';
+  ov.innerHTML=h; document.body.appendChild(ov);
+  function close(){ ov.remove(); }
+  ov.querySelector('#mtc').onclick=close;
+  ov.addEventListener('mousedown',function(e){ if(e.target===ov) close(); });
+  if(extra) ov.querySelector('#mtx').onclick=function(){ close(); extra.fn(); };
+  ov.querySelector('#mto').onclick=function(){
+    var v=fields.map(function(f,i){ var e=ov.querySelector('#mtf'+i); return e.value; });
+    close(); onOk(v);
+  };
+  var first=ov.querySelector('input,select,textarea'); if(first) first.focus();
+}
+function num(v){ var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?0:n; }
+function fail(e){ alert(tt('Fehler: ','Error: ')+(e&&e.message?e.message:e)); }
+
+/* ---------- Aktionen ---------- */
+async function doDone(id){
+  var parts=[]; try{ parts=await call('/parts')||[]; }catch(e){}
+  var opts=[['',tt('– kein Ersatzteil –','– no spare part –')]].concat(parts.filter(function(p){return p.qty>0;}).map(function(p){return [p.id,p.name+' ('+nf(p.qty,0)+')'];}));
+  modal(tt('Erledigt eintragen','Mark as done'),[
+    {label:tt('Kosten (€)','Cost (€)'),type:'number',step:'0.01',value:''},
+    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:opts,value:''},
+    {label:tt('Notiz','Note'),type:'textarea'}
+  ],async function(v){ try{ await call('/tasks/'+id+'/done','POST',{cost:num(v[0]),part_id:v[1]?parseInt(v[1]):null,note:v[2]||null}); refresh(); }catch(e){fail(e);} });
+}
+function doPostpone(id){
+  modal(tt('Verschieben','Postpone'),[{label:tt('Um wie viele Druckstunden?','By how many print hours?'),type:'number',value:20}],
+    async function(v){ try{ await call('/tasks/'+id+'/postpone','POST',{hours:num(v[0])||20}); refresh(); }catch(e){fail(e);} });
+}
+async function doReplace(cid,name,life){
+  var parts=[]; try{ parts=await call('/parts')||[]; }catch(e){}
+  var opts=[['',tt('– kein Ersatzteil –','– no spare part –')]].concat(parts.filter(function(p){return p.qty>0;}).map(function(p){return [p.id,p.name+' ('+nf(p.qty,0)+')'];}));
+  modal(tt('Tauschen: ','Replace: ')+ti(name),[
+    {label:tt('Bezeichnung','Name'),value:name},{label:tt('Lebensdauer (Druckstunden)','Lifetime (print hours)'),type:'number',value:life},
+    {label:tt('Kosten (€)','Cost (€)'),type:'number',step:'0.01',value:''},
+    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:opts,value:''},
+    {label:tt('Notiz','Note'),type:'textarea'}
+  ],async function(v){ try{ await call('/components/'+cid+'/replace','POST',{name:v[0],life_h:num(v[1]),cost:num(v[2]),part_id:v[3]?parseInt(v[3]):null,note:v[4]||null}); refresh(); }catch(e){fail(e);} });
+}
+function doAddTask(p){
+  modal(tt('Aufgabe hinzufügen','Add task'),[{label:tt('Bezeichnung','Title')},{label:tt('Intervall (Druckstunden)','Interval (print hours)'),type:'number',value:100}],
+    async function(v){ if(!v[0]) return; try{ await call('/tasks','POST',{printer:p,title:v[0],interval_h:num(v[1])||100,source:'user'}); refresh(); }catch(e){fail(e);} });
+}
+function doEditTask(t){
+  modal(tt('Aufgabe bearbeiten','Edit task'),[{label:tt('Bezeichnung','Title'),value:ti(t.title)},{label:tt('Intervall (Druckstunden)','Interval (print hours)'),type:'number',value:t.interval_h},{label:tt('Notiz','Note'),type:'textarea',value:t.note||''}],
+    async function(v){ try{ await call('/tasks/'+t.id,'PUT',{title:v[0],interval_h:num(v[1]),note:v[2]}); refresh(); }catch(e){fail(e);} },
+    {label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Aufgabe löschen?','Delete task?'))){ try{ await call('/tasks/'+t.id,'DELETE'); refresh(); }catch(e){fail(e);} } }});
+}
+function doAddComp(p){
+  modal(tt('Komponente anlegen','Add component'),[
+    {label:tt('Art','Type'),type:'select',options:[['nozzle',tt('Düse','Nozzle')],['plate',tt('Druckplatte','Build plate')]],value:'nozzle'},
+    {label:tt('Bezeichnung','Name')},{label:tt('Lebensdauer (Druckstunden)','Lifetime (print hours)'),type:'number',value:800}
+  ],async function(v){ if(!v[1]) return; try{ await call('/components','POST',{printer:p,kind:v[0],name:v[1],life_h:num(v[2])||800,mounted:1}); refresh(); }catch(e){fail(e);} });
+}
+async function doMount(c){ try{ await call('/components/'+c.id,'PUT',{mounted:c.mounted?0:1}); refresh(); }catch(e){fail(e);} }
+async function doSetup(p){ try{ await call('/printer/'+encodeURIComponent(p)+'/setup','POST'); refresh(); }catch(e){fail(e);} }
+function doSteckbrief(d){
+  var s=d.steckbrief||{};
+  modal(tt('Steckbrief','Profile'),[
+    {label:tt('Modell','Model'),value:s.model||''},{label:tt('Seriennummer','Serial number'),value:s.serial||''},
+    {label:tt('Gekauft am','Purchased'),type:'date',value:s.purchased||''},{label:tt('Garantie bis','Warranty until'),type:'date',value:s.warranty_until||''},
+    {label:tt('Zusatzstunden (vor Erfassung)','Extra hours (before tracking)'),type:'number',value:s.extra_hours||0},
+    {label:tt('Gramm pro Stunde (Schätzung ohne Dauer)','Grams per hour (estimate without duration)'),type:'number',step:'0.1',value:s.g_per_h||''},
+    {label:tt('Notizen','Notes'),type:'textarea',value:s.notes||''}
+  ],async function(v){ try{ await call('/printer/'+encodeURIComponent(d.printer),'PUT',{model:v[0]||null,serial:v[1]||null,purchased:v[2]||null,warranty_until:v[3]||null,extra_hours:num(v[4]),g_per_h:v[5]?num(v[5]):null,notes:v[6]||null}); refresh(); }catch(e){fail(e);} });
+}
+function doPart(p){
+  p=p||{};
+  modal(p.id?tt('Ersatzteil bearbeiten','Edit part'):tt('Ersatzteil anlegen','Add spare part'),[
+    {label:tt('Bezeichnung','Name'),value:p.name||''},{label:tt('Bestand','Stock'),type:'number',value:p.qty==null?1:p.qty},
+    {label:tt('Mindestbestand','Minimum stock'),type:'number',value:p.min_qty==null?1:p.min_qty},{label:tt('Preis (€)','Price (€)'),type:'number',step:'0.01',value:p.price||''},
+    {label:tt('Drucker (optional)','Printer (optional)'),value:p.printer||''}
+  ],async function(v){ if(!v[0]) return; var b={name:v[0],qty:num(v[1]),min_qty:num(v[2]),price:num(v[3]),printer:v[4]||null};
+    try{ if(p.id) await call('/parts/'+p.id,'PUT',b); else await call('/parts','POST',b); refresh(); }catch(e){fail(e);} },
+    p.id?{label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Ersatzteil löschen?','Delete part?'))){ try{ await call('/parts/'+p.id,'DELETE'); refresh(); }catch(e){fail(e);} } }}:null);
+}
+async function doQty(id,delta,cur){ try{ await call('/parts/'+id,'PUT',{qty:Math.max(0,cur+delta)}); refresh(); }catch(e){fail(e);} }
+
+/* ---------- Rendering ---------- */
+function tabs(){
+  var t=[['overview',tt('Übersicht','Overview')],['parts',tt('Ersatzteillager','Spare parts')],['costs',tt('Kosten','Costs')]];
+  return '<div class="mt-tabs">'+t.map(function(x){ return '<button class="mt-tab'+(MT.tab===x[0]&&!MT.printer?' active':'')+'" data-mt-tab="'+x[0]+'">'+x[1]+'</button>'; }).join('')+'</div>';
+}
+function itemRow(i,withPrinter){
+  var meta=remTxt(i)+(withPrinter?' · '+esc(i.printer):'');
+  return '<div class="mt-row" data-mt-p="'+esc(i.printer)+'"><span class="mt-dot '+i.status+'"></span><div class="t"><b>'+esc(ti(i.title))+(i.kind==='task'?srcBadge(i.source):'')+'</b><span class="'+(i.status==='ok'?'':i.status)+'">'+meta+'</span></div>'
+   +(i.kind==='task'?'<button class="mt-btn sm" data-mt-done="'+i.id+'" title="'+tt('Erledigt','Done')+'">✓</button>':'<button class="mt-btn sm" data-mt-repl="'+i.id+'" data-n="'+esc(i.title)+'" data-l="'+i.life_h+'">'+tt('Tauschen','Replace')+'</button>')+'</div>';
+}
+function renderOverview(o){
+  var title=o.due>0?(o.due+' '+(o.due===1?tt('Wartung fällig','maintenance due'):tt('Wartungen fällig','maintenances due'))):(o.soon>0?tt('Bald fällig','Due soon'):tt('Alles im Plan','All on schedule'));
+  var h=tabs()+'<div class="mt-card mt-hero">'+ring(o.score,120)+'<div><div class="mt-sub">'+tt('Zustand deiner Drucker','Condition of your printers')+'</div><h3>'+esc(title)+'</h3>'
+   +'<div style="font-size:.82rem;color:var(--muted)"><span class="due">● '+o.due+' '+tt('fällig','due')+'</span> &nbsp; <span class="soon">● '+o.soon+' '+tt('bald','soon')+'</span> &nbsp; <span class="ok">● '+o.ok+' '+tt('im Plan','on plan')+'</span> &nbsp; '+o.printers.length+' '+tt('Drucker','printers')+' · '+o.components+' '+tt('Komponenten','components')+'</div></div></div>';
+  h+='<div class="mt-grid"><div class="mt-col">';
+  if(o.next.length){
+    var n=o.next[0];
+    h+='<div class="mt-h"><span>'+tt('Als nächstes','Up next')+'</span><span>'+esc(n.printer)+'</span></div><div class="mt-card mt-next">'+ring(Math.max(0,Math.min(100,Math.round(100*Math.max(0,n.remaining_h)/(n.interval_h||n.life_h||1)))),84)
+     +'<div style="flex:1;min-width:0"><h4>'+esc(ti(n.title))+srcBadge(n.source)+'</h4><div class="'+n.status+'" style="font-size:.86rem">'+remTxt(n)+'</div>'
+     +(n.note?'<div style="color:var(--muted);font-size:.8rem;margin-top:.3rem">'+esc(n.note)+'</div>':'')
+     +'<div class="mt-actions">'+(n.kind==='task'?'<button class="mt-btn pri" data-mt-done="'+n.id+'">✓ '+tt('Erledigen','Mark done')+'</button><button class="mt-btn" data-mt-post="'+n.id+'">'+tt('Verschieben','Postpone')+'</button>':'<button class="mt-btn pri" data-mt-repl="'+n.id+'" data-n="'+esc(n.title)+'" data-l="'+n.life_h+'">'+tt('Tauschen','Replace')+'</button>')+'</div></div></div>';
+    if(o.next.length>1){ h+='<div class="mt-h"><span>'+tt('Danach','Afterwards')+'</span><span>'+(o.next.length-1)+'</span></div>'+o.next.slice(1).map(function(i){return itemRow(i,true);}).join(''); }
+  } else {
+    h+='<div class="mt-card"><div class="mt-empty">'+tt('Nichts fällig. Bei Druckern ohne Wartungsplan: Drucker rechts öffnen und „Wartungsplan einrichten“ wählen.','Nothing due. For printers without a plan: open the printer on the right and choose “Set up maintenance plan”.')+'</div></div>';
+  }
+  h+='</div><div class="mt-col"><div class="mt-h"><span>'+tt('Deine Drucker','Your printers')+'</span><span>'+o.printers.length+'</span></div>';
+  h+=o.printers.map(function(p){
+    return '<div class="mt-card mt-printer" data-mt-p="'+esc(p.printer)+'">'+ring(p.score,56)+'<div style="flex:1;min-width:0"><b>'+esc(p.printer)+'</b><span>'+nf(p.hours,0)+' h · '+p.prints+' '+tt('Drucke','prints')+' · '+(p.set_up?p.components+' '+tt('Komponenten','components'):tt('kein Plan','no plan'))+'</span>'
+     +(p.set_up?'<span><span class="due">● '+p.due+' '+tt('fällig','due')+'</span> &nbsp;<span class="ok">● '+p.ok+' '+tt('im Plan','on plan')+'</span></span>':'')+'</div><span style="color:var(--muted)">›</span></div>';
+  }).join('');
+  h+='<div class="mt-h"><span>'+tt('Werkstatt','Workshop')+'</span></div>'
+   +'<div class="mt-card mt-printer" data-mt-tab="parts"><div style="flex:1"><b>'+tt('Ersatzteillager','Spare parts')+'</b><span>'+o.parts+' '+tt('Artikel','items')+(o.parts_empty?' · '+o.parts_empty+' '+tt('leer','empty'):'')+'</span></div><span style="color:var(--muted)">›</span></div>'
+   +'<div class="mt-card mt-printer" data-mt-tab="costs"><div style="flex:1"><b>'+tt('Wartungskosten','Maintenance costs')+'</b><span>'+eur(o.cost_year)+' '+tt('dieses Jahr','this year')+'</span></div><span style="color:var(--muted)">›</span></div>';
+  h+='</div></div>';
+  root().innerHTML=h;
+}
+function renderDetail(d){
+  var s=d.stats, tasks=d.tasks, due=tasks.filter(function(t){return t.status!=='ok';}), ok=tasks.filter(function(t){return t.status==='ok';});
+  var h='<div class="mt-tabs"><button class="mt-tab" data-mt-back="1">← '+tt('Zurück','Back')+'</button></div>';
+  h+='<div class="mt-card mt-hero">'+ring(d.score,110)+'<div style="flex:1"><h3>'+esc(d.printer)+'</h3><div style="color:var(--muted);font-size:.86rem">'+nf(s.hours,0)+' h · '+s.prints+' '+tt('Drucke','prints')+' · '+nf(s.kg,1)+' kg</div>'
+   +'<div style="color:var(--muted);font-size:.8rem;margin-top:.3rem">'+tt('Tempo: ','Pace: ')+nf(s.tempo_h_per_day,1)+' h/'+tt('Tag (letzte 30 Tage)','day (last 30 days)')+(s.estimated_hours>0?' · '+tt('davon ca. ','of which ca. ')+nf(s.estimated_hours,0)+' h '+tt('aus Gramm geschätzt','estimated from grams'):'')+'</div></div>'
+   +'<div style="text-align:right;color:var(--muted);font-size:.8rem">'+tt('Kosten gesamt','Total cost')+'<br><b style="color:var(--text);font-size:1rem">'+eur(d.cost_total)+'</b></div></div>';
+  if(!d.set_up){
+    h+='<div class="mt-card"><b>'+tt('Noch kein Wartungsplan','No maintenance plan yet')+'</b><p class="hint" style="margin:.3rem 0 .6rem">'+tt('Legt die Standard-Aufgaben und Komponenten (Düse, Druckplatte) für diesen Druckertyp an. Die Zähler starten jetzt bei den aktuellen Druckstunden.','Creates the default tasks and components (nozzle, build plate) for this printer type. Counters start at the current print hours.')+'</p><button class="mt-btn pri" data-mt-setup="1">'+tt('Wartungsplan einrichten','Set up maintenance plan')+'</button></div>';
+  }
+  h+='<div class="mt-grid"><div class="mt-col">';
+  h+='<div class="mt-h"><span>'+tt('Steht an','Due')+'</span><span>'+due.length+'</span></div>'
+    +(due.length?due.map(function(t){return itemRowDetail(t);}).join(''):'<div class="mt-empty">'+tt('Nichts fällig.','Nothing due.')+'</div>');
+  h+='<div class="mt-h"><span>'+tt('Im Plan','On plan')+'</span><span>'+ok.length+'</span></div>'+ok.map(function(t){return itemRowDetail(t);}).join('');
+  h+='<div class="mt-actions"><button class="mt-btn" data-mt-addtask="1">+ '+tt('Aufgabe','Task')+'</button>'
+    +(d.set_up?'<button class="mt-btn" data-mt-service="1">🔧 '+tt('Großer Service','Major service')+'</button>':'')
+    +'<a class="mt-btn" style="text-decoration:none" target="_blank" rel="noopener" href="'+base()+'/booklet/'+encodeURIComponent(d.printer)+'">📄 '+tt('Service-Heft (PDF)','Service booklet (PDF)')+'</a></div>';
+  if(s.active_days_30!=null && s.active_days_30<7){ h+='<div class="mt-empty">'+tt('Prognose erscheint ab 7 Drucktagen in den letzten 30 Tagen (aktuell ','Forecast appears after 7 print days in the last 30 (currently ')+s.active_days_30+').</div>'; }
+  h+='<div class="mt-h"><span>'+tt('Historie','History')+'</span></div><div class="mt-card"><table class="mt-tbl"><tbody>'
+    +(d.history.length?d.history.slice(0,30).map(function(x){ var k=x.kind==='done'?'✓':(x.kind==='postponed'?'↷':(x.kind==='service'?'🔧':'•')); var dt=new Date(x.ts*1000).toLocaleDateString(lang()==='en'?'en':'de');
+      var ttl=x.kind==='service'?String(x.title).replace(/^Großer Service \((\d+) Aufgaben\)/,function(_,n){return tt('Großer Service ('+n+' Aufgaben)','Major service ('+n+' tasks)');}):ti(x.title);
+      return '<tr><td style="width:5.5rem;color:var(--muted)">'+dt+'</td><td>'+k+' '+esc(ttl)+(x.note?' <span style="color:var(--muted)">('+esc(x.note)+')</span>':'')+'</td><td style="text-align:right;color:var(--muted)">'+nf(x.at_h,0)+' h'+(x.cost>0?' · '+eur(x.cost):'')+'</td></tr>'; }).join('')
+      :'<tr><td class="mt-empty">'+tt('Noch keine Einträge.','No entries yet.')+'</td></tr>')+'</tbody></table></div>';
+  h+='</div><div class="mt-col">';
+  h+='<div class="mt-h"><span>'+tt('Komponenten','Components')+'</span><span><button class="mt-btn sm" data-mt-addcomp="1">+</button></span></div>';
+  var comps=d.components;
+  h+=comps.length?comps.map(function(c){
+    var pct=Math.max(0,Math.min(100,Math.round(100*c.runtime_h/c.life_h)));
+    return '<div class="mt-card"><div style="display:flex;justify-content:space-between;gap:.5rem"><b>'+esc(ti(c.title))+'</b><span class="'+c.status+'" style="font-size:.78rem">'+(c.mounted?tt('montiert','mounted'):tt('nicht montiert','not mounted'))+'</span></div>'
+     +'<div style="color:var(--muted);font-size:.8rem">'+nf(c.runtime_h,0)+' / '+nf(c.life_h,0)+' h</div><div class="mt-bar"><i style="width:'+pct+'%;background:'+(c.status==='ok'?'var(--ok)':(c.status==='soon'?'var(--warn)':'var(--danger)'))+'"></i></div>'
+     +'<div class="mt-actions"><button class="mt-btn sm" data-mt-mount=\''+esc(JSON.stringify({id:c.id,mounted:c.mounted}))+'\'>'+(c.mounted?tt('Abnehmen','Unmount'):tt('Montieren','Mount'))+'</button><button class="mt-btn sm" data-mt-repl="'+c.id+'" data-n="'+esc(c.title)+'" data-l="'+c.life_h+'">'+tt('Tauschen','Replace')+'</button></div></div>';
+  }).join(''):'<div class="mt-empty">'+tt('Keine Komponenten.','No components.')+'</div>';
+  h+=matCard(s);
+  var sb=d.steckbrief||{};
+  h+='<div class="mt-h"><span>'+tt('Steckbrief','Profile')+'</span><span><button class="mt-btn sm" data-mt-edit="1">'+tt('Bearbeiten','Edit')+'</button></span></div><div class="mt-card"><dl class="mt-kv">'
+   +'<dt>'+tt('Modell','Model')+'</dt><dd>'+esc(sb.model||'–')+'</dd><dt>'+tt('Seriennr.','Serial')+'</dt><dd>'+esc(sb.serial||'–')+'</dd>'
+   +'<dt>'+tt('Gekauft','Purchased')+'</dt><dd>'+esc(sb.purchased||'–')+'</dd><dt>'+tt('Garantie bis','Warranty')+'</dt><dd>'+esc(sb.warranty_until||'–')+'</dd>'
+   +'<dt>'+tt('Druckstunden','Print hours')+'</dt><dd>'+nf(s.hours,0)+' h'+(s.extra_hours?' ('+tt('inkl. ','incl. ')+nf(s.extra_hours,0)+' h '+tt('Zusatz','extra')+')':'')+'</dd>'
+   +'<dt>'+tt('Notizen','Notes')+'</dt><dd>'+esc(sb.notes||'–')+'</dd></dl></div>';
+  h+='</div></div>';
+  root().innerHTML=h;
+  root().__d=d;
+}
+function itemRowDetail(t){
+  return '<div class="mt-row" data-mt-edittask="'+t.id+'"><span class="mt-dot '+t.status+'"></span><div class="t"><b>'+esc(ti(t.title))+srcBadge(t.source)+'</b><span class="'+(t.status==='ok'?'':t.status)+'">'+remTxt(t)+'</span>'+(t.note?'<span> · '+esc(t.note)+'</span>':'')+'</div>'
+   +'<button class="mt-btn sm" data-mt-done="'+t.id+'" title="'+tt('Erledigt','Done')+'">✓</button>'+(t.status!=='ok'?'<button class="mt-btn sm" data-mt-post="'+t.id+'">'+tt('Verschieben','Postpone')+'</button>':'')+'</div>';
+}
+function renderParts(list){
+  var h=tabs()+'<div class="mt-actions" style="margin:0 0 .8rem"><button class="mt-btn pri" data-mt-addpart="1">+ '+tt('Ersatzteil','Spare part')+'</button></div><div class="mt-card"><table class="mt-tbl"><thead><tr><th>'+tt('Artikel','Item')+'</th><th>'+tt('Drucker','Printer')+'</th><th>'+tt('Preis','Price')+'</th><th>'+tt('Bestand','Stock')+'</th><th></th></tr></thead><tbody>';
+  h+=list.length?list.map(function(p){
+    var empty=p.qty<=0, low=!empty&&p.qty<=p.min_qty;
+    return '<tr><td><b>'+esc(p.name)+'</b>'+(empty?' <span class="mt-badge due">'+tt('leer','empty')+'</span>':(low?' <span class="mt-badge soon">'+tt('knapp','low')+'</span>':''))+'</td><td>'+esc(p.printer||'–')+'</td><td>'+(p.price?eur(p.price):'–')+'</td>'
+     +'<td><button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,-1,p.qty])+'\'>−</button> <b>'+nf(p.qty,0)+'</b> <button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,1,p.qty])+'\'>+</button></td>'
+     +'<td style="text-align:right"><button class="mt-btn sm" data-mt-editpart=\''+esc(JSON.stringify(p))+'\'>'+tt('Bearbeiten','Edit')+'</button></td></tr>';
+  }).join(''):'<tr><td colspan="5" class="mt-empty">'+tt('Noch keine Ersatzteile angelegt.','No spare parts yet.')+'</td></tr>';
+  root().innerHTML=h+'</tbody></table></div>';
+}
+function renderCosts(c){
+  var h=tabs()+'<div class="mt-grid"><div class="mt-col"><div class="mt-card"><table class="mt-tbl"><thead><tr><th>'+tt('Datum','Date')+'</th><th>'+tt('Drucker','Printer')+'</th><th>'+tt('Eintrag','Entry')+'</th><th style="text-align:right">'+tt('Kosten','Cost')+'</th></tr></thead><tbody>';
+  h+=c.entries.length?c.entries.map(function(x){ return '<tr><td>'+new Date(x.ts*1000).toLocaleDateString(lang()==='en'?'en':'de')+'</td><td>'+esc(x.printer)+'</td><td>'+esc(ti(x.title))+'</td><td style="text-align:right">'+eur(x.cost)+'</td></tr>'; }).join('')
+    :'<tr><td colspan="4" class="mt-empty">'+tt('Noch keine Kosten erfasst. Kosten gibst du beim Erledigen oder Tauschen an.','No costs yet. Enter them when marking done or replacing.')+'</td></tr>';
+  h+='</tbody></table></div></div><div class="mt-col"><div class="mt-card"><div class="mt-sub">'+tt('Dieses Jahr','This year')+'</div><h3 style="margin:.2rem 0">'+eur(c.year)+'</h3><div class="mt-sub">'+tt('Gesamt','Total')+'</div><b>'+eur(c.total)+'</b></div>'
+   +(c.per_printer.length?'<div class="mt-card"><div class="mt-sub" style="margin-bottom:.4rem">'+tt('Pro Drucker','Per printer')+'</div>'+c.per_printer.map(function(p){return '<div style="display:flex;justify-content:space-between"><span>'+esc(p.printer)+'</span><b>'+eur(p.total)+'</b></div>';}).join('')+'</div>':'')+'</div></div>';
+  root().innerHTML=h;
+}
+function labels(){
+  var l=document.querySelector('[data-nav-target="maintenance"] .nav-label'); if(l) l.textContent=tt('Wartungsbuch','Maintenance log');
+  var h=document.querySelector('#mt-panel > h2'); if(h) h.textContent=tt('Wartungsbuch','Maintenance log');
+}
+async function refresh(){
+  var r=root(); if(!r) return;
+  labels();
+  try{
+    if(MT.printer){ renderDetail(await call('/printer/'+encodeURIComponent(MT.printer))); }
+    else if(MT.tab==='parts'){ renderParts(await call('/parts')||[]); }
+    else if(MT.tab==='costs'){ renderCosts(await call('/costs')); }
+    else { renderOverview(await call('/overview')); }
+  }catch(e){ r.innerHTML='<p class="hint">'+tt('Fehler beim Laden: ','Load error: ')+esc(e.message||e)+'</p>'; }
+}
+window.loadMaintenance=refresh;
+
+/* ---------- Events ---------- */
+document.addEventListener('click',function(ev){
+  var panel=document.getElementById('mt-panel'); if(!panel||!panel.contains(ev.target)) return;
+  var t=ev.target.closest('[data-mt-done],[data-mt-post],[data-mt-repl],[data-mt-mount],[data-mt-tab],[data-mt-back],[data-mt-setup],[data-mt-service],[data-mt-addtask],[data-mt-addcomp],[data-mt-edit],[data-mt-edittask],[data-mt-p],[data-mt-addpart],[data-mt-editpart],[data-mt-qty]');
+  if(!t) return;
+  var a=function(n){ return t.getAttribute('data-mt-'+n); };
+  if(a('done')!=null){ ev.stopPropagation(); doDone(parseInt(a('done'))); return; }
+  if(a('post')!=null){ ev.stopPropagation(); doPostpone(parseInt(a('post'))); return; }
+  if(a('repl')!=null){ ev.stopPropagation(); doReplace(parseInt(a('repl')),t.getAttribute('data-n'),parseFloat(t.getAttribute('data-l'))); return; }
+  if(a('mount')!=null){ ev.stopPropagation(); doMount(JSON.parse(a('mount'))); return; }
+  if(a('qty')!=null){ var q=JSON.parse(a('qty')); doQty(q[0],q[1],q[2]); return; }
+  if(a('editpart')!=null){ doPart(JSON.parse(a('editpart'))); return; }
+  if(a('addpart')!=null){ doPart(); return; }
+  if(a('tab')!=null){ MT.tab=a('tab'); MT.printer=null; refresh(); return; }
+  if(a('back')!=null){ MT.printer=null; refresh(); return; }
+  if(a('setup')!=null){ doSetup(MT.printer); return; }
+  if(a('service')!=null){ doService(MT.printer); return; }
+  if(a('addtask')!=null){ doAddTask(MT.printer); return; }
+  if(a('addcomp')!=null){ doAddComp(MT.printer); return; }
+  if(a('edit')!=null){ doSteckbrief(root().__d); return; }
+  if(a('edittask')!=null){ var d=root().__d; var tk=d&&d.tasks.filter(function(x){return String(x.id)===a('edittask');})[0]; if(tk) doEditTask(tk); return; }
+  if(a('p')!=null){ MT.printer=a('p'); refresh(); return; }
+});
+function bindNav(){
+  labels();
+  var b=document.querySelector('[data-nav-target="maintenance"]');
+  if(b) b.addEventListener('click',function(){ MT.printer=null; MT.tab='overview'; refresh(); });
+  var p=document.getElementById('mt-panel');
+  if(p && p.classList.contains('active')) refresh();
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',bindNav); else bindNav();
+window.addEventListener('load',function(){ var p=document.getElementById('mt-panel'); if(p&&p.classList.contains('active')) refresh(); });
+})();
+</script>
+
 </div>
 </div>
 
@@ -715,7 +1060,7 @@ main>.panel.active{display:block;}
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.6.1</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.7.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -960,6 +1305,8 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.7.0 &ndash; 24.10.2026</h4>
+      <p>Neu: Wartungsbuch. Wartungsplan je Drucker nach Druckstunden (aus gebuchten Drucken, bei fehlender Dauer aus dem Filamentverbrauch gesch&auml;tzt), Zustands-Score, Prognose, Komponenten D&uuml;se und Druckplatte mit eigener Laufzeit (abrasive Materialien z&auml;hlen dreifach), Ersatzteillager, Kosten, Gro&szlig;er Service und Service-Heft als PDF.</p>
       <h4>v1.6.1 &ndash; 24.10.2026</h4>
       <p>Druckeransicht: externe Spulen neben dem Drucker (links/rechts) mit Filamentbogen zum Druckkopf. Lagerpl&auml;tze: Drucker (mit ACE) in eigener, mitlaufender Spalte, Dryboxen daneben, Ger&auml;te-Einstellungen eingeklappt. Layout nutzt jetzt die volle Fensterbreite und passt sich der Fenstergr&ouml;&szlig;e an (zwei Druckerspalten ab 1500&nbsp;px).</p>
       <h4>v1.6.0 &ndash; 24.10.2026</h4>
@@ -1266,6 +1613,8 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.7.0 &ndash; 2026-10-24</h4>
+      <p>New: maintenance log. Per-printer maintenance plan based on print hours (from booked prints, estimated from filament use when no duration is known), condition score, forecast, nozzle and build plate with their own runtime (abrasive materials count triple), spare parts, costs, major service and a PDF service booklet.</p>
       <h4>v1.6.1 &ndash; 2026-10-24</h4>
       <p>Printer page: external spools beside the printer (left/right) with a filament arc to the print head. Storage locations: printers (with ACE) in their own sticky column, dryboxes beside them, device settings collapsed. Layout now uses the full window width and adapts to window size (two printer columns from 1500&nbsp;px).</p>
       <h4>v1.6.0 &ndash; 2026-10-24</h4>

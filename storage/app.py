@@ -1910,3 +1910,8 @@ def prints_skip(b: PrintSkip):
         for i in b.ids:
             conn.execute("UPDATE prints SET state='skipped' WHERE id=? AND state!='booked'", (i,))
     return {"ok": True, "count": len(b.ids)}
+
+
+# ---- Wartungsbuch ----
+import maintenance
+maintenance.setup(app, db, SPOOLMAN_URL)

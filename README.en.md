@@ -108,6 +108,7 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.5.0 (2026-10-24)**: Slot cards with spool ring, assign a print to two spools, slot detection by colour (Kobra X).
 - **v1.4.0 (2026-10-16)**: sidebar navigation; printer page with live data from the Anycubic bridge (ACE boxes, remaining amount in grams, deviation hint, book/adjust on the slot); print history 'Printed products'; statistics; colour names; dry box/printer wizard; running prints no longer shown as failed; the bridge syncs the print history automatically every 30 minutes (PRINT_SYNC_MIN), anycubic-cloud-api 0.4.36.
 - **v1.3.0 (2026-09-28)**: version indicator and changelog in the footer.
 - **v1.2.0 (2026-09-28)**: levels and slots of an existing device can be changed afterwards.

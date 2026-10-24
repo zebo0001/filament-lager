@@ -108,6 +108,7 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.5.0 (2026-10-24)**: Slot-Karten mit Spulenring, Zuordnen auf zwei Spulen, Slot-Erkennung per Farbe (Kobra X).
 - **v1.4.0 (2026-10-16)**: Seitenleisten-Navigation; Drucker-Seite mit Live-Daten aus der Anycubic-Bridge (ACE-Boxen, Restmenge in Gramm, Abweichungshinweis, Buchen/Angleichen am Slot); Druckhistorie 'Gedruckte Produkte'; Statistik; Farbnamen; Drybox/Drucker-Assistent; laufende Drucke nicht mehr als fehlgeschlagen; Bridge synchronisiert die Druckhistorie automatisch alle 30 Minuten (PRINT_SYNC_MIN), anycubic-cloud-api 0.4.36.
 - **v1.3.0 (2026-09-28)**: Versionsanzeige und Aenderungsverlauf im Footer.
 - **v1.2.0 (2026-09-28)**: Ebenen und Plaetze eines bestehenden Geraets nachtraeglich aenderbar.

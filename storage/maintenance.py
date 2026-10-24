@@ -44,12 +44,19 @@ _COMMON = [
     ("hotend", "Düse und Heizblock reinigen", "Clean nozzle and heater block", 100, "vendor",
      "Hersteller: monatlich"),
     ("plate", "Druckplatte reinigen", "Clean build plate", 50, "community", "Isopropanol, nicht mit Fingern anfassen"),
-    ("fans", "Lüfter entstauben", "Dust off fans", 100, "vendor", "Hersteller (Bambu): wöchentlich prüfen"),
-    ("cutter", "Filament-Cutter prüfen", "Check filament cutter", 150, "vendor", "Hersteller (Bambu): alle 3 Rollen"),
-    ("ptfe", "PTFE-Schlauch auf Verschleiß prüfen", "Check PTFE tube for wear", 270, "vendor",
-     "Hersteller (Bambu): alle 6 Rollen, bei CF alle 2"),
-    ("belts", "Riemenspannung prüfen", "Check belt tension", 500, "community", "Bambu: nur auf Meldung (HMS)"),
+    ("fans", "Lüfter entstauben", "Dust off fans", 100, "community", "Regelmäßig prüfen, Staub entfernen (Richtwert)"),
+    ("cutter", "Filament-Cutter prüfen", "Check filament cutter", 150, "community", "Etwa alle 3 Rollen prüfen (Richtwert)"),
+    ("ptfe", "PTFE-Schlauch auf Verschleiß prüfen", "Check PTFE tube for wear", 270, "community",
+     "Etwa alle 6 Rollen, bei CF-Filament öfter (Richtwert)"),
+    ("belts", "Riemenspannung prüfen", "Check belt tension", 500, "community", "Nur bei Auffälligkeiten prüfen (Richtwert)"),
 ]
+# Bambu-spezifische Herstellerangaben (nur für Bambu-Drucker)
+_BAMBU_NOTES = {
+    "fans": ("vendor", "Hersteller (Bambu): wöchentlich prüfen"),
+    "cutter": ("vendor", "Hersteller (Bambu): alle 3 Rollen"),
+    "ptfe": ("vendor", "Hersteller (Bambu): alle 6 Rollen, bei CF alle 2"),
+    "belts": ("community", "Bambu: nur auf Meldung (HMS)"),
+}
 _EXTRA = {
     "bambu": [("idlers", "Umlenkrollen ölen", "Oil idler pulleys", 250, "vendor", "Bambu: alle 3 Monate (Öl)")],
     "kobra": [("wiper", "Düsen-Abstreifer reinigen", "Clean nozzle wiper", 100, "community",
@@ -416,6 +423,8 @@ def setup(app, db, spoolman_url=None):
         fam = _family(printer, model_of(c, printer))
         items = list(_COMMON) + list(_EXTRA.get(fam, []))
         for key, de, en, iv, src, note in items:
+            if fam == "bambu" and key in _BAMBU_NOTES:
+                src, note = _BAMBU_NOTES[key]
             if c.execute("SELECT 1 FROM maint_tasks WHERE printer=? AND key=?", (printer, key)).fetchone():
                 continue
             c.execute(
@@ -435,6 +444,16 @@ def setup(app, db, spoolman_url=None):
             "ON CONFLICT(printer) DO UPDATE SET set_up=1",
             (printer,),
         )
+
+    # Migration: Bambu-Hinweise bei Nicht-Bambu-Druckern durch neutrale Texte ersetzen
+    with db() as c:
+        neutral = {k: (s_, n_) for k, _, _, _, s_, n_ in _COMMON}
+        for p in [r[0] for r in c.execute("SELECT DISTINCT printer FROM maint_tasks")]:
+            if _family(p, model_of(c, p)) == "bambu":
+                continue
+            for k, (s_, n_) in neutral.items():
+                c.execute("UPDATE maint_tasks SET source=?, note=? WHERE printer=? AND key=? AND note LIKE '%Bambu%'",
+                          (s_, n_, p, k))
 
     # ---------- Endpoints ----------
     @app.get("/maintenance/overview")

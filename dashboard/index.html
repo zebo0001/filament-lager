@@ -466,6 +466,14 @@ main>.panel.active{display:block;}
 .live-print-card.show{display:block;}
 </style>
 <style id="pa-compact">#printers-content{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:.9rem;align-items:start}#printers-content>.printer-card{margin:0}.pa .pv-stage{width:min(100%,270px)!important}.pa-pct{font-size:2rem!important}.pa-row{padding:.2rem 0!important;font-size:.82rem!important}.pa-bar{margin:.4rem 0 .5rem!important}.pa-info{margin-top:.4rem!important}</style>
+<style id="dev-split">
+.device-grid{display:grid;grid-template-columns:minmax(330px,36%) 1fr;gap:1rem;align-items:start}
+.dev-col-printers{position:sticky;top:8px;max-height:calc(100vh - 16px);overflow-y:auto;display:flex;flex-direction:column;gap:1rem;padding-right:4px}
+.dev-box-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1rem}
+.dev-col-title{font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:.4rem}
+.dev-settings-wrap>summary{cursor:pointer;font-size:.85rem;opacity:.8;padding:.4rem 0}
+@media (max-width:900px){.device-grid{grid-template-columns:1fr}.dev-col-printers{position:static;max-height:none;overflow:visible}}
+</style>
 </head>
 <body>
 <div id="conn-banner" style="display:none;position:sticky;top:0;z-index:9000;background:#7f1d1d;color:#fff;text-align:center;padding:.5rem 1rem;font-size:.9rem"></div>
@@ -2024,7 +2032,7 @@ function renderDeviceCard(unit) {
       '<button class="btn secondary danger dev-delete" data-unit-id="' + unit.id + '" title="' + t('sl.deleteDeviceTitle') + '">&times;</button>' +
     '</div>' +
     svg +
-    renderDeviceSettings(unit) +
+    '<details class="dev-settings-wrap"><summary>' + T('Einstellungen','Settings') + '</summary>' + renderDeviceSettings(unit) + '</details>' +
   '</div>';
 }
 
@@ -2077,7 +2085,8 @@ async function loadDevices() {
       el.innerHTML = '<div class="empty">Noch keine Geräte angelegt. Oben ein Gerät hinzufügen (z.&nbsp;B. Drybox mit 3 Ebenen &agrave; 10 Plätzen).</div>';
       return;
     }
-    el.innerHTML = '<div class="device-grid">' + units.map(renderDeviceCard).join('') + '</div>';
+    var isPcol = function(u){ return u.type === 'printer' || !!u.parent_unit_id; };
+    el.innerHTML = '<div class="device-grid"><div class="dev-col dev-col-printers"><div class="dev-col-title">' + T('Drucker','Printers') + '</div>' + units.filter(isPcol).map(renderDeviceCard).join('') + '</div><div class="dev-col dev-col-boxes"><div class="dev-col-title">' + T('Dryboxen','Dryboxes') + '</div><div class="dev-box-grid">' + units.filter(function(u){ return !isPcol(u); }).map(renderDeviceCard).join('') + '</div></div></div>';
 
     el.querySelectorAll('.slot-circle').forEach(g => {
       g.addEventListener('click', () => openAssignDialog(parseInt(g.dataset.slotId, 10), units));

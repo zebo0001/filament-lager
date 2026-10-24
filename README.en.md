@@ -114,6 +114,7 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.6.1 (2026-10-24)**: External spools beside the printer, storage view with sticky printer column next to the dryboxes, full-width responsive layout.
 - **v1.6.0 (2026-10-24)**: New printer view: ACE on top with hose, spools in real colours, glowing active slot, big progress with layer x/y and info rows.
 - **v1.5.1 (2026-10-24)**: ACE/AMS reliably shown inside the printer frame, "add ACE/AMS" button, warning for an ACE without a printer.
 - **v1.5.0 (2026-10-24)**: Slot cards with spool ring, assign a print to two spools, slot detection by colour (Kobra X).

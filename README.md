@@ -68,6 +68,12 @@ Drucker-Seite (eigener Menuepunkt im Dashboard, ab v1.4.0):
 - Idle-Drucker (status "available"/"online"/"standby") zeigen eine ruhige, nicht animierte Illustration statt der Druck-Animation
 - Lagerplaetze lassen sich praezise mit einer einzelnen ACE-Box eines Druckers verknuepfen (nicht nur pauschal mit dem Drucker) - wichtig bei mehreren Zufuehrungs-Boxen am selben Geraet
 
+Neu in v1.5.0 (Drucker-Seite und Historie):
+
+- Jede Slot-Karte zeigt einen Spulenring in Filamentfarbe; die Fuellung entspricht der Restmenge laut Drucker, in der Mitte steht der Prozentwert. Der gerade eingezogene Slot ist farbig umrandet.
+- Historie: 'Zuordnen' kann einen Druck auf zwei Spulen aufteilen (z.B. nach einem Spulenwechsel mitten im Druck); beim Spulenwechsel waehrend eines laufenden Drucks fragt das Dashboard nach.
+- Anycubic-Bridge: Meldet ein Drucker (Kobra X) keinen aktiven Slot, wird der Slot ueber Farbe und Material bestimmt. Bei mehreren gleich aussehenden Spulen wird bewusst nicht automatisch gebucht.
+
 Drucker-Seite, Live-Daten und Abgleich (v1.4.0):
 
 - ACE-Boxen werden mit Farbe, Material und SKU angezeigt; der Slot, der gerade eingezogen ist, ist markiert. Der ACE-Anschluss am Geraet ist als 'ACE' beschriftet.

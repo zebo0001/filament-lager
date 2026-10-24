@@ -68,6 +68,12 @@ Printers page (dedicated dashboard section, since v1.4.0):
 - Idle printers (status "available"/"online"/"standby") show a calm, non-animated illustration instead of the printing animation
 - Storage locations can be linked to one specific ACE box on a printer (not just the printer as a whole) - important when a printer has several feed boxes
 
+New in v1.5.0 (printer page and history):
+
+- Every slot card shows a spool ring in the filament colour; the fill is the remaining amount reported by the printer, with the percentage in the middle. The slot currently feeding is outlined.
+- History: 'Assign' can split a print across two spools (e.g. after a spool change mid-print); on a spool change during a running print the dashboard asks.
+- Anycubic bridge: if a printer (Kobra X) reports no active slot, the slot is determined by colour and material. With several identical-looking spools it deliberately does not book automatically.
+
 Printer page, live data and reconciliation (v1.4.0):
 
 - ACE boxes are shown with colour, material and SKU; the slot currently fed is marked. The ACE port on the device is labelled 'ACE'.

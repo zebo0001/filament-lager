@@ -705,7 +705,7 @@ main>.panel.active{display:block;}
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.5.0</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.5.1</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -950,6 +950,8 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.5.1 &ndash; 24.10.2026</h4>
+      <p>Lagerpl&auml;tze: ACE/AMS-Einheiten stehen jetzt zuverl&auml;ssig im Rahmen ihres Druckers (Ladefehler behoben). Neu: Knopf "+ ACE/AMS hinzuf&uuml;gen" f&uuml;r bestehende Drucker, Warnung bei ACE ohne Drucker. Kobra 3 Max mit ACE eingerichtet (ACE-Anschluss reserviert).</p>
       <h4>v1.5.0 &ndash; 24.10.2026</h4>
       <p>Drucker-Seite: neue Slot-Karten mit Spulenring (Restmenge in Filamentfarbe) und Markierung des aktiven Slots. Historie: Zuordnen eines Drucks mit Aufteilung auf zwei Spulen, Abfrage beim Spulenwechsel w&auml;hrend eines Drucks. Bridge: Slot-Erkennung per Farbe und Material beim Kobra X, zuverl&auml;ssigere Verbrauchsbuchung.</p>
       <h4>v1.4.0 &ndash; 16.10.2026</h4>
@@ -1250,6 +1252,8 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.5.1 &ndash; 2026-10-24</h4>
+      <p>Storage locations: ACE/AMS units are now reliably shown inside their printer frame (loading race fixed). New: "+ ACE/AMS" button for existing printers (label currently German only), warning for an ACE without a printer. Kobra 3 Max set up with ACE (ACE port reserved).</p>
       <h4>v1.5.0 &ndash; 2026-10-24</h4>
       <p>Printer page: new slot cards with a spool ring (remaining amount in filament colour) and a marker for the active slot. History: assign a print split across two spools, prompt on spool change during a print. Bridge: slot detection by colour and material on the Kobra X, more reliable consumption booking.</p>
       <h4>v1.4.0 &ndash; 2026-10-16</h4>
@@ -5303,10 +5307,10 @@ function ldWireProps(el) {
 
   var pwNesting = false;
   function nestChildUnits(){
-    if (pwNesting) return;
+    if (pwNesting) { pwNestAgain = true; return; }
     var grid = document.querySelector('.device-grid');
     if (!grid) return;
-    pwNesting = true;
+    pwNesting = true; pwUnitsCache = null;
     fetchUnitsCached().then(function(units){
       var byId = {};
       units.forEach(function(u){ byId[u.id] = u; });
@@ -5328,9 +5332,37 @@ function ldWireProps(el) {
           parentCard.appendChild(wrap);
         }
         if (card.parentElement !== wrap) wrap.appendChild(card);
-      });
-    }).finally(function(){ pwNesting = false; });
+      }); pwDecorate(grid, units);
+    }).finally(function(){ pwNesting = false; if (pwNestAgain) { pwNestAgain = false; setTimeout(nestChildUnits, 60); } });
   }
+
+  var pwNestAgain = false; var pwObsGrid = null;
+  function pwHdr(){ return { 'Content-Type': 'application/json' }; }
+  function pwDecorate(grid, units){
+    var byId = {}; units.forEach(function(u){ byId[u.id] = u; });
+    grid.querySelectorAll('.device-card').forEach(function(card){
+      var u = byId[parseInt(card.getAttribute('data-unit-id'), 10)]; if (!u) return;
+      var has = card.querySelector('.pw-child-wrap'); var btn = card.querySelector('.pw-add-ace');
+      if (u.type === 'printer') {
+        if (has && btn) btn.remove();
+        if (!has && !btn) { var b = document.createElement('button'); b.className = 'btn secondary pw-add-ace'; b.style.margin = '.5rem .9rem .9rem'; b.textContent = '+ ACE/AMS hinzufügen'; b.addEventListener('click', function(){ pwAddAce(u); }); card.appendChild(b); }
+      }
+      if (u.type === 'ace' && !u.parent_unit_id && !card.querySelector('.pw-orphan')) { var w = document.createElement('div'); w.className = 'pw-orphan'; w.style.cssText = 'color:#f87171;font-size:.85rem;margin:.4rem .9rem'; w.textContent = 'Keinem Drucker zugeordnet – bitte Drucker zuweisen'; card.appendChild(w); }
+    });
+  }
+  async function pwAddAce(p){
+    var name = prompt('Name der ACE/AMS-Einheit', 'ACE ' + p.name); if (!name) return;
+    var n = parseInt(prompt('Anzahl Slots', '4'), 10); if (!(n > 0)) return;
+    try {
+      var r = await fetch('/api/storage/units', { method: 'POST', credentials: 'include', headers: pwHdr(), body: JSON.stringify({ name: name, type: 'ace', levels: 1, slots_per_level: n, layout: 'row', rows_per_level: 1, parent_unit_id: p.id }) });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      var nu = await r.json(); var id = nu.id || (nu.unit && nu.unit.id);
+      if (id && p.bridge_printer_id) { await fetch('/api/storage/units/' + id, { method: 'PATCH', credentials: 'include', headers: pwHdr(), body: JSON.stringify({ bridge_printer_id: String(p.bridge_printer_id), bridge_box_id: 0 }) }); }
+      pwUnitsCache = null;
+      if (typeof window.loadDevices === 'function') window.loadDevices(); else location.reload();
+    } catch (e) { alert('Fehler: ' + e.message); }
+  }
+  setInterval(function(){ var g = document.querySelector('.device-grid'); if (g && g !== pwObsGrid) { pwObsGrid = g; initNestObserver(); } }, 1500);
 
   var pwGridObserver = null;
   function initNestObserver(){

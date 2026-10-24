@@ -114,6 +114,7 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.6.0 (2026-10-24)**: Neue Druckeransicht: ACE oben mit Schlauch, Rollen in echten Farben, aktiver Slot leuchtet, großer Fortschritt mit Schicht x/y und Infozeilen.
 - **v1.5.1 (2026-10-24)**: ACE/AMS zuverlässig im Druckerrahmen, Knopf "ACE/AMS hinzufügen", Warnung bei ACE ohne Drucker.
 - **v1.5.0 (2026-10-24)**: Slot-Karten mit Spulenring, Zuordnen auf zwei Spulen, Slot-Erkennung per Farbe (Kobra X).
 - **v1.4.0 (2026-10-16)**: Seitenleisten-Navigation; Drucker-Seite mit Live-Daten aus der Anycubic-Bridge (ACE-Boxen, Restmenge in Gramm, Abweichungshinweis, Buchen/Angleichen am Slot); Druckhistorie 'Gedruckte Produkte'; Statistik; Farbnamen; Drybox/Drucker-Assistent; laufende Drucke nicht mehr als fehlgeschlagen; Bridge synchronisiert die Druckhistorie automatisch alle 30 Minuten (PRINT_SYNC_MIN), anycubic-cloud-api 0.4.36.

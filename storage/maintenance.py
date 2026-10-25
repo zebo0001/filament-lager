@@ -93,6 +93,20 @@ _ANY_EXTRA = {
 }
 
 
+_WB = "https://wiki.anycubic.com/en/fdm-3d-printer/"
+# Anleitungsseiten (statt allgemeiner Wartungsempfehlungen) je Aufgabe
+_ANY_GUIDES = {
+    "kx": {
+        "hotend": _WB + "anycubic-kobra-x/cleans-clogged-nozzles",
+        "wiper": _WB + "anycubic-kobra-x/purge-wiper-replacement",
+        "fans": _WB + "anycubic-kobra-x/hotend-cooling-fan",
+    },
+    "k3max": {
+        "hotend": _WB + "k3-max-v2/guide-for-cleaning-hotend-clogging",
+    },
+}
+
+
 def _any_model(name: str, model: str = "") -> str:
     s = f"{name} {model}".lower().replace("-", " ")
     if "3 max" in s or "k3 max" in s or "kobra3max" in s:
@@ -551,7 +565,7 @@ def setup(app, db, spoolman_url=None):
                 src, note = _BAMBU_NOTES[key]
             lk = None
             if am and key in _ANY_NOTES.get(am, {}):
-                src, note, lk = "vendor", _ANY_NOTES[am][key], link
+                src, note, lk = "vendor", _ANY_NOTES[am][key], _ANY_GUIDES.get(am, {}).get(key, link)
             elif am and key == "zd":
                 lk = link
             if c.execute("SELECT 1 FROM maint_tasks WHERE printer=? AND key=?", (printer, key)).fetchone():
@@ -607,6 +621,14 @@ def setup(app, db, spoolman_url=None):
                     h = stats(c, p)["hours"]
                     c.execute("INSERT INTO maint_tasks (printer,key,title,interval_h,next_due_h,source,note,link) "
                               "VALUES (?,?,?,?,?,?,?,?)", (p, key, de, iv, h + iv, src, note, link))
+
+    # Migration: Anleitungs-Links (nur wenn noch der allgemeine Wiki-Link gesetzt ist)
+    with db() as c:
+        for p in [r[0] for r in c.execute("SELECT DISTINCT printer FROM maint_tasks")]:
+            am = _any_model(p, model_of(c, p))
+            for k, url in _ANY_GUIDES.get(am, {}).items():
+                c.execute("UPDATE maint_tasks SET link=? WHERE printer=? AND key=? AND link=?",
+                          (url, p, k, _wiki_url(p, model_of(c, p))))
 
     # ---------- Endpoints ----------
     @app.get("/maintenance/overview")

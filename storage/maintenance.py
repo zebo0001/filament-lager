@@ -43,12 +43,12 @@ def _abr_extra(material):
 
 # (key, title_de, title_en, interval_h, source, note)
 _COMMON = [
-    ("rails", "Schienen/Führungen reinigen und ölen", "Clean and oil rails/guides", 100, "vendor",
-     "Hersteller: monatlich; als Druckstunden angesetzt"),
-    ("zscrew", "Z-Spindel reinigen und fetten", "Clean and grease Z lead screw", 250, "vendor",
-     "Hersteller: alle 3 Monate, Fett statt Öl"),
-    ("hotend", "Düse und Heizblock reinigen", "Clean nozzle and heater block", 100, "vendor",
-     "Hersteller: monatlich"),
+    ("rails", "Schienen/Führungen reinigen und ölen", "Clean and oil rails/guides", 100, "community",
+     "Richtwert: etwa monatlich; als Druckstunden angesetzt"),
+    ("zscrew", "Z-Spindel reinigen und fetten", "Clean and grease Z lead screw", 250, "community",
+     "Richtwert: etwa alle 3 Monate, Fett statt Öl"),
+    ("hotend", "Düse und Heizblock reinigen", "Clean nozzle and heater block", 100, "community",
+     "Richtwert: etwa monatlich"),
     ("plate", "Druckplatte reinigen", "Clean build plate", 50, "community", "Isopropanol, nicht mit Fingern anfassen"),
     ("fans", "Lüfter entstauben", "Dust off fans", 100, "community", "Regelmäßig prüfen, Staub entfernen (Richtwert)"),
     ("cutter", "Filament-Cutter prüfen", "Check filament cutter", 150, "community", "Etwa alle 3 Rollen prüfen (Richtwert)"),
@@ -538,6 +538,13 @@ def setup(app, db, spoolman_url=None):
             for k, (s_, n_) in neutral.items():
                 c.execute("UPDATE maint_tasks SET source=?, note=? WHERE printer=? AND key=? AND note LIKE '%Bambu%'",
                           (s_, n_, p, k))
+
+    # Migration: Allgemeine "Hersteller"-Hinweise -> Community-Richtwerte
+    with db() as c:
+        for k, _, _, _, s_, n_ in _COMMON:
+            if s_ == "community":
+                c.execute("UPDATE maint_tasks SET source=?, note=? WHERE key=? AND note LIKE 'Hersteller: %' AND note NOT LIKE '%Bambu%'",
+                          (s_, n_, k))
 
     # ---------- Endpoints ----------
     @app.get("/maintenance/overview")

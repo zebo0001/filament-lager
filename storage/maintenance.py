@@ -34,6 +34,12 @@ def _classify(material, name=""):
     return "normal"
 
 SOON_FRAC = 0.15  # "bald faellig" ab 15 % Restlaufzeit
+_HARD_RE = re.compile(r"härte|harte|hard|wolfram|tungsten|ruby|rubin|hss|carbid|karbid", re.I)
+
+
+def _abr_extra(material):
+    """Zusatzgewicht abrasiver Stunden/kg: gehaertete Duesen verschleissen kaum mehr, Messing/Edelstahl dreifach."""
+    return 0.0 if material and _HARD_RE.search(material) else ABRASIVE_EXTRA
 
 # (key, title_de, title_en, interval_h, source, note)
 _COMMON = [
@@ -108,6 +114,7 @@ class DoneIn(BaseModel):
     cost: Optional[float] = 0
     note: Optional[str] = None
     part_id: Optional[int] = None
+    part_qty: Optional[float] = 1
 
 
 class PostponeIn(BaseModel):
@@ -117,10 +124,20 @@ class PostponeIn(BaseModel):
 class CompIn(BaseModel):
     printer: str
     kind: str  # nozzle | plate
-    name: str
-    life_h: float
+    name: Optional[str] = None
+    life_h: Optional[float] = 0  # Lebensdauer in 'unit' (0 = keine)
     mounted: int = 1
     note: Optional[str] = None
+    unit: Optional[str] = "h"  # h | kg
+    diameter: Optional[float] = None
+    material: Optional[str] = None
+    surface: Optional[str] = None
+    clean_every: Optional[float] = 0
+    price: Optional[float] = 0
+    used_h: Optional[float] = 0
+    used_kg: Optional[float] = 0
+    used_abr_kg: Optional[float] = 0
+    replace_task: Optional[int] = 0
 
 
 class CompUpd(BaseModel):
@@ -128,6 +145,12 @@ class CompUpd(BaseModel):
     life_h: Optional[float] = None
     mounted: Optional[int] = None
     note: Optional[str] = None
+    diameter: Optional[float] = None
+    material: Optional[str] = None
+    surface: Optional[str] = None
+    clean_every: Optional[float] = None
+    price: Optional[float] = None
+    retired: Optional[int] = None
 
 
 class ReplaceIn(BaseModel):
@@ -136,15 +159,21 @@ class ReplaceIn(BaseModel):
     name: Optional[str] = None
     life_h: Optional[float] = None
     part_id: Optional[int] = None
+    part_qty: Optional[float] = 1
 
 
 class PartIn(BaseModel):
     name: str
     qty: float = 0
     min_qty: float = 1
-    price: Optional[float] = 0
+    price: Optional[float] = 0  # Preis je Packung
     printer: Optional[str] = None
     note: Optional[str] = None
+    unit: Optional[str] = "Stück"  # Stück | ml | g
+    pack_type: Optional[str] = "Stück"  # Stück | Flasche | Tube | Pack
+    pack_size: Optional[float] = 1  # Menge je Packung in 'unit'
+    symbol: Optional[str] = None
+    category: Optional[str] = "Ersatzteil"  # Ersatzteil | Zubehör
 
 
 class ServiceIn(BaseModel):
@@ -159,6 +188,11 @@ class PartUpd(BaseModel):
     price: Optional[float] = None
     printer: Optional[str] = None
     note: Optional[str] = None
+    unit: Optional[str] = None
+    pack_type: Optional[str] = None
+    pack_size: Optional[float] = None
+    symbol: Optional[str] = None
+    category: Optional[str] = None
 
 
 def _booklet_html(d):
@@ -186,8 +220,9 @@ def _booklet_html(d):
         for t in d["tasks"]
     ) or "<tr><td colspan=5>Keine Aufgaben</td></tr>"
     rows_c = "".join(
-        f"<tr><td>{e(c['title'])}</td><td>{f(c['life_h'],0)} h</td><td>{f(c['runtime_h'])} h</td>"
-        f"<td>{f(c['remaining_h'])} h</td><td>{'montiert' if c['mounted'] else 'Lager'}</td>"
+        f"<tr><td>{e(c['title'])}</td><td>{f(c['life_h'],0) if c['life_h'] else '–'} {c.get('unit','h')}</td>"
+        f"<td>{f(c['runtime_h'])} {c.get('unit','h')}</td>"
+        f"<td>{f(c['remaining_h'])} {c.get('unit','h')}</td><td>{'montiert' if c['mounted'] else 'Lager'}</td>"
         f"<td style='color:{st_col[c['status']]};font-weight:600'>{st_txt[c['status']]}</td></tr>"
         for c in d["components"]
     ) or "<tr><td colspan=6>Keine Komponenten</td></tr>"
@@ -249,6 +284,19 @@ def setup(app, db, spoolman_url=None):
                     min_qty REAL DEFAULT 1, price REAL DEFAULT 0, printer TEXT, note TEXT);
                 """
             )
+            have_p = {r[1] for r in c.execute("PRAGMA table_info(maint_parts)")}
+            for col, ddl in (("unit", "TEXT DEFAULT 'Stück'"), ("pack_type", "TEXT DEFAULT 'Stück'"),
+                             ("pack_size", "REAL DEFAULT 1"), ("symbol", "TEXT"), ("category", "TEXT DEFAULT 'Ersatzteil'")):
+                if col not in have_p:
+                    c.execute(f"ALTER TABLE maint_parts ADD COLUMN {col} {ddl}")
+            have = {r[1] for r in c.execute("PRAGMA table_info(maint_components)")}
+            for col, ddl in (
+                ("unit", "TEXT DEFAULT 'h'"), ("diameter", "REAL"), ("material", "TEXT"), ("surface", "TEXT"),
+                ("clean_every", "REAL DEFAULT 0"), ("last_clean", "REAL DEFAULT 0"), ("banked_kg", "REAL DEFAULT 0"),
+                ("mounted_since_kg", "REAL"), ("mounted_since_abr_kg", "REAL"), ("price", "REAL DEFAULT 0"),
+            ):
+                if col not in have:
+                    c.execute(f"ALTER TABLE maint_components ADD COLUMN {col} {ddl}")
 
     init()
 
@@ -332,6 +380,8 @@ def setup(app, db, spoolman_url=None):
             "extra_hours": extra,
             "prints": len(rows),
             "kg": round(grams / 1000.0, 2),
+            "kg_total": grams / 1000.0,
+            "abr_kg_total": cls_g["abrasive"] / 1000.0,
             "g_per_h": gph,
             "tempo_h_per_day": round(recent / 30.0, 2),
             "active_days_30": len(days),
@@ -362,32 +412,66 @@ def setup(app, db, spoolman_url=None):
             "eta_days": eta_days(rem, s),
         }
 
-    def abrasive_extra_h(s, since_h, hours_now):
+    def abrasive_extra_h(s, since_h, hours_now, extra_factor=ABRASIVE_EXTRA):
         extra = 0.0
         for start, dur, cls in s["_timeline"]:
             if cls != "abrasive" or dur <= 0:
                 continue
             a, b = max(start, since_h), min(start + dur, hours_now)
             if b > a:
-                extra += (b - a) * ABRASIVE_EXTRA
+                extra += (b - a) * extra_factor
         return extra
 
-    def comp_view(cm, s):
+    def comp_usage(cm, s):
+        """Verbrauchte Laufzeit der Komponente in ihrer Einheit (h oder kg, abrasiv gewichtet)."""
+        ex = _abr_extra(cm["material"])
         hours = s["hours"]
-        abr = 0.0
-        if cm["mounted"] and cm["kind"] == "nozzle":
-            abr = abrasive_extra_h(s, cm["mounted_since_h"] or hours, hours)
-        run = (cm["banked_h"] or 0) + ((hours - (cm["mounted_since_h"] or hours)) if cm["mounted"] else 0) + abr
-        rem = cm["life_h"] - run
-        if rem <= 0:
-            st = "due"
-        elif rem <= max(cm["life_h"] * SOON_FRAC, 5):
-            st = "soon"
+        if (cm["unit"] or "h") == "kg":
+            run = cm["banked_kg"] or 0
+            if cm["mounted"]:
+                ks, ka = cm["mounted_since_kg"], cm["mounted_since_abr_kg"]
+                if ks is None:
+                    ks = s["kg_total"]
+                if ka is None:
+                    ka = s["abr_kg_total"]
+                run += (s["kg_total"] - ks) + ex * (s["abr_kg_total"] - ka)
+            return max(run, 0.0)
+        since = cm["mounted_since_h"] if cm["mounted_since_h"] is not None else hours
+        run = cm["banked_h"] or 0
+        if cm["mounted"]:
+            run += hours - since
+            if cm["kind"] == "nozzle":
+                run += abrasive_extra_h(s, since, hours, ex)
+        return max(run, 0.0)
+
+    def comp_view(cm, s):
+        unit = cm["unit"] or "h"
+        run = comp_usage(cm, s)
+        life = cm["life_h"] or 0
+        ce = cm["clean_every"] or 0
+        soon_abs = 5 if unit == "h" else 0.3
+        rank = {"due": 0, "soon": 1, "ok": 2}
+        checks = []
+        for reason, total, rem in (
+            ("life", life, life - run),
+            ("clean", ce, ce - (run - (cm["last_clean"] or 0))),
+        ):
+            if total and total > 0:
+                st = "due" if rem <= 0 else ("soon" if rem <= max(total * SOON_FRAC, soon_abs) else "ok")
+                checks.append((rank[st], rem / total, reason, rem, total, st))
+        if checks:
+            checks.sort()
+            _, _, reason, rem, total, st = checks[0]
+            life_rem = next((c[3] for c in checks if c[2] == "life"), None)
+            clean_rem = next((c[3] for c in checks if c[2] == "clean"), None)
         else:
-            st = "ok"
+            reason, rem, total, st, life_rem, clean_rem = None, None, 0, "ok", None, None
+        rd = lambda v: None if v is None else round(v, 2 if unit == "kg" else 1)
         return {
-            "id": cm["id"], "kind": "component", "comp_kind": cm["kind"], "title": cm["name"],
-            "life_h": cm["life_h"], "runtime_h": round(run, 1), "remaining_h": round(rem, 1),
+            "id": cm["id"], "kind": "component", "comp_kind": cm["kind"], "title": cm["name"], "unit": unit,
+            "life_h": life, "runtime_h": rd(run), "remaining_h": rd(rem), "interval_h": total, "reason": reason,
+            "life_rem": rd(life_rem), "clean_rem": rd(clean_rem), "clean_every": ce,
+            "diameter": cm["diameter"], "material": cm["material"], "surface": cm["surface"], "price": cm["price"],
             "mounted": cm["mounted"], "status": st, "note": cm["note"], "printer": cm["printer"],
         }
 
@@ -613,13 +697,16 @@ def setup(app, db, spoolman_url=None):
         return {"ok": True}
 
     def use_part(c, part_id, qty=1):
+        """Verbraucht qty (in der Einheit des Artikels). Rueckgabe: (Artikel, Kosten) oder (None, 0)."""
         if not part_id:
-            return None
+            return None, 0
         p = c.execute("SELECT * FROM maint_parts WHERE id=?", (part_id,)).fetchone()
         if not p:
-            return None
+            return None, 0
+        qty = qty if qty is not None else 1
         c.execute("UPDATE maint_parts SET qty=? WHERE id=?", (max((p["qty"] or 0) - qty, 0), part_id))
-        return p
+        size = p["pack_size"] or 1
+        return p, round((p["price"] or 0) / size * qty, 2)
 
     @app.post("/maintenance/tasks/{tid}/done")
     def task_done(tid: int, body: DoneIn):
@@ -630,9 +717,9 @@ def setup(app, db, spoolman_url=None):
             h = stats(c, t["printer"])["hours"]
             c.execute("UPDATE maint_tasks SET next_due_h=? WHERE id=?", (h + t["interval_h"], tid))
             cost = body.cost or 0
-            part = use_part(c, body.part_id)
+            part, pcost = use_part(c, body.part_id, body.part_qty)
             if part and not cost:
-                cost = part["price"] or 0
+                cost = pcost
             log(c, t["printer"], "done", t["title"], h, cost, body.note)
         return {"ok": True}
 
@@ -648,17 +735,37 @@ def setup(app, db, spoolman_url=None):
             log(c, t["printer"], "postponed", t["title"], h, 0, f"+{body.hours:g} h")
         return {"ok": True}
 
+    def mount_marks(s):
+        return s["hours"], s["kg_total"], s["abr_kg_total"]
+
     @app.post("/maintenance/components")
     def comp_add(body: CompIn):
         with db() as c:
-            h = stats(c, body.printer)["hours"]
-            if body.kind == "plate" and body.mounted:
-                pass  # mehrere Platten erlaubt, nur montierte zaehlen
+            s = stats(c, body.printer)
+            h, kg, akg = mount_marks(s)
+            unit = "kg" if body.unit == "kg" else "h"
+            ex = _abr_extra(body.material)
+            name = (body.name or "").strip()
+            if not name:
+                if body.kind == "nozzle":
+                    name = "Düse" + (f" {body.diameter:g} mm" if body.diameter else "") + (f" {body.material}" if body.material else "")
+                else:
+                    name = "Druckplatte" + (f" {body.surface}" if body.surface else "")
+            banked_h = body.used_h or 0
+            banked_kg = (body.used_kg or 0) + ex * (body.used_abr_kg or 0)
+            start_use = banked_kg if unit == "kg" else banked_h
             cur = c.execute(
-                "INSERT INTO maint_components (printer,kind,name,life_h,mounted,mounted_since_h,note) VALUES (?,?,?,?,?,?,?)",
-                (body.printer, body.kind, body.name, body.life_h, body.mounted, h if body.mounted else None, body.note),
+                "INSERT INTO maint_components (printer,kind,name,life_h,mounted,banked_h,banked_kg,mounted_since_h,"
+                "mounted_since_kg,mounted_since_abr_kg,note,unit,diameter,material,surface,clean_every,last_clean,price) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (body.printer, body.kind, name, body.life_h or 0, body.mounted, banked_h, banked_kg,
+                 h if body.mounted else None, kg if body.mounted else None, akg if body.mounted else None,
+                 body.note, unit, body.diameter, body.material, body.surface, body.clean_every or 0,
+                 start_use, body.price or 0),
             )
-            log(c, body.printer, "setup", body.name, h)
+            if body.kind == "plate" and body.replace_task:
+                c.execute("UPDATE maint_tasks SET active=0 WHERE printer=? AND key='plate'", (body.printer,))
+            log(c, body.printer, "setup", name, h, body.price or 0)
             return {"id": cur.lastrowid}
 
     @app.put("/maintenance/components/{cid}")
@@ -668,19 +775,36 @@ def setup(app, db, spoolman_url=None):
             if not cm:
                 raise HTTPException(404)
             s = stats(c, cm["printer"])
-            h = s["hours"]
+            h, kg, akg = mount_marks(s)
             d = body.dict(exclude_unset=True)
             if "mounted" in d and d["mounted"] != cm["mounted"]:
                 if d["mounted"]:
-                    c.execute("UPDATE maint_components SET mounted_since_h=? WHERE id=?", (h, cid))
+                    c.execute("UPDATE maint_components SET mounted_since_h=?, mounted_since_kg=?, mounted_since_abr_kg=? "
+                              "WHERE id=?", (h, kg, akg, cid))
                 else:
-                    run = h - (cm["mounted_since_h"] or h)
+                    ex = _abr_extra(cm["material"])
+                    run_h = h - (cm["mounted_since_h"] if cm["mounted_since_h"] is not None else h)
                     if cm["kind"] == "nozzle":
-                        run += abrasive_extra_h(s, cm["mounted_since_h"] or h, h)
-                    c.execute("UPDATE maint_components SET banked_h=banked_h+?, mounted_since_h=NULL WHERE id=?",
-                              (run, cid))
+                        run_h += abrasive_extra_h(s, cm["mounted_since_h"] if cm["mounted_since_h"] is not None else h, h, ex)
+                    ks = cm["mounted_since_kg"] if cm["mounted_since_kg"] is not None else kg
+                    ka = cm["mounted_since_abr_kg"] if cm["mounted_since_abr_kg"] is not None else akg
+                    run_kg = (kg - ks) + ex * (akg - ka)
+                    c.execute("UPDATE maint_components SET banked_h=banked_h+?, banked_kg=banked_kg+?, "
+                              "mounted_since_h=NULL, mounted_since_kg=NULL, mounted_since_abr_kg=NULL WHERE id=?",
+                              (run_h, run_kg, cid))
             for k, v in d.items():
                 c.execute(f"UPDATE maint_components SET {k}=? WHERE id=?", (v, cid))
+        return {"ok": True}
+
+    @app.post("/maintenance/components/{cid}/clean")
+    def comp_clean(cid: int):
+        with db() as c:
+            cm = c.execute("SELECT * FROM maint_components WHERE id=?", (cid,)).fetchone()
+            if not cm:
+                raise HTTPException(404)
+            s = stats(c, cm["printer"])
+            c.execute("UPDATE maint_components SET last_clean=? WHERE id=?", (comp_usage(cm, s), cid))
+            log(c, cm["printer"], "done", f"{cm['name']} gereinigt", s["hours"], 0, None)
         return {"ok": True}
 
     @app.post("/maintenance/components/{cid}/replace")
@@ -689,16 +813,20 @@ def setup(app, db, spoolman_url=None):
             cm = c.execute("SELECT * FROM maint_components WHERE id=?", (cid,)).fetchone()
             if not cm:
                 raise HTTPException(404)
-            h = stats(c, cm["printer"])["hours"]
+            h, kg, akg = mount_marks(stats(c, cm["printer"]))
             c.execute("UPDATE maint_components SET retired=1, mounted=0 WHERE id=?", (cid,))
             c.execute(
-                "INSERT INTO maint_components (printer,kind,name,life_h,mounted,mounted_since_h,note) VALUES (?,?,?,?,1,?,?)",
-                (cm["printer"], cm["kind"], body.name or cm["name"], body.life_h or cm["life_h"], h, cm["note"]),
+                "INSERT INTO maint_components (printer,kind,name,life_h,mounted,mounted_since_h,mounted_since_kg,"
+                "mounted_since_abr_kg,note,unit,diameter,material,surface,clean_every,price) "
+                "VALUES (?,?,?,?,1,?,?,?,?,?,?,?,?,?,?)",
+                (cm["printer"], cm["kind"], body.name or cm["name"], body.life_h or cm["life_h"], h, kg, akg,
+                 cm["note"], cm["unit"] or "h", cm["diameter"], cm["material"], cm["surface"],
+                 cm["clean_every"] or 0, cm["price"] or 0),
             )
             cost = body.cost or 0
-            part = use_part(c, body.part_id)
+            part, pcost = use_part(c, body.part_id, body.part_qty)
             if part and not cost:
-                cost = part["price"] or 0
+                cost = pcost
             log(c, cm["printer"], "done", f"{cm['name']} getauscht", h, cost, body.note)
         return {"ok": True}
 
@@ -711,8 +839,10 @@ def setup(app, db, spoolman_url=None):
     def parts_add(body: PartIn):
         with db() as c:
             cur = c.execute(
-                "INSERT INTO maint_parts (name,qty,min_qty,price,printer,note) VALUES (?,?,?,?,?,?)",
-                (body.name, body.qty, body.min_qty, body.price, body.printer, body.note),
+                "INSERT INTO maint_parts (name,qty,min_qty,price,printer,note,unit,pack_type,pack_size,symbol,category) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (body.name, body.qty, body.min_qty, body.price, body.printer, body.note,
+                 body.unit, body.pack_type, body.pack_size or 1, body.symbol, body.category),
             )
             return {"id": cur.lastrowid}
 

@@ -228,6 +228,11 @@ class PartIn(BaseModel):
     category: Optional[str] = "Ersatzteil"  # Ersatzteil | Zubehör
 
 
+class InstallIn(BaseModel):
+    printer: str
+    qty: Optional[float] = 1
+
+
 class ServiceIn(BaseModel):
     cost: Optional[float] = 0
     note: Optional[str] = None
@@ -334,6 +339,9 @@ def setup(app, db, spoolman_url=None):
                 CREATE TABLE IF NOT EXISTS maint_parts (
                     id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, qty REAL DEFAULT 0,
                     min_qty REAL DEFAULT 1, price REAL DEFAULT 0, printer TEXT, note TEXT);
+                CREATE TABLE IF NOT EXISTS maint_installed (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, part_id INTEGER, name TEXT NOT NULL,
+                    printer TEXT NOT NULL, qty REAL DEFAULT 1, since_h REAL, ts INTEGER, removed_ts INTEGER);
                 """
             )
             have_p = {r[1] for r in c.execute("PRAGMA table_info(maint_parts)")}
@@ -943,6 +951,48 @@ def setup(app, db, spoolman_url=None):
         with db() as c:
             for k, v in body.dict(exclude_unset=True).items():
                 c.execute(f"UPDATE maint_parts SET {k}=? WHERE id=?", (v, pid))
+        return {"ok": True}
+
+    @app.get("/maintenance/installed")
+    def installed_list():
+        with db() as c:
+            return [dict(r) for r in c.execute(
+                "SELECT * FROM maint_installed WHERE removed_ts IS NULL ORDER BY printer, name")]
+
+    @app.post("/maintenance/parts/{pid}/install")
+    def part_install(pid: int, body: InstallIn):
+        with db() as c:
+            p = c.execute("SELECT * FROM maint_parts WHERE id=?", (pid,)).fetchone()
+            if not p:
+                raise HTTPException(404)
+            qty = body.qty if body.qty and body.qty > 0 else 1
+            if (p["qty"] or 0) < qty:
+                raise HTTPException(400, "Nicht genug im Lager")
+            h = stats(c, body.printer)["hours"]
+            _, cost = use_part(c, pid, qty)
+            c.execute("INSERT INTO maint_installed (part_id,name,printer,qty,since_h,ts) VALUES (?,?,?,?,?,?)",
+                      (pid, p["name"], body.printer, qty, h, int(time.time())))
+            log(c, body.printer, "install", p["name"], h, cost, "Eingebaut")
+        return {"ok": True}
+
+    @app.post("/maintenance/installed/{iid}/remove")
+    def part_uninstall(iid: int, reason: str = "back", shop: bool = False):
+        """reason: back (zurueck ins Lager) | worn (Lebensdauer erreicht) | defect (defekt)"""
+        with db() as c:
+            r = c.execute("SELECT * FROM maint_installed WHERE id=? AND removed_ts IS NULL", (iid,)).fetchone()
+            if not r:
+                raise HTTPException(404)
+            c.execute("UPDATE maint_installed SET removed_ts=? WHERE id=?", (int(time.time()), iid))
+            txt = {"back": "Ausgebaut, zurück ins Lager", "worn": "Ausgebaut: Lebensdauer erreicht",
+                   "defect": "Ausgebaut: defekt"}.get(reason, "Ausgebaut")
+            if reason == "back" and r["part_id"]:
+                c.execute("UPDATE maint_parts SET qty=COALESCE(qty,0)+? WHERE id=?", (r["qty"] or 1, r["part_id"]))
+            if shop and reason != "back":
+                c.execute("INSERT INTO shopping_list (material,color_name,color_hex,vendor,note) VALUES (?,?,?,?,?)",
+                          ("Ersatzteil", r["name"], "#888888", None,
+                           f"für {r['printer']} – {'defekt' if reason == 'defect' else 'Lebensdauer erreicht'}"))
+                txt += " · auf Einkaufsliste"
+            log(c, r["printer"], "uninstall", r["name"], stats(c, r["printer"])["hours"], 0, txt)
         return {"ok": True}
 
     @app.delete("/maintenance/parts/{pid}")

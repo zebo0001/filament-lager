@@ -68,6 +68,44 @@ _EXTRA = {
     "kobra": [("wiper", "Düsen-Abstreifer reinigen", "Clean nozzle wiper", 100, "community",
                "Anycubic: eigene Anleitung, kein Intervall genannt")],
 }
+# Anycubic-Wiki (https://wiki.anycubic.com): Wartungsempfehlungen je Modell
+_WIKI_X = "https://wiki.anycubic.com/en/fdm-3d-printer/anycubic-kobra-x/maintenance-recommendations"
+_WIKI_3MAX = "https://wiki.anycubic.com/en/fdm-3d-printer/kobra-3-max/maintenance-recommendations"
+_ANY_NOTES = {
+    "kx": {
+        "rails": "Wiki: X/Y-Führungen monatlich prüfen und reinigen, alle 2-3 Monate ölen (als Druckstunden angesetzt)",
+        "zscrew": "Wiki: Spindel alle 3 Monate fetten",
+        "hotend": "Wiki: Düse und Heizblock regelmäßig prüfen (kein fester Intervall)",
+        "wiper": "Wiki: Abstreifer regelmäßig prüfen (kein fester Intervall)",
+        "fans": "Wiki: Lüfter regelmäßig ausblasen (kein fester Intervall)",
+        "cutter": "Wiki: Cutter regelmäßig prüfen (kein fester Intervall)",
+        "ptfe": "Wiki: Teflonschlauch regelmäßig prüfen (kein fester Intervall)",
+    },
+    "k3max": {
+        "rails": "Wiki: X/Y-Doppelmetallspindeln monatlich prüfen und reinigen (als Druckstunden angesetzt)",
+        "zscrew": "Wiki: Z-Gewindestange alle 3 Monate fetten, früher bei Geräuschen",
+        "hotend": "Wiki: Filamentaustritt an der Düse monatlich prüfen",
+    },
+}
+_ANY_EXTRA = {
+    "k3max": [("zd", "Z-Achse D-Struktur auf Verschleiß prüfen", "Check Z-axis D-structure for wear", 100, "vendor",
+               "Wiki: monatlich auf Verschleiß prüfen, bei Bedarf tauschen (als Druckstunden angesetzt)")],
+}
+
+
+def _any_model(name: str, model: str = "") -> str:
+    s = f"{name} {model}".lower().replace("-", " ")
+    if "3 max" in s or "k3 max" in s or "kobra3max" in s:
+        return "k3max"
+    if "kobra x" in s:
+        return "kx"
+    return ""
+
+
+def _wiki_url(name: str, model: str = "") -> str:
+    return {"kx": _WIKI_X, "k3max": _WIKI_3MAX}.get(_any_model(name, model), "")
+
+
 # (kind, name_de, life_h, source, note)
 _COMP = [
     ("nozzle", "Düse (Messing)", 800, "community", "Messing ca. 6 Monate, QIDI: 800-1500 h (nicht abrasiv)"),
@@ -505,15 +543,22 @@ def setup(app, db, spoolman_url=None):
     def apply_template(c, printer):
         hours = stats(c, printer)["hours"]
         fam = _family(printer, model_of(c, printer))
-        items = list(_COMMON) + list(_EXTRA.get(fam, []))
+        am = _any_model(printer, model_of(c, printer)) if fam == "kobra" else ""
+        link = _wiki_url(printer, model_of(c, printer)) if am else None
+        items = list(_COMMON) + list(_EXTRA.get(fam, [])) + list(_ANY_EXTRA.get(am, []))
         for key, de, en, iv, src, note in items:
             if fam == "bambu" and key in _BAMBU_NOTES:
                 src, note = _BAMBU_NOTES[key]
+            lk = None
+            if am and key in _ANY_NOTES.get(am, {}):
+                src, note, lk = "vendor", _ANY_NOTES[am][key], link
+            elif am and key == "zd":
+                lk = link
             if c.execute("SELECT 1 FROM maint_tasks WHERE printer=? AND key=?", (printer, key)).fetchone():
                 continue
             c.execute(
-                "INSERT INTO maint_tasks (printer,key,title,interval_h,next_due_h,source,note) VALUES (?,?,?,?,?,?,?)",
-                (printer, key, de, iv, hours + iv, src, note),
+                "INSERT INTO maint_tasks (printer,key,title,interval_h,next_due_h,source,note,link) VALUES (?,?,?,?,?,?,?,?)",
+                (printer, key, de, iv, hours + iv, src, note, lk),
             )
             log(c, printer, "setup", de, hours)
         for kind, name, life, src, note in _COMP:
@@ -545,6 +590,23 @@ def setup(app, db, spoolman_url=None):
             if s_ == "community":
                 c.execute("UPDATE maint_tasks SET source=?, note=? WHERE key=? AND note LIKE 'Hersteller: %' AND note NOT LIKE '%Bambu%'",
                           (s_, n_, k))
+
+    # Migration: Anycubic-Wiki-Hinweise fuer bestehende Kobra-Drucker
+    with db() as c:
+        for p in [r[0] for r in c.execute("SELECT DISTINCT printer FROM maint_tasks")]:
+            am = _any_model(p, model_of(c, p))
+            if not am:
+                continue
+            link = _wiki_url(p, model_of(c, p))
+            for k, note in _ANY_NOTES.get(am, {}).items():
+                c.execute("UPDATE maint_tasks SET source='vendor', note=?, link=? WHERE printer=? AND key=? "
+                          "AND source IN ('community','vendor') AND (note IS NULL OR note NOT LIKE 'Wiki:%')",
+                          (note, link, p, k))
+            for key, de, en, iv, src, note in _ANY_EXTRA.get(am, []):
+                if not c.execute("SELECT 1 FROM maint_tasks WHERE printer=? AND key=?", (p, key)).fetchone():
+                    h = stats(c, p)["hours"]
+                    c.execute("INSERT INTO maint_tasks (printer,key,title,interval_h,next_due_h,source,note,link) "
+                              "VALUES (?,?,?,?,?,?,?,?)", (p, key, de, iv, h + iv, src, note, link))
 
     # ---------- Endpoints ----------
     @app.get("/maintenance/overview")
@@ -603,6 +665,7 @@ def setup(app, db, spoolman_url=None):
             "stats": pub, "score": score_of(items), "tasks": tasks, "components": all_comps,
             "history": hist, "cost_total": round(cost, 2),
             "set_up": bool(mp and mp["set_up"]),
+            "wiki": _wiki_url(printer, model_of(c, printer)),
         }
 
     @app.get("/maintenance/printer/{printer}")

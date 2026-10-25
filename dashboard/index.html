@@ -785,7 +785,15 @@ function ring(score,size){
    +'<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+scol(score)+'" stroke-width="'+w+'" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>'
    +'<text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" fill="var(--text)" font-size="'+size*0.28+'" font-weight="700">'+score+'</text></svg>';
 }
+function compRemTxt(i){
+  var u=i.unit||'h', d=u==='kg'?2:0;
+  if(i.remaining_h==null) return nf(i.runtime_h,u==='kg'?2:0)+' '+u+' '+tt('gelaufen','used');
+  var what=i.reason==='clean'?tt('Reinigen','Clean'):tt('Tausch','Replace');
+  if(i.status==='due') return what+' '+tt('jetzt fällig','due now')+' · '+nf(-i.remaining_h,u==='kg'?2:1)+' '+u+' '+tt('überfällig','overdue');
+  return what+' '+tt('in ','in ')+nf(i.remaining_h,u==='kg'?2:1)+' '+u+(i.interval_h?' · '+tt('alle ','every ')+nf(i.interval_h,d)+' '+u:'');
+}
 function remTxt(i){
+  if(i.kind==='component') return compRemTxt(i);
   var rem=i.remaining_h;
   if(i.status==='due') return tt('Jetzt fällig','Due now')+' · '+nf(-rem)+' h '+tt('überfällig','overdue');
   var eta='';
@@ -840,14 +848,17 @@ function num(v){ var n=parseFloat(String(v).replace(',','.')); return isNaN(n)?0
 function fail(e){ alert(tt('Fehler: ','Error: ')+(e&&e.message?e.message:e)); }
 
 /* ---------- Aktionen ---------- */
+function partOpts(parts){
+  return [['',tt('– kein Ersatzteil –','– no spare part –')]].concat(parts.filter(function(p){return p.qty>0;}).map(function(p){return [p.id,p.name+' ('+nf(p.qty,2)+' '+(p.unit||'Stück')+')'];}));
+}
 async function doDone(id){
   var parts=[]; try{ parts=await call('/parts')||[]; }catch(e){}
-  var opts=[['',tt('– kein Ersatzteil –','– no spare part –')]].concat(parts.filter(function(p){return p.qty>0;}).map(function(p){return [p.id,p.name+' ('+nf(p.qty,0)+')'];}));
   modal(tt('Erledigt eintragen','Mark as done'),[
     {label:tt('Kosten (€)','Cost (€)'),type:'number',step:'0.01',value:''},
-    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:opts,value:''},
+    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:partOpts(parts),value:''},
+    {label:tt('Verbrauchte Menge (in der Einheit des Artikels)','Amount used (in the item’s unit)'),type:'number',step:'any',value:1},
     {label:tt('Notiz','Note'),type:'textarea'}
-  ],async function(v){ try{ await call('/tasks/'+id+'/done','POST',{cost:num(v[0]),part_id:v[1]?parseInt(v[1]):null,note:v[2]||null}); refresh(); }catch(e){fail(e);} });
+  ],async function(v){ try{ await call('/tasks/'+id+'/done','POST',{cost:num(v[0]),part_id:v[1]?parseInt(v[1]):null,part_qty:num(v[2])||1,note:v[3]||null}); refresh(); }catch(e){fail(e);} });
 }
 function doPostpone(id){
   modal(tt('Verschieben','Postpone'),[{label:tt('Um wie viele Druckstunden?','By how many print hours?'),type:'number',value:20}],
@@ -855,13 +866,13 @@ function doPostpone(id){
 }
 async function doReplace(cid,name,life){
   var parts=[]; try{ parts=await call('/parts')||[]; }catch(e){}
-  var opts=[['',tt('– kein Ersatzteil –','– no spare part –')]].concat(parts.filter(function(p){return p.qty>0;}).map(function(p){return [p.id,p.name+' ('+nf(p.qty,0)+')'];}));
   modal(tt('Tauschen: ','Replace: ')+ti(name),[
-    {label:tt('Bezeichnung','Name'),value:name},{label:tt('Lebensdauer (Druckstunden)','Lifetime (print hours)'),type:'number',value:life},
+    {label:tt('Bezeichnung','Name'),value:name},{label:tt('Lebensdauer (gleiche Einheit wie bisher, 0 = keine)','Lifetime (same unit as before, 0 = none)'),type:'number',value:life},
     {label:tt('Kosten (€)','Cost (€)'),type:'number',step:'0.01',value:''},
-    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:opts,value:''},
+    {label:tt('Ersatzteil verbrauchen','Use spare part'),type:'select',options:partOpts(parts),value:''},
+    {label:tt('Verbrauchte Menge (in der Einheit des Artikels)','Amount used (in the item’s unit)'),type:'number',step:'any',value:1},
     {label:tt('Notiz','Note'),type:'textarea'}
-  ],async function(v){ try{ await call('/components/'+cid+'/replace','POST',{name:v[0],life_h:num(v[1]),cost:num(v[2]),part_id:v[3]?parseInt(v[3]):null,note:v[4]||null}); refresh(); }catch(e){fail(e);} });
+  ],async function(v){ try{ await call('/components/'+cid+'/replace','POST',{name:v[0],life_h:num(v[1]),cost:num(v[2]),part_id:v[3]?parseInt(v[3]):null,part_qty:num(v[4])||1,note:v[5]||null}); refresh(); }catch(e){fail(e);} });
 }
 function doAddTask(p){
   modal(tt('Aufgabe hinzufügen','Add task'),[{label:tt('Bezeichnung','Title')},{label:tt('Intervall (Druckstunden)','Interval (print hours)'),type:'number',value:100}],
@@ -872,12 +883,129 @@ function doEditTask(t){
     async function(v){ try{ await call('/tasks/'+t.id,'PUT',{title:v[0],interval_h:num(v[1]),note:v[2]}); refresh(); }catch(e){fail(e);} },
     {label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Aufgabe löschen?','Delete task?'))){ try{ await call('/tasks/'+t.id,'DELETE'); refresh(); }catch(e){fail(e);} } }});
 }
-function doAddComp(p){
-  modal(tt('Komponente anlegen','Add component'),[
-    {label:tt('Art','Type'),type:'select',options:[['nozzle',tt('Düse','Nozzle')],['plate',tt('Druckplatte','Build plate')]],value:'nozzle'},
-    {label:tt('Bezeichnung','Name')},{label:tt('Lebensdauer (Druckstunden)','Lifetime (print hours)'),type:'number',value:800}
-  ],async function(v){ if(!v[1]) return; try{ await call('/components','POST',{printer:p,kind:v[0],name:v[1],life_h:num(v[2])||800,mounted:1}); refresh(); }catch(e){fail(e);} });
+/* ---------- Formular-Dialoge (Chips, Schalter) ---------- */
+(function(){
+  if(document.getElementById('mt-style2')) return;
+  var s=document.createElement('style'); s.id='mt-style2';
+  s.textContent='.mt-md.wide{width:min(470px,100%)}.mt-md h3{text-align:center}'
+  +'.mt-sec{font-size:.68rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:.95rem 0 .35rem}'
+  +'.mt-chips{display:flex;flex-wrap:wrap;gap:.4rem}'
+  +'.mt-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);border-radius:999px;padding:.4rem .8rem;cursor:pointer;font-size:.85rem}'
+  +'.mt-chip.on{border-color:var(--accent);color:var(--accent);background:rgba(56,189,248,.12)}'
+  +'.mt-chip.big{flex:1;text-align:center;border-radius:.7rem;padding:.55rem}'
+  +'.mt-chip.sym{border-radius:.7rem;width:2.6rem;height:2.6rem;padding:0;font-size:1.1rem}'
+  +'.mt-sw{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);border-radius:.7rem;padding:.65rem .8rem;margin:.8rem 0;cursor:pointer;color:var(--text);font-size:.9rem}'
+  +'.mt-md .mt-sw input{width:auto}'
+  +'.mt-row2{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.mt-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}'
+  +'.mt-hint{font-size:.76rem;color:var(--muted);margin:.35rem 0}'
+  +'.mt-inp{display:flex;align-items:center;gap:.4rem}.mt-inp span{color:var(--muted);font-size:.8rem;min-width:1.6rem}'
+  +'.mt-md details{border-top:1px solid var(--border);margin-top:.9rem;padding-top:.5rem}.mt-md summary{cursor:pointer;color:var(--muted);font-size:.85rem}';
+  document.head.appendChild(s);
+})();
+function chips(name,opts,val,cls){
+  return '<div class="mt-chips" data-name="'+name+'">'+opts.map(function(o){
+    return '<button type="button" class="mt-chip '+(cls||'')+(String(o[0])===String(val)?' on':'')+'" data-v="'+esc(o[0])+'">'+esc(o[1])+'</button>';
+  }).join('')+'</div>';
 }
+function fv(ov,name){
+  var g=ov.querySelector('[data-name="'+name+'"]');
+  if(g){ var on=g.querySelector('.mt-chip.on'); return on?on.getAttribute('data-v'):''; }
+  var e=ov.querySelector('[name="'+name+'"]'); if(!e) return '';
+  return e.type==='checkbox'?e.checked:e.value;
+}
+function fmodal(title,html,onOk,opts){
+  opts=opts||{};
+  var ov=document.createElement('div'); ov.className='mt-ov';
+  ov.innerHTML='<div class="mt-md wide"><h3>'+esc(title)+'</h3>'+html+'<div class="mt-bt">'
+    +(opts.extra?'<button class="mt-btn danger" id="mtx" style="margin-right:auto">'+esc(opts.extra.label)+'</button>':'')
+    +'<button class="mt-btn" id="mtc">'+tt('Abbrechen','Cancel')+'</button><button class="mt-btn pri" id="mto">'+esc(opts.ok||'OK')+'</button></div></div>';
+  document.body.appendChild(ov);
+  function close(){ ov.remove(); }
+  function change(){ if(opts.onChange) opts.onChange(ov); }
+  ov.querySelector('#mtc').onclick=close;
+  ov.addEventListener('mousedown',function(e){ if(e.target===ov) close(); });
+  if(opts.extra) ov.querySelector('#mtx').onclick=function(){ close(); opts.extra.fn(); };
+  ov.addEventListener('click',function(e){
+    var c=e.target.closest('.mt-chip'); if(!c) return;
+    var g=c.parentNode; [].forEach.call(g.querySelectorAll('.mt-chip'),function(x){x.classList.remove('on');}); c.classList.add('on');
+    if(g.hasAttribute('data-fill') && opts.onFill) opts.onFill(ov,c.getAttribute('data-v'));
+    change();
+  });
+  ov.addEventListener('input',change);
+  ov.querySelector('#mto').onclick=async function(){ var r=await onOk(ov); if(r!==false) close(); };
+  change();
+  return ov;
+}
+function pickVal(ov,name,other){ var v=fv(ov,name); return v==='other'?(fv(ov,other)||''):v; }
+async function printerNames(){ try{ var o=await call('/overview'); return o.printers.map(function(p){return p.printer;}); }catch(e){ return MT.printer?[MT.printer]:[]; } }
+function optHtml(list,val){ return list.map(function(n){return '<option value="'+esc(n)+'"'+(n===val?' selected':'')+'>'+esc(n)+'</option>';}).join(''); }
+function swHtml(name,label,on){ return '<label class="mt-sw"><span>'+label+'</span><input type="checkbox" name="'+name+'"'+(on?' checked':'')+'></label>'; }
+function inpU(name,val,unit,ph,step){ return '<div class="mt-inp"><input name="'+name+'" type="number" step="'+(step||'any')+'" min="0" value="'+(val==null||val===0?'':val)+'" placeholder="'+esc(ph||'')+'"><span>'+unit+'</span></div>'; }
+
+async function doAddComp(kind,p,cm){
+  var names=await printerNames(); if(p&&names.indexOf(p)<0) names.push(p);
+  var edit=!!cm, nozzle=kind==='nozzle';
+  var DIAM=[['0.2','0,2 mm'],['0.4','0,4 mm'],['0.6','0,6 mm'],['0.8','0,8 mm'],['other',tt('Andere','Other')]];
+  var MAT=[['Gehärteter Stahl',tt('gehärteter Stahl','hardened steel')],['Edelstahl',tt('Edelstahl','stainless steel')],['Messing',tt('Messing','brass')],['Wolframkarbid',tt('Wolframkarbid','tungsten carbide')],['other',tt('Andere','Other')]];
+  var SURF=[['Strukturiert (PEI)',tt('Strukturiert (PEI)','Textured (PEI)')],['Glatt (PEI)',tt('Glatt (PEI)','Smooth (PEI)')],['Cool Plate / SuperTack','Cool Plate / SuperTack'],['Engineering','Engineering'],['other',tt('Andere','Other')]];
+  var unit=nozzle?(cm&&cm.unit==='h'?'h':'kg'):'h';
+  if(cm) unit=cm.unit||'h';
+  var dval=cm&&cm.diameter?String(cm.diameter):'0.4', dknown=DIAM.some(function(x){return x[0]===dval;});
+  var mval=cm&&cm.material||'Messing', mknown=MAT.some(function(x){return x[0]===mval&&x[0]!=='other';});
+  var sval=cm&&cm.surface||'Strukturiert (PEI)', sknown=SURF.some(function(x){return x[0]===sval&&x[0]!=='other';});
+  var h='<div class="mt-sec">'+(nozzle?tt('Bezeichnung (optional)','Name (optional)'):tt('Name','Name'))+'</div>'
+   +'<input name="name" value="'+esc(cm?cm.title:'')+'" placeholder="'+(nozzle?tt('z. B. Hotend Ersatz','e.g. spare hotend'):tt('z. B. Textured PEI','e.g. Textured PEI'))+'">';
+  if(nozzle){
+    h+='<div class="mt-sec">'+tt('Durchmesser','Diameter')+'</div>'+chips('diam',DIAM,dknown?dval:'other')
+      +'<div id="dOther" style="margin-top:.4rem;display:none">'+inpU('diam_o',dknown?'':dval,'mm','0,5','0.05')+'</div>'
+      +'<div class="mt-sec">'+tt('Material','Material')+'</div>'+chips('mat',MAT,mknown?mval:'other')
+      +'<div id="mOther" style="margin-top:.4rem;display:none"><input name="mat_o" value="'+esc(mknown?'':mval)+'" placeholder="'+tt('Material','Material')+'"></div>';
+  } else {
+    h+='<div class="mt-sec">'+tt('Oberfläche','Surface')+'</div>'+chips('surf',SURF,sknown?sval:'other')
+      +'<div id="sOther" style="margin-top:.4rem;display:none"><input name="surf_o" value="'+esc(sknown?'':sval)+'" placeholder="'+tt('Oberfläche','Surface')+'"></div>';
+  }
+  if(!edit){
+    h+='<div class="mt-sec">'+tt('Drucker','Printer')+'</div><select name="printer">'+optHtml(names,p)+'</select>'
+      +swHtml('mounted',nozzle?tt('Ist gerade eingebaut','Currently installed'):tt('Liegt gerade im Drucker','Currently in the printer'),true);
+    if(!nozzle) h+=swHtml('replace_task',tt('Bisherigen Punkt „Druckplatte reinigen“ ersetzen','Replace existing “Clean build plate” task'),true);
+  }
+  var u=unit;
+  h+='<div class="mt-row2"><div><div class="mt-sec">'+tt('Reinigen alle','Clean every')+'</div>'+inpU('clean',cm?cm.clean_every:(nozzle?5:50),u,'')+'</div>'
+    +'<div><div class="mt-sec">'+tt('Lebensdauer','Lifetime')+'</div>'+inpU('life',cm?cm.life_h:'',u,tt('optional','optional'))+'</div></div>'
+    +'<div class="mt-hint">'+(nozzle?tt('In Kilo Filament. Abrasives Filament (CF, GF) verschleißt die Düse stärker und zählt deshalb mehr (bei gehärtet/Wolframkarbid nicht).','In kilograms of filament. Abrasive filament (CF, GF) wears the nozzle faster and counts more (not for hardened/tungsten carbide).')
+      :tt('Beides trägst du selbst ein, in Druckstunden. Die Lebensdauer ist optional; ist sie gesetzt, warnt das Wartungsbuch rechtzeitig vor dem Tausch.','Both are entered by you, in print hours. Lifetime is optional; if set, the log warns you before it is due.'))+'</div>'
+    +'<div class="mt-sec">'+tt('Preis','Price')+'</div><div style="max-width:11rem">'+inpU('price',cm?cm.price:'','€',tt('optional','optional'),'0.01')+'</div>';
+  if(!edit){
+    h+='<details'+'><summary>'+tt('Schon genutzt','Already used')+'</summary>'
+      +(nozzle?'<div class="mt-row3"><div><div class="mt-sec">'+tt('Stunden','Hours')+'</div>'+inpU('used_h','','h','0')+'</div>'
+        +'<div><div class="mt-sec">'+tt('Filament','Filament')+'</div>'+inpU('used_kg','','kg','0')+'</div>'
+        +'<div><div class="mt-sec">'+tt('Davon abrasiv','Of which abrasive')+'</div>'+inpU('used_abr','','kg','0')+'</div></div>'
+        :'<div class="mt-sec">'+tt('Schon gedruckt','Already printed')+'</div>'+inpU('used_h','','h','0'))
+      +'<div class="mt-hint">'+tt('Für gebrauchte Teile: bisherige Werte, falls du sie kennst.','For used parts: previous values, if you know them.')+'</div></details>';
+  }
+  fmodal(edit?(nozzle?tt('Düse bearbeiten','Edit nozzle'):tt('Druckplatte bearbeiten','Edit build plate')):(nozzle?tt('Neue Düse','New nozzle'):tt('Neue Druckplatte','New build plate')),h,
+    async function(ov){
+      var body={kind:kind,name:fv(ov,'name').trim(),life_h:num(fv(ov,'life')),clean_every:num(fv(ov,'clean')),price:num(fv(ov,'price'))};
+      if(nozzle){ var d=pickVal(ov,'diam','diam_o'); body.diameter=d?num(d):null; body.material=pickVal(ov,'mat','mat_o')||null; }
+      else { body.surface=pickVal(ov,'surf','surf_o')||null; }
+      try{
+        if(edit){ delete body.kind; await call('/components/'+cm.id,'PUT',body); }
+        else {
+          body.printer=fv(ov,'printer'); body.mounted=fv(ov,'mounted')?1:0; body.unit=u;
+          body.used_h=num(fv(ov,'used_h')); if(nozzle){ body.used_kg=num(fv(ov,'used_kg')); body.used_abr_kg=num(fv(ov,'used_abr')); }
+          if(!nozzle) body.replace_task=fv(ov,'replace_task')?1:0;
+          await call('/components','POST',body);
+        }
+        refresh();
+      }catch(e){ fail(e); return false; }
+    },{ok:edit?tt('Speichern','Save'):(nozzle?tt('Düse anlegen','Add nozzle'):tt('Druckplatte anlegen','Add build plate')),
+       onChange:function(ov){
+         var q=function(id,show){ var e=ov.querySelector(id); if(e) e.style.display=show?'':'none'; };
+         if(nozzle){ q('#dOther',fv(ov,'diam')==='other'); q('#mOther',fv(ov,'mat')==='other'); } else { q('#sOther',fv(ov,'surf')==='other'); }
+       },
+       extra:edit?{label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Komponente löschen?','Delete component?'))){ try{ await call('/components/'+cm.id,'PUT',{retired:1,mounted:0}); refresh(); }catch(e){fail(e);} } }}:null});
+}
+async function doClean(id){ try{ await call('/components/'+id+'/clean','POST'); refresh(); }catch(e){fail(e);} }
 async function doMount(c){ try{ await call('/components/'+c.id,'PUT',{mounted:c.mounted?0:1}); refresh(); }catch(e){fail(e);} }
 async function doSetup(p){ try{ await call('/printer/'+encodeURIComponent(p)+'/setup','POST'); refresh(); }catch(e){fail(e);} }
 function doSteckbrief(d){
@@ -890,17 +1018,60 @@ function doSteckbrief(d){
     {label:tt('Notizen','Notes'),type:'textarea',value:s.notes||''}
   ],async function(v){ try{ await call('/printer/'+encodeURIComponent(d.printer),'PUT',{model:v[0]||null,serial:v[1]||null,purchased:v[2]||null,warranty_until:v[3]||null,extra_hours:num(v[4]),g_per_h:v[5]?num(v[5]):null,notes:v[6]||null}); refresh(); }catch(e){fail(e);} });
 }
-function doPart(p){
-  p=p||{};
-  modal(p.id?tt('Ersatzteil bearbeiten','Edit part'):tt('Ersatzteil anlegen','Add spare part'),[
-    {label:tt('Bezeichnung','Name'),value:p.name||''},{label:tt('Bestand','Stock'),type:'number',value:p.qty==null?1:p.qty},
-    {label:tt('Mindestbestand','Minimum stock'),type:'number',value:p.min_qty==null?1:p.min_qty},{label:tt('Preis (€)','Price (€)'),type:'number',step:'0.01',value:p.price||''},
-    {label:tt('Drucker (optional)','Printer (optional)'),value:p.printer||''}
-  ],async function(v){ if(!v[0]) return; var b={name:v[0],qty:num(v[1]),min_qty:num(v[2]),price:num(v[3]),printer:v[4]||null};
-    try{ if(p.id) await call('/parts/'+p.id,'PUT',b); else await call('/parts','POST',b); refresh(); }catch(e){fail(e);} },
-    p.id?{label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Ersatzteil löschen?','Delete part?'))){ try{ await call('/parts/'+p.id,'DELETE'); refresh(); }catch(e){fail(e);} } }}:null);
+var SYMS=['◎','💧','🖌','📚','⚙','🔧','✂','🌬','📏','⚡'];
+function symOf(p){ var i=parseInt(p.symbol); return isNaN(i)?SYMS[0]:SYMS[i%SYMS.length]; }
+function qtyTxt(p){ return nf(p.qty,p.unit==='Stück'||!p.unit?0:0)+' '+(p.unit||'Stück'); }
+async function doPart(p){
+  p=p||{}; var edit=!!p.id; var PN=await printerNames();
+  var PRE=[
+    [tt('Düse 0,2','Nozzle 0.2'),{name:tt('Düse 0,2','Nozzle 0.2'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:0,category:'Ersatzteil'}],
+    [tt('Düse 0,4','Nozzle 0.4'),{name:tt('Düse 0,4','Nozzle 0.4'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:0,category:'Ersatzteil'}],
+    [tt('Düse 0,6','Nozzle 0.6'),{name:tt('Düse 0,6','Nozzle 0.6'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:0,category:'Ersatzteil'}],
+    [tt('Düse 0,8','Nozzle 0.8'),{name:tt('Düse 0,8','Nozzle 0.8'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:0,category:'Ersatzteil'}],
+    [tt('Druckplatte','Build plate'),{name:tt('Druckplatte','Build plate'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:3,category:'Ersatzteil'}],
+    [tt('Filament-Cutter-Klinge','Filament cutter blade'),{name:tt('Filament-Cutter-Klinge','Filament cutter blade'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:6,category:'Ersatzteil'}],
+    [tt('Aktivkohlefilter','Activated carbon filter'),{name:tt('Aktivkohlefilter','Activated carbon filter'),unit:'Stück',pack_type:'Stück',pack_size:1,symbol:7,category:'Zubehör'}],
+    [tt('Trockenmittel (AMS)','Desiccant (AMS)'),{name:tt('Trockenmittel (AMS)','Desiccant (AMS)'),unit:'Stück',pack_type:'Pack',pack_size:1,symbol:1,category:'Zubehör'}]
+  ];
+  var UN=[['Stück',tt('Stück','Piece')],['ml','ml'],['g','g']], PK=[['Stück',tt('Stück','Piece')],['Flasche',tt('Flasche','Bottle')],['Tube','Tube'],['Pack','Pack']];
+  var h='';
+  if(!edit) h+='<div class="mt-sec">'+tt('Standard-Artikel','Standard items')+'</div><div class="mt-chips" data-name="pre" data-fill="1">'
+      +PRE.map(function(x,i){return '<button type="button" class="mt-chip" data-v="'+i+'">'+esc(x[0])+'</button>';}).join('')+'</div>';
+  h+='<div class="mt-sec">'+tt('Bezeichnung','Name')+'</div><input name="name" value="'+esc(p.name||'')+'" placeholder="'+tt('z. B. Isopropanol 99%','e.g. isopropanol 99%')+'">'
+   +'<div class="mt-chips" style="margin-top:.6rem" data-name="cat">'
+   +[['Ersatzteil',tt('Ersatzteil','Spare part')],['Zubehör',tt('Zubehör','Accessory')]].map(function(o){return '<button type="button" class="mt-chip big'+((p.category||'Ersatzteil')===o[0]?' on':'')+'" data-v="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>'
+   +'<div class="mt-sec">'+tt('Für Drucker','For printer')+'</div>'+chips('prn',[['',tt('Alle Drucker','All printers')]].concat(PN.map(function(n){return [n,n];})),p.printer||'')
+   +'<div class="mt-sec">'+tt('Einheit','Unit')+'</div>'+chips('unit',UN,p.unit||'Stück')
+   +'<div class="mt-sec">'+tt('Packung','Package')+'</div>'+chips('pack',PK,p.pack_type||'Stück')
+   +'<div style="margin-top:.5rem">'+inpU('size',p.pack_size==null?1:p.pack_size,'<b id="uLbl"></b>','1')+'</div><div class="mt-hint" id="hPack"></div>'
+   +'<div class="mt-sec">'+tt('Preis je Packung','Price per package')+'</div>'+inpU('price',p.price||'','€','0,00','0.01')
+   +'<div class="mt-hint">'+tt('Optional. Trag ein, was du wirklich bezahlst.','Optional. Enter what you actually pay.')+'</div>'
+   +'<div class="mt-sec">'+tt('Bestand','Stock')+'</div>'+inpU('qty',p.qty==null?1:p.qty,'<b id="uLbl2"></b>','0')+'<div class="mt-hint" id="hStock"></div>'
+   +'<div class="mt-sec">'+tt('Symbol','Symbol')+'</div><div class="mt-chips" data-name="sym">'
+   +SYMS.map(function(s,i){return '<button type="button" class="mt-chip sym'+((parseInt(p.symbol)||0)===i?' on':'')+'" data-v="'+i+'">'+s+'</button>';}).join('')+'</div>';
+  fmodal(edit?tt('Artikel bearbeiten','Edit item'):tt('Artikel anlegen','Add item'),h,
+    async function(ov){
+      var name=fv(ov,'name').trim(); if(!name){ ov.querySelector('[name="name"]').focus(); return false; }
+      var unit=fv(ov,'unit'), size=num(fv(ov,'size'))||1;
+      var b={name:name,qty:num(fv(ov,'qty')),price:num(fv(ov,'price')),unit:unit,pack_type:fv(ov,'pack'),pack_size:size,symbol:fv(ov,'sym'),category:fv(ov,'cat'),printer:fv(ov,'prn')||null};
+      if(!edit) b.min_qty=unit==='Stück'?1:Math.round(size*0.2*10)/10;
+      try{ if(edit) await call('/parts/'+p.id,'PUT',b); else await call('/parts','POST',b); refresh(); }catch(e){ fail(e); return false; }
+    },{ok:edit?tt('Speichern','Save'):tt('Artikel anlegen','Add item'),
+      onFill:function(ov,i){
+        var x=PRE[parseInt(i)][1];
+        ov.querySelector('[name="name"]').value=x.name; ov.querySelector('[name="size"]').value=x.pack_size;
+        function setChip(n,v){ var g=ov.querySelector('[data-name="'+n+'"]'); [].forEach.call(g.querySelectorAll('.mt-chip'),function(c){ c.classList.toggle('on',c.getAttribute('data-v')===String(v)); }); }
+        setChip('unit',x.unit); setChip('pack',x.pack_type); setChip('cat',x.category); setChip('sym',x.symbol);
+      },
+      onChange:function(ov){
+        var unit=fv(ov,'unit'), pk=fv(ov,'pack'), size=num(fv(ov,'size'))||1;
+        [].forEach.call(ov.querySelectorAll('#uLbl,#uLbl2'),function(e){ e.textContent=unit; });
+        var h1=ov.querySelector('#hPack'); if(h1) h1.textContent='1 '+pk+' = '+nf(size,2)+' '+unit;
+        var h2=ov.querySelector('#hStock'); if(h2) h2.textContent='„+1 '+pk+'“ '+tt('im Lager bucht ','in stock adds ')+nf(size,2)+' '+unit+tt(' dazu.','.');
+      },
+      extra:edit?{label:tt('Löschen','Delete'),fn:async function(){ if(confirm(tt('Artikel löschen?','Delete item?'))){ try{ await call('/parts/'+p.id,'DELETE'); refresh(); }catch(e){fail(e);} } }}:null});
 }
-async function doQty(id,delta,cur){ try{ await call('/parts/'+id,'PUT',{qty:Math.max(0,cur+delta)}); refresh(); }catch(e){fail(e);} }
+async function doQty(id,delta,cur){ try{ await call('/parts/'+id,'PUT',{qty:Math.max(0,Math.round((cur+delta)*100)/100)}); refresh(); }catch(e){fail(e);} }
 
 /* ---------- Rendering ---------- */
 function tabs(){
@@ -910,7 +1081,7 @@ function tabs(){
 function itemRow(i,withPrinter){
   var meta=remTxt(i)+(withPrinter?' · '+esc(i.printer):'');
   return '<div class="mt-row" data-mt-p="'+esc(i.printer)+'"><span class="mt-dot '+i.status+'"></span><div class="t"><b>'+esc(ti(i.title))+(i.kind==='task'?srcBadge(i.source):'')+'</b><span class="'+(i.status==='ok'?'':i.status)+'">'+meta+'</span></div>'
-   +(i.kind==='task'?'<button class="mt-btn sm" data-mt-done="'+i.id+'" title="'+tt('Erledigt','Done')+'">✓</button>':'<button class="mt-btn sm" data-mt-repl="'+i.id+'" data-n="'+esc(i.title)+'" data-l="'+i.life_h+'">'+tt('Tauschen','Replace')+'</button>')+'</div>';
+   +(i.kind==='task'?'<button class="mt-btn sm" data-mt-done="'+i.id+'" title="'+tt('Erledigt','Done')+'">✓</button>':(i.reason==='clean'?'<button class="mt-btn sm" data-mt-clean="'+i.id+'">'+tt('Gereinigt','Cleaned')+'</button>':'<button class="mt-btn sm" data-mt-repl="'+i.id+'" data-n="'+esc(i.title)+'" data-l="'+i.life_h+'">'+tt('Tauschen','Replace')+'</button>'))+'</div>';
 }
 function renderOverview(o){
   var title=o.due>0?(o.due+' '+(o.due===1?tt('Wartung fällig','maintenance due'):tt('Wartungen fällig','maintenances due'))):(o.soon>0?tt('Bald fällig','Due soon'):tt('Alles im Plan','All on schedule'));
@@ -922,7 +1093,7 @@ function renderOverview(o){
     h+='<div class="mt-h"><span>'+tt('Als nächstes','Up next')+'</span><span>'+esc(n.printer)+'</span></div><div class="mt-card mt-next">'+ring(Math.max(0,Math.min(100,Math.round(100*Math.max(0,n.remaining_h)/(n.interval_h||n.life_h||1)))),84)
      +'<div style="flex:1;min-width:0"><h4>'+esc(ti(n.title))+srcBadge(n.source)+'</h4><div class="'+n.status+'" style="font-size:.86rem">'+remTxt(n)+'</div>'
      +(n.note?'<div style="color:var(--muted);font-size:.8rem;margin-top:.3rem">'+esc(n.note)+'</div>':'')
-     +'<div class="mt-actions">'+(n.kind==='task'?'<button class="mt-btn pri" data-mt-done="'+n.id+'">✓ '+tt('Erledigen','Mark done')+'</button><button class="mt-btn" data-mt-post="'+n.id+'">'+tt('Verschieben','Postpone')+'</button>':'<button class="mt-btn pri" data-mt-repl="'+n.id+'" data-n="'+esc(n.title)+'" data-l="'+n.life_h+'">'+tt('Tauschen','Replace')+'</button>')+'</div></div></div>';
+     +'<div class="mt-actions">'+(n.kind==='task'?'<button class="mt-btn pri" data-mt-done="'+n.id+'">✓ '+tt('Erledigen','Mark done')+'</button><button class="mt-btn" data-mt-post="'+n.id+'">'+tt('Verschieben','Postpone')+'</button>':(n.reason==='clean'?'<button class="mt-btn pri" data-mt-clean="'+n.id+'">'+tt('Gereinigt','Cleaned')+'</button>':'<button class="mt-btn pri" data-mt-repl="'+n.id+'" data-n="'+esc(n.title)+'" data-l="'+n.life_h+'">'+tt('Tauschen','Replace')+'</button>'))+'</div></div></div>';
     if(o.next.length>1){ h+='<div class="mt-h"><span>'+tt('Danach','Afterwards')+'</span><span>'+(o.next.length-1)+'</span></div>'+o.next.slice(1).map(function(i){return itemRow(i,true);}).join(''); }
   } else {
     h+='<div class="mt-card"><div class="mt-empty">'+tt('Nichts fällig. Bei Druckern ohne Wartungsplan: Drucker rechts öffnen und „Wartungsplan einrichten“ wählen.','Nothing due. For printers without a plan: open the printer on the right and choose “Set up maintenance plan”.')+'</div></div>';
@@ -961,13 +1132,24 @@ function renderDetail(d){
       return '<tr><td style="width:5.5rem;color:var(--muted)">'+dt+'</td><td>'+k+' '+esc(ttl)+(x.note?' <span style="color:var(--muted)">('+esc(x.note)+')</span>':'')+'</td><td style="text-align:right;color:var(--muted)">'+nf(x.at_h,0)+' h'+(x.cost>0?' · '+eur(x.cost):'')+'</td></tr>'; }).join('')
       :'<tr><td class="mt-empty">'+tt('Noch keine Einträge.','No entries yet.')+'</td></tr>')+'</tbody></table></div>';
   h+='</div><div class="mt-col">';
-  h+='<div class="mt-h"><span>'+tt('Komponenten','Components')+'</span><span><button class="mt-btn sm" data-mt-addcomp="1">+</button></span></div>';
+  h+='<div class="mt-h"><span>'+tt('Komponenten','Components')+'</span><span><button class="mt-btn sm" data-mt-addcomp="nozzle">+ '+tt('Düse','Nozzle')+'</button> <button class="mt-btn sm" data-mt-addcomp="plate">+ '+tt('Druckplatte','Plate')+'</button></span></div>';
   var comps=d.components;
+  function cbar(used,total,st){ var pct=Math.max(0,Math.min(100,Math.round(100*used/total))); return '<div class="mt-bar"><i style="width:'+pct+'%;background:'+(st==='ok'?'var(--ok)':(st==='soon'?'var(--warn)':'var(--danger)'))+'"></i></div>'; }
   h+=comps.length?comps.map(function(c){
-    var pct=Math.max(0,Math.min(100,Math.round(100*c.runtime_h/c.life_h)));
+    var u=c.unit||'h', dg=u==='kg'?2:0, sub=[];
+    if(c.diameter) sub.push(nf(c.diameter,2)+' mm'); if(c.material) sub.push(esc(c.material)); if(c.surface) sub.push(esc(c.surface));
+    var lines='<div style="color:var(--muted);font-size:.8rem">'+tt('Gelaufen: ','Used: ')+nf(c.runtime_h,dg)+(c.life_h>0?' / '+nf(c.life_h,dg):'')+' '+u+'</div>';
+    if(c.life_h>0) lines+=cbar(c.runtime_h,c.life_h,c.life_rem!=null&&c.life_rem<=0?'due':(c.reason==='life'?c.status:'ok'));
+    if(c.clean_every>0){
+      var cs=c.clean_rem!=null&&c.clean_rem<=0?'due':(c.reason==='clean'?c.status:'ok');
+      lines+='<div style="color:var(--muted);font-size:.8rem;margin-top:.4rem">'+tt('Reinigen in ','Clean in ')+nf(Math.max(0,c.clean_rem||0),dg)+' '+u+' ('+tt('alle ','every ')+nf(c.clean_every,dg)+' '+u+')</div>'+cbar(c.clean_every-(c.clean_rem||0),c.clean_every,cs);
+    }
     return '<div class="mt-card"><div style="display:flex;justify-content:space-between;gap:.5rem"><b>'+esc(ti(c.title))+'</b><span class="'+c.status+'" style="font-size:.78rem">'+(c.mounted?tt('montiert','mounted'):tt('nicht montiert','not mounted'))+'</span></div>'
-     +'<div style="color:var(--muted);font-size:.8rem">'+nf(c.runtime_h,0)+' / '+nf(c.life_h,0)+' h</div><div class="mt-bar"><i style="width:'+pct+'%;background:'+(c.status==='ok'?'var(--ok)':(c.status==='soon'?'var(--warn)':'var(--danger)'))+'"></i></div>'
-     +'<div class="mt-actions"><button class="mt-btn sm" data-mt-mount=\''+esc(JSON.stringify({id:c.id,mounted:c.mounted}))+'\'>'+(c.mounted?tt('Abnehmen','Unmount'):tt('Montieren','Mount'))+'</button><button class="mt-btn sm" data-mt-repl="'+c.id+'" data-n="'+esc(c.title)+'" data-l="'+c.life_h+'">'+tt('Tauschen','Replace')+'</button></div></div>';
+     +(sub.length?'<div style="color:var(--muted);font-size:.76rem">'+sub.join(' · ')+'</div>':'')+lines
+     +'<div class="mt-actions"><button class="mt-btn sm" data-mt-mount=\''+esc(JSON.stringify({id:c.id,mounted:c.mounted}))+'\'>'+(c.mounted?tt('Abnehmen','Unmount'):tt('Montieren','Mount'))+'</button>'
+     +(c.clean_every>0?'<button class="mt-btn sm" data-mt-clean="'+c.id+'">'+tt('Gereinigt','Cleaned')+'</button>':'')
+     +'<button class="mt-btn sm" data-mt-repl="'+c.id+'" data-n="'+esc(c.title)+'" data-l="'+c.life_h+'">'+tt('Tauschen','Replace')+'</button>'
+     +'<button class="mt-btn sm" data-mt-editcomp="'+c.id+'">'+tt('Bearbeiten','Edit')+'</button></div></div>';
   }).join(''):'<div class="mt-empty">'+tt('Keine Komponenten.','No components.')+'</div>';
   h+=matCard(s);
   var sb=d.steckbrief||{};
@@ -975,23 +1157,60 @@ function renderDetail(d){
    +'<dt>'+tt('Modell','Model')+'</dt><dd>'+esc(sb.model||'–')+'</dd><dt>'+tt('Seriennr.','Serial')+'</dt><dd>'+esc(sb.serial||'–')+'</dd>'
    +'<dt>'+tt('Gekauft','Purchased')+'</dt><dd>'+esc(sb.purchased||'–')+'</dd><dt>'+tt('Garantie bis','Warranty')+'</dt><dd>'+esc(sb.warranty_until||'–')+'</dd>'
    +'<dt>'+tt('Druckstunden','Print hours')+'</dt><dd>'+nf(s.hours,0)+' h'+(s.extra_hours?' ('+tt('inkl. ','incl. ')+nf(s.extra_hours,0)+' h '+tt('Zusatz','extra')+')':'')+'</dd>'
-   +'<dt>'+tt('Notizen','Notes')+'</dt><dd>'+esc(sb.notes||'–')+'</dd></dl></div>';
+   +'<dt>'+tt('Notizen','Notes')+'</dt><dd>'+esc(sb.notes||'–')+'</dd>'+(d.wiki?'<dt>Wiki</dt><dd><a href="'+esc(d.wiki)+'" target="_blank" rel="noopener" style="color:var(--accent,#4db8ff)">'+tt('Anycubic-Wartungsempfehlungen','Anycubic maintenance guide')+' ↗</a></dd>':'')+'</dl></div>';
   h+='</div></div>';
   root().innerHTML=h;
   root().__d=d;
 }
 function itemRowDetail(t){
-  return '<div class="mt-row" data-mt-edittask="'+t.id+'"><span class="mt-dot '+t.status+'"></span><div class="t"><b>'+esc(ti(t.title))+srcBadge(t.source)+'</b><span class="'+(t.status==='ok'?'':t.status)+'">'+remTxt(t)+'</span>'+(t.note?'<span> · '+esc(t.note)+'</span>':'')+'</div>'
+  return '<div class="mt-row" data-mt-edittask="'+t.id+'"><span class="mt-dot '+t.status+'"></span><div class="t"><b>'+esc(ti(t.title))+srcBadge(t.source)+'</b><span class="'+(t.status==='ok'?'':t.status)+'">'+remTxt(t)+'</span>'+(t.note?'<span> · '+esc(t.note)+'</span>':'')+(t.link?' <a href="'+esc(t.link)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent,#4db8ff)">Wiki ↗</a>':'')+'</div>'
    +'<button class="mt-btn sm" data-mt-done="'+t.id+'" title="'+tt('Erledigt','Done')+'">✓</button>'+(t.status!=='ok'?'<button class="mt-btn sm" data-mt-post="'+t.id+'">'+tt('Verschieben','Postpone')+'</button>':'')+'</div>';
 }
-function renderParts(list){
-  var h=tabs()+'<div class="mt-actions" style="margin:0 0 .8rem"><button class="mt-btn pri" data-mt-addpart="1">+ '+tt('Ersatzteil','Spare part')+'</button></div><div class="mt-card"><table class="mt-tbl"><thead><tr><th>'+tt('Artikel','Item')+'</th><th>'+tt('Drucker','Printer')+'</th><th>'+tt('Preis','Price')+'</th><th>'+tt('Bestand','Stock')+'</th><th></th></tr></thead><tbody>';
+async function doInstall(p){
+  var PN=await printerNames(); if(!PN.length){ alert(tt('Kein Drucker vorhanden.','No printer available.')); return; }
+  var def=(p.printer&&PN.indexOf(p.printer)>=0)?p.printer:PN[0];
+  var h='<div class="mt-sec">'+tt('In welchen Drucker?','Into which printer?')+'</div>'+chips('prn',PN.map(function(n){return [n,n];}),def)
+   +'<div class="mt-sec">'+tt('Menge','Quantity')+'</div>'+inpU('qty',1,esc(p.unit||'Stück'),'1')
+   +'<div class="mt-hint">'+tt('Wird vom Lager abgezogen und beim Drucker als eingebaut geführt.','Is taken from stock and tracked as installed in the printer.')+'</div>';
+  fmodal(tt('Einbauen: ','Install: ')+p.name,h,async function(ov){
+    try{ await call('/parts/'+p.id+'/install','POST',{printer:fv(ov,'prn'),qty:num(fv(ov,'qty'))||1}); refresh(); }catch(e){ fail(e); return false; }
+  },{ok:tt('Einbauen','Install')});
+}
+async function doUninstall(i){
+  var h='<div class="mt-sec">'+esc(i.name)+' · '+esc(i.printer)+'</div>'+chips('why',[['worn',tt('Lebensdauer erreicht','Worn out')],['defect',tt('Defekt','Defective')],['back',tt('Zurück ins Lager','Back to stock')]],'worn')
+   +'<div id="mtShop" style="margin-top:.7rem">'+swHtml('shop',tt('Auf die Einkaufsliste setzen','Add to shopping list'),true)+'</div>';
+  fmodal(tt('Ausbauen','Remove'),h,async function(ov){
+    var why=fv(ov,'why')||'worn', shop=!!ov.querySelector('[name="shop"]').checked;
+    try{ await call('/installed/'+i.id+'/remove?reason='+why+'&shop='+(shop&&why!=='back'),'POST',{}); refresh(); }catch(e){ fail(e); return false; }
+  },{ok:tt('Ausbauen','Remove'),onChange:function(ov){ var s=ov.querySelector('#mtShop'); if(s) s.style.display=(fv(ov,'why')==='back')?'none':''; }});
+}
+function renderParts(list,inst){
+  inst=inst||[];
+  var ps=MT.psort||'name', pf=MT.pfilter||'';
+  var pn=[]; list.forEach(function(p){ if(p.printer&&pn.indexOf(p.printer)<0) pn.push(p.printer); }); pn.sort();
+  var all=list.length;
+  if(pf==='__all') list=list.filter(function(p){return !p.printer;}); else if(pf) list=list.filter(function(p){return p.printer===pf;});
+  var cmp=function(a,b){ return String(a).localeCompare(String(b),lang()==='en'?'en':'de'); };
+  list=list.slice().sort(function(x,y){
+    if(ps==='printer'){ var r=cmp(x.printer||'￿',y.printer||'￿'); return r||cmp(x.name,y.name); }
+    if(ps==='cat'){ var r2=cmp(x.category||'',y.category||''); return r2||cmp(x.name,y.name); }
+    if(ps==='stock'){ return (x.qty/(x.min_qty||1))-(y.qty/(y.min_qty||1))||cmp(x.name,y.name); }
+    return cmp(x.name,y.name);
+  });
+  var bar='<div class="mt-sub" style="margin:0 0 .3rem">'+tt('Sortieren nach','Sort by')+'</div><div class="mt-chips" style="margin-bottom:.6rem">'
+    +[['name',tt('Artikel','Item')],['printer',tt('Drucker','Printer')],['cat',tt('Kategorie','Category')],['stock',tt('Bestand','Stock')]].map(function(o){return '<button type="button" class="mt-chip'+(ps===o[0]?' on':'')+'" data-mt-psort="'+o[0]+'">'+o[1]+'</button>';}).join('')+'</div>';
+  if(pn.length) bar+='<div class="mt-sub" style="margin:0 0 .3rem">'+tt('Drucker filtern','Filter by printer')+'</div><div class="mt-chips" style="margin-bottom:.8rem">'
+    +[['',tt('Alle','All')]].concat(pn.map(function(n){return [n,n];})).concat([['__all',tt('Für alle Drucker','For all printers')]]).map(function(o){return '<button type="button" class="mt-chip'+(pf===o[0]?' on':'')+'" data-mt-pfilter="'+esc(o[0])+'">'+esc(o[1])+'</button>';}).join('')+'</div>';
+  var h=tabs()+'<div class="mt-actions" style="margin:0 0 .8rem"><button class="mt-btn pri" data-mt-addpart="1">+ '+tt('Artikel','Item')+'</button></div>'+(all>1?bar:'')+'<div class="mt-card"><table class="mt-tbl"><thead><tr><th>'+tt('Artikel','Item')+'</th><th>'+tt('Preis je Packung','Price per package')+'</th><th>'+tt('Bestand','Stock')+'</th><th></th></tr></thead><tbody>';
   h+=list.length?list.map(function(p){
-    var empty=p.qty<=0, low=!empty&&p.qty<=p.min_qty;
-    return '<tr><td><b>'+esc(p.name)+'</b>'+(empty?' <span class="mt-badge due">'+tt('leer','empty')+'</span>':(low?' <span class="mt-badge soon">'+tt('knapp','low')+'</span>':''))+'</td><td>'+esc(p.printer||'–')+'</td><td>'+(p.price?eur(p.price):'–')+'</td>'
-     +'<td><button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,-1,p.qty])+'\'>−</button> <b>'+nf(p.qty,0)+'</b> <button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,1,p.qty])+'\'>+</button></td>'
+    var empty=p.qty<=0, low=!empty&&p.qty<=p.min_qty, u=p.unit||'Stück', pk=p.pack_type||'Stück', sz=p.pack_size||1;
+    return '<tr><td><span style="font-size:1.1rem;margin-right:.4rem">'+symOf(p)+'</span><b>'+esc(p.name)+'</b> <span class="mt-badge">'+(p.category==='Zubehör'?tt('Zubehör','Accessory'):tt('Ersatzteil','Spare part'))+'</span>'+(empty?' <span class="mt-badge due">'+tt('leer','empty')+'</span>':(low?' <span class="mt-badge soon">'+tt('knapp','low')+'</span>':''))
+     +'<div style="color:var(--muted);font-size:.76rem">'+(p.printer?esc(p.printer):tt('Alle Drucker','All printers'))+' · 1 '+esc(pk)+' = '+nf(sz,2)+' '+esc(u)+'</div>'
+     +(function(){ var mine=inst.filter(function(x){return x.part_id===p.id;}); return mine.length?'<div style="font-size:.78rem;margin-top:.2rem">'+mine.map(function(x){return '<span class="mt-badge">'+tt('Eingebaut','Installed')+': '+esc(x.printer)+' ×'+nf(x.qty,2)+' · '+nf(x.since_h,0)+' h</span> <a href="#" data-mt-uninst=\''+esc(JSON.stringify(x))+'\' style="color:var(--accent,#4db8ff)">'+tt('Ausbauen','Remove')+'</a>';}).join('<br>')+'</div>':''; })()
+     +'</td><td>'+(p.price?eur(p.price):'–')+'</td>'
+     +'<td><button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,-sz,p.qty])+'\' title="−1 '+esc(pk)+'">−</button> <b>'+nf(p.qty,2)+' '+esc(u)+'</b> <button class="mt-btn sm" data-mt-qty=\''+JSON.stringify([p.id,sz,p.qty])+'\' title="+1 '+esc(pk)+'">+1 '+esc(pk)+'</button> <button class="mt-btn sm" data-mt-inst=\''+esc(JSON.stringify(p))+'\'>'+tt('Einbauen','Install')+'</button></td>'
      +'<td style="text-align:right"><button class="mt-btn sm" data-mt-editpart=\''+esc(JSON.stringify(p))+'\'>'+tt('Bearbeiten','Edit')+'</button></td></tr>';
-  }).join(''):'<tr><td colspan="5" class="mt-empty">'+tt('Noch keine Ersatzteile angelegt.','No spare parts yet.')+'</td></tr>';
+  }).join(''):'<tr><td colspan="4" class="mt-empty">'+tt('Noch keine Artikel angelegt.','No items yet.')+'</td></tr>';
   root().innerHTML=h+'</tbody></table></div>';
 }
 function renderCosts(c){
@@ -1011,7 +1230,7 @@ async function refresh(){
   labels();
   try{
     if(MT.printer){ renderDetail(await call('/printer/'+encodeURIComponent(MT.printer))); }
-    else if(MT.tab==='parts'){ renderParts(await call('/parts')||[]); }
+    else if(MT.tab==='parts'){ var pl=await call('/parts')||[], il=[]; try{ il=await call('/installed')||[]; }catch(e){} renderParts(pl,il); }
     else if(MT.tab==='costs'){ renderCosts(await call('/costs')); }
     else { renderOverview(await call('/overview')); }
   }catch(e){ r.innerHTML='<p class="hint">'+tt('Fehler beim Laden: ','Load error: ')+esc(e.message||e)+'</p>'; }
@@ -1021,9 +1240,13 @@ window.loadMaintenance=refresh;
 /* ---------- Events ---------- */
 document.addEventListener('click',function(ev){
   var panel=document.getElementById('mt-panel'); if(!panel||!panel.contains(ev.target)) return;
-  var t=ev.target.closest('[data-mt-done],[data-mt-post],[data-mt-repl],[data-mt-mount],[data-mt-tab],[data-mt-back],[data-mt-setup],[data-mt-service],[data-mt-addtask],[data-mt-addcomp],[data-mt-edit],[data-mt-edittask],[data-mt-p],[data-mt-addpart],[data-mt-editpart],[data-mt-qty]');
+  var t=ev.target.closest('[data-mt-done],[data-mt-post],[data-mt-repl],[data-mt-mount],[data-mt-tab],[data-mt-back],[data-mt-setup],[data-mt-service],[data-mt-addtask],[data-mt-addcomp],[data-mt-edit],[data-mt-clean],[data-mt-editcomp],[data-mt-edittask],[data-mt-p],[data-mt-addpart],[data-mt-editpart],[data-mt-qty],[data-mt-psort],[data-mt-pfilter],[data-mt-inst],[data-mt-uninst]');
   if(!t) return;
   var a=function(n){ return t.getAttribute('data-mt-'+n); };
+  if(a('inst')!=null){ doInstall(JSON.parse(a('inst'))); return; }
+  if(a('uninst')!=null){ ev.preventDefault(); doUninstall(JSON.parse(a('uninst'))); return; }
+  if(a('psort')!=null){ MT.psort=a('psort'); refresh(); return; }
+  if(a('pfilter')!=null){ MT.pfilter=a('pfilter'); refresh(); return; }
   if(a('done')!=null){ ev.stopPropagation(); doDone(parseInt(a('done'))); return; }
   if(a('post')!=null){ ev.stopPropagation(); doPostpone(parseInt(a('post'))); return; }
   if(a('repl')!=null){ ev.stopPropagation(); doReplace(parseInt(a('repl')),t.getAttribute('data-n'),parseFloat(t.getAttribute('data-l'))); return; }
@@ -1036,7 +1259,9 @@ document.addEventListener('click',function(ev){
   if(a('setup')!=null){ doSetup(MT.printer); return; }
   if(a('service')!=null){ doService(MT.printer); return; }
   if(a('addtask')!=null){ doAddTask(MT.printer); return; }
-  if(a('addcomp')!=null){ doAddComp(MT.printer); return; }
+  if(a('addcomp')!=null){ doAddComp(a('addcomp')==='plate'?'plate':'nozzle',MT.printer); return; }
+  if(a('clean')!=null){ ev.stopPropagation(); doClean(parseInt(a('clean'))); return; }
+  if(a('editcomp')!=null){ var dd=root().__d; var cc=dd&&dd.components.filter(function(x){return String(x.id)===a('editcomp');})[0]; if(cc) doAddComp(cc.comp_kind,MT.printer,cc); return; }
   if(a('edit')!=null){ doSteckbrief(root().__d); return; }
   if(a('edittask')!=null){ var d=root().__d; var tk=d&&d.tasks.filter(function(x){return String(x.id)===a('edittask');})[0]; if(tk) doEditTask(tk); return; }
   if(a('p')!=null){ MT.printer=a('p'); refresh(); return; }
@@ -1060,7 +1285,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.7.0</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.8.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1305,6 +1530,8 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.8.0 &ndash; 25.10.2026</h4>
+      <p>Wartungsbuch: Wartungsplan mit Werten aus dem Anycubic-Wiki und Links zu den offiziellen Anleitungen je Aufgabe. Ersatzteile mit Druckerzuordnung, Sortierung und Filter. Teile lassen sich in einen Drucker einbauen und mit Grund (Lebensdauer erreicht, defekt, zur&uuml;ck ins Lager) wieder ausbauen, auf Wunsch mit Eintrag in die Einkaufsliste. D&uuml;sen 0,2/0,4/0,6/0,8 als Standard-Artikel.</p>
       <h4>v1.7.0 &ndash; 24.10.2026</h4>
       <p>Neu: Wartungsbuch. Wartungsplan je Drucker nach Druckstunden (aus gebuchten Drucken, bei fehlender Dauer aus dem Filamentverbrauch gesch&auml;tzt), Zustands-Score, Prognose, Komponenten D&uuml;se und Druckplatte mit eigener Laufzeit (abrasive Materialien z&auml;hlen dreifach), Ersatzteillager, Kosten, Gro&szlig;er Service und Service-Heft als PDF.</p>
       <h4>v1.6.1 &ndash; 24.10.2026</h4>
@@ -1613,6 +1840,8 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.8.0 &ndash; 2026-10-25</h4>
+      <p>Maintenance log: plan with values from the Anycubic wiki and links to the official guides per task. Spare parts with printer assignment, sorting and filter. Parts can be installed in a printer and removed again with a reason (worn out, defective, back to stock), optionally adding an entry to the shopping list. Nozzles 0.2/0.4/0.6/0.8 as standard items.</p>
       <h4>v1.7.0 &ndash; 2026-10-24</h4>
       <p>New: maintenance log. Per-printer maintenance plan based on print hours (from booked prints, estimated from filament use when no duration is known), condition score, forecast, nozzle and build plate with their own runtime (abrasive materials count triple), spare parts, costs, major service and a PDF service booklet.</p>
       <h4>v1.6.1 &ndash; 2026-10-24</h4>

@@ -114,6 +114,7 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.8.0 (2026-10-25)**: Wartungsbuch: Werte und Anleitungs-Links aus dem Anycubic-Wiki, Ersatzteile mit Druckerzuordnung/Sortierung/Filter, Einbauen und Ausbauen von Teilen (Lebensdauer erreicht, defekt, zurueck ins Lager) mit optionalem Einkaufslisten-Eintrag, Duesen 0,2/0,4/0,6/0,8 als Standard-Artikel.
 - **v1.7.0 (2026-10-24)**: Neu: Wartungsbuch - Wartungsplan je Drucker nach Druckstunden, Zustands-Score, Prognose, Duese und Druckplatte mit eigener Laufzeit (abrasive Materialien zaehlen dreifach), Ersatzteillager, Kosten, Grosser Service, Service-Heft als PDF.
 - **v1.6.1 (2026-10-24)**: Externe Spulen neben dem Drucker, Lagerpltze mit mitlaufender Druckerspalte neben den Dryboxen, volle Fensterbreite (responsiv).
 - **v1.6.0 (2026-10-24)**: Neue Druckeransicht: ACE oben mit Schlauch, Rollen in echten Farben, aktiver Slot leuchtet, großer Fortschritt mit Schicht x/y und Infozeilen.

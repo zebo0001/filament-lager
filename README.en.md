@@ -2,7 +2,7 @@
 
 *[Deutsch](README.md) | English*
 
-Self-hosted storage management system for 3D printing filament: [Spoolman](https://github.com/Donkie/Spoolman) for spool tracking, plus a custom storage-location module that assigns spools to physical locations (printer, AMS/ACE unit, dry box, ...) - including drag & drop, a shopping list for empty rolls, a visual storage overview, a built-in label designer (with QR/barcode export as PNG/PDF), and a scan-driven workflow for receiving new spools and assigning storage locations (hardware scanner or phone camera).
+Self-hosted storage management system for 3D printing filament: its own spool management (Spoolman-v1-compatible API, filament database from SpoolmanDB) for spool tracking, plus a custom storage-location module that assigns spools to physical locations (printer, AMS/ACE unit, dry box, ...) - including drag & drop, a shopping list for empty rolls, a visual storage overview, a built-in label designer (with QR/barcode export as PNG/PDF), and a scan-driven workflow for receiving new spools and assigning storage locations (hardware scanner or phone camera).
 
 Running in production for us for several weeks now. Feedback, bug reports and feature suggestions are very welcome - preferably as an issue in this repo.
 
@@ -24,7 +24,7 @@ docker compose up -d
 Then:
 
 - Dashboard: http://localhost:8093
-- Spoolman (full interface): http://localhost:8091
+
 
 Ports can be adjusted via a `.env` file (template: `.env.example`).
 
@@ -34,23 +34,23 @@ Ports can be adjusted via a `.env` file (template: `.env.example`).
 
 Core features:
 
-- Add spools in Spoolman (material, manufacturer, color, including multi-color), including an article-number field
+- Add spools in the storage (material, manufacturer, color, including multi-color), including an article-number field
 - Create devices via the Device Wizard (Dashboard -> Storage locations -> Device Wizard): printer (optionally with AMS/ACE feed unit) or dry box, with a live preview while you fill in the fields. All device types go through the same wizard now, no separate form needed
 - Nested devices: a printer with AMS/ACE can contain several feed boxes as independent child devices. The storage overview shows this nesting indented
 - Assign spools to locations via drag & drop or the assignment dialog ("On printer/AMS", "In dry box")
 - Click a spool name in the table -> a detail/edit modal opens (price, weights, lot number, comment, temperature overrides, filament-type fields) - editing after the fact is supported
-- Try "Spool empty" (archives the spool in Spoolman, frees the slot, adds an entry to the shopping list including the article number)
+- Try "Spool empty" (archives the spool in the storage, frees the slot, adds an entry to the shopping list including the article number)
 - Search and pagination in the spool directory
 - Reorder dashboard panels via the settings button
 
 Label designer (its own menu item in the dashboard):
 
-- Build custom label templates via drag & drop (text with Spoolman variables like name/material/manufacturer/color, spool icon, color swatch, barcode/QR code)
+- Build custom label templates via drag & drop (text with storage variables like name/material/manufacturer/color, spool icon, color swatch, barcode/QR code)
 - Templates are typed as either spool or filament (switch in the editor) - the QR code content automatically follows the selected type
 - Live QR preview directly in the design tab (no more placeholder - a real QR code while you edit)
 - Design and print tabs are separate: the print tab lets you select multiple spools/filaments for a label sheet (sheet-tile printing), including a live preview of the sheet
 - The QR code automatically embeds the app logo in its center
-- QR content follows the schema `WEB+SPOOLMAN:S-<spool_id>` or `WEB+SPOOLMAN:F-<filament_id>` (compatible with the scan format used by Spoolman's own label designer; scanning is case-insensitive)
+- QR content follows the schema `WEB+FILASTORAG:S-<spool_id>` or `WEB+FILASTORAG:F-<filament_id>` (old labels with `WEB+SPOOLMAN:` are still recognized when scanning, both prefixes are equivalent; scanning is case-insensitive)
 - Export templates as PNG or PDF (runs via headless Chromium in the `storage` service) and print them with a label printer or laser printer
 
 Scan-driven workflow (hardware barcode/QR scanner with HID keyboard emulation, no driver needed - or alternatively the phone camera, see the HTTPS note above):
@@ -77,8 +77,8 @@ New in v1.5.0 (printer page and history):
 Printer page, live data and reconciliation (v1.4.0):
 
 - ACE boxes are shown with colour, material and SKU; the slot currently fed is marked. The ACE port on the device is labelled 'ACE'.
-- Remaining amount per slot is shown in grams ('Printer approx. 350 g - Spoolman 690 g'). The printer value is an estimate (remaining percent times the starting weight of the assigned spool). A warning appears from 15 percent deviation.
-- Usage can be booked directly on the slot: enter grams and press 'Book' or 'Adjust' (books the difference down to the printer value, only offered when Spoolman shows more). Both ask for confirmation first. Better not to adjust while a print is running.
+- Remaining amount per slot is shown in grams ('Printer approx. 350 g - storage 690 g'). The printer value is an estimate (remaining percent times the starting weight of the assigned spool). A warning appears from 15 percent deviation.
+- Usage can be booked directly on the slot: enter grams and press 'Book' or 'Adjust' (books the difference down to the printer value, only offered when storage shows more). Both ask for confirmation first. Better not to adjust while a print is running.
 - The last known ACE box state is stored and shown as '(last state)' after a bridge restart until the printer reports again.
 - Running prints show up in the print history with the status 'Running' (no longer 'Failed').
 
@@ -93,18 +93,22 @@ Statistics (own menu entry): usage, prints and forecast; colour names can be mai
 
 ```
 docker-compose.yml
-dashboard/ Frontend (nginx, static SPA) + reverse proxy to Spoolman/Storage/Anycubic bridge
+dashboard/ Frontend (nginx, static SPA) + reverse proxy to Storage/Anycubic bridge
 storage/ Custom storage-location and label backend (FastAPI + SQLite + Playwright/Chromium for label export)
-bridge/ Anycubic cloud bridge (FastAPI): reads live print status/ACE slots via an Anycubic account and books consumption in Spoolman
+bridge/ Anycubic cloud bridge (FastAPI): reads live print status/ACE slots via an Anycubic account and books consumption in the storage service
 ```
 
-All four services (Spoolman, Storage, Dashboard, Anycubic bridge) are part of the same Compose project and start together with `docker compose up -d`. The Anycubic integration is entirely optional **to use** - ignore it if you have no Anycubic account, or configure it under Settings -> Anycubic Integration in the dashboard if you do.
+All three services (Storage, Dashboard, Anycubic bridge) are part of the same Compose project and start together with `docker compose up -d`. The Anycubic integration is entirely optional **to use** - ignore it if you have no Anycubic account, or configure it under Settings -> Anycubic Integration in the dashboard if you do.
 
-Spoolman itself runs as the official image (`ghcr.io/donkie/spoolman`); configuration/docs there: https://github.com/Donkie/Spoolman
+Spool/filament management is built into the `storage` service (Spoolman-v1-compatible API at `/spoolman-v1`, data in `/data/spoolman_compat.db`). A separate Spoolman container is no longer needed.
+
+**Thanks & sources:** The data model and API shape follow [Spoolman](https://github.com/Donkie/Spoolman) by Donkie (MIT). The manufacturer/filament database comes from [SpoolmanDB](https://github.com/Donkie/SpoolmanDB) (MIT) and is fetched and validated daily by the service itself. Many thanks to Donkie and all contributors!
+
+**Migrating from an existing Spoolman:** export your Spoolman data via its API (`/api/v1/{vendor,filament,spool,field,setting}` as JSON files in one directory) and import it inside the storage container with `python spoolman_compat.py import <directory>`. IDs stay unchanged so printed QR labels keep working.
 
 ## Data
 
-Both databases (Spoolman, storage locations/label templates) start out empty and live in named Docker volumes (`spoolman_data`, `storage_data`). To reset: `docker compose down -v`.
+The database (spools/filaments, storage locations, label templates) starts out empty and lives in the named Docker volume `storage_data`. To reset: `docker compose down -v`.
 
 ## Known limitations (as of this version)
 
@@ -114,6 +118,7 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.10.0 (2026-10-29)**: Spoolman is no longer required - spool/filament management is built into the storage service (Spoolman v1 API at `/spoolman-v1`, filament database fetched daily from SpoolmanDB). QR prefix is now `WEB+FILASTORAG:` (old prefix remains readable). Migration: see section Structure. Compose without a Spoolman container.
 - **v1.9.0 (2026-10-29)**: New: spool calculator (menu item). Weight and empty spool weight (manufacturer list, Spoolman values or custom entries) give the fill level; assign to a spool or create a new one. Spool number in tooltips.
 - **v1.8.1 (2026-10-29)**: Printer view: the active external spool (Kobra X) is highlighted in card and diagram; level ring shows the Spoolman value instead of the unreliable printer value.
 - **v1.8.0 (2026-10-25)**: Maintenance log: values and guide links from the Anycubic wiki, spare parts with printer assignment/sorting/filter, install and remove parts (worn out, defective, back to stock) with optional shopping-list entry, nozzles 0.2/0.4/0.6/0.8 as standard items.
@@ -138,7 +143,7 @@ docker compose down
 docker compose up -d --build
 ```
 
-The SQLite database in the `storage` service migrates its schema automatically on startup (missing columns/tables are added via `ALTER TABLE`) - no manual DB migration step is needed for existing installations. Your data in the `spoolman_data` and `storage_data` volumes is preserved across the update (only `docker compose down -v` would delete it - do NOT use that if you want to keep your data).
+The SQLite database in the `storage` service migrates its schema automatically on startup (missing columns/tables are added via `ALTER TABLE`) - no manual DB migration step is needed for existing installations. Your data in the `storage_data` volume is preserved across the update (only `docker compose down -v` would delete it - do NOT use that if you want to keep your data).
 
 ## Status
 

@@ -2,7 +2,7 @@
 
 *Deutsch | [English](README.en.md)*
 
-Eigenstaendiges Lagerverwaltungs-System fuer 3D-Druck-Filament: [Spoolman](https://github.com/Donkie/Spoolman) fuer die Spulenverwaltung, plus ein eigenes Lagerplatz-Modul, das Spulen konkreten physischen Plaetzen (Drucker, ACE-Einheit, Drybox, ...) zuordnet - inklusive Drag & Drop, Einkaufsliste bei leeren Rollen, visueller Lager-Ansicht, einem eigenen Label-Designer fuer Etiketten (mit QR/Barcode-Export als PNG/PDF) und einem scan-gestuetzten Workflow fuer Wareneingang und Lagerplatz-Zuordnung (Hardware-Scanner oder Handykamera).
+Eigenstaendiges Lagerverwaltungs-System fuer 3D-Druck-Filament: eigener Spulenverwaltung (API-kompatibel zu Spoolman v1, Filament-Datenbank von SpoolmanDB), plus ein eigenes Lagerplatz-Modul, das Spulen konkreten physischen Plaetzen (Drucker, ACE-Einheit, Drybox, ...) zuordnet - inklusive Drag & Drop, Einkaufsliste bei leeren Rollen, visueller Lager-Ansicht, einem eigenen Label-Designer fuer Etiketten (mit QR/Barcode-Export als PNG/PDF) und einem scan-gestuetzten Workflow fuer Wareneingang und Lagerplatz-Zuordnung (Hardware-Scanner oder Handykamera).
 
 Laeuft bei uns produktiv seit mehreren Wochen. Ruerckmeldungen, Bugs und Verbesserungsvorschlaege sind sehr willkommen - gerne als Issue in diesem Repo.
 
@@ -24,7 +24,7 @@ docker compose up -d
 Danach:
 
 - Dashboard: http://localhost:8093
-- Spoolman (vollstaendige Oberflaeche): http://localhost:8091
+
 
 Ports lassen sich ueber eine `.env`-Datei anpassen (Vorlage: `.env.example`).
 
@@ -34,23 +34,23 @@ Ports lassen sich ueber eine `.env`-Datei anpassen (Vorlage: `.env.example`).
 
 Grundfunktionen:
 
-- Spulen in Spoolman anlegen (Material, Hersteller, Farbe, auch mehrfarbig), inkl. Artikelnummer-Feld
+- Spulen im Lager anlegen (Material, Hersteller, Farbe, auch mehrfarbig), inkl. Artikelnummer-Feld
 - Geraete im Geraete-Wizard anlegen (Dashboard -> Lagerplaetze -> Geraete-Wizard): Drucker (optional mit ACE/AMS-Zufuehrung) oder Drybox - mit Live-Vorschau waehrend der Eingabe. Alle Geraetetypen laufen durch denselben Wizard, kein separates Formular mehr noetig
 - Verschachtelte Geraete: ein Drucker mit ACE/AMS kann mehrere Zufuehrungs-Boxen als eigene Untergeraete enthalten. Die Lagerplaetze-Uebersicht stellt das eingerueckt dar
 - Spulen per Drag & Drop bzw. Zuweisungsdialog ('Auf Drucker/ACE', 'In Drybox') auf Plaetze legen
 - Auf einen Spulennamen in der Tabelle klicken -> Detail-/Edit-Modal oeffnet sich (Preis, Gewichte, Lot-Nr., Kommentar, Temperatur-Overrides, Filament-Typ-Felder) - auch nachtraegliche Bearbeitung moeglich
-- 'Rolle leer' testen (archiviert die Spule in Spoolman, gibt den Platz frei, setzt einen Eintrag auf die Einkaufsliste inkl. Artikelnummer)
+- 'Rolle leer' testen (archiviert die Spule im Lager, gibt den Platz frei, setzt einen Eintrag auf die Einkaufsliste inkl. Artikelnummer)
 - Suche und Pagination im Spulenverzeichnis
 - Panel-Reihenfolge im Dashboard ueber den Einstellungen-Button anpassen
 
 Label-Designer (eigener Menuepunkt im Dashboard):
 
-- Eigene Etikettenvorlagen per Drag & Drop zusammenstellen (Text mit Spoolman-Variablen wie Name/Material/Hersteller/Farbe, Spulen-Icon, Farbfeld, Barcode/QR-Code)
+- Eigene Etikettenvorlagen per Drag & Drop zusammenstellen (Text mit Lager-Variablen wie Name/Material/Hersteller/Farbe, Spulen-Icon, Farbfeld, Barcode/QR-Code)
 - Vorlagen sind nach Spule oder Filament typisiert (Umschalter im Editor) - der QR-Code-Inhalt folgt dabei automatisch dem gewaehlten Typ
 - Live-QR-Vorschau direkt im Design-Tab (kein Platzhalter mehr, echter QR-Code waehrend der Bearbeitung)
 - Design- und Druck-Tab getrennt: im Druck-Tab lassen sich mehrere Spulen/Filamente fuer einen Etikettenbogen (Sheet-Tile-Druck) auswaehlen, inkl. Live-Vorschau des Bogens
 - QR-Code enthaelt automatisch das App-Logo im Zentrum eingebettet
-- QR-Inhalt folgt dem Schema `WEB+SPOOLMAN:S-<spool_id>` bzw. `WEB+SPOOLMAN:F-<filament_id>` (kompatibel zum Scan-Format des Spoolman-eigenen Label-Designers, Gross-/Kleinschreibung spielt beim Scannen keine Rolle)
+- QR-Inhalt folgt dem Schema `WEB+FILASTORAG:S-<spool_id>` bzw. `WEB+FILASTORAG:F-<filament_id>` (alte Etiketten mit `WEB+SPOOLMAN:` werden beim Scannen weiterhin erkannt, beide Praefixe sind gleichwertig, Gross-/Kleinschreibung spielt beim Scannen keine Rolle)
 - Vorlagen als PNG oder PDF exportieren (laeuft ueber Headless Chromium im `storage`-Dienst) und mit einem Etikettendrucker/Laserdrucker ausdrucken
 
 Scan-gestuetzter Workflow (Hardware-Barcode-/QR-Scanner mit HID-Tastatur-Emulation, kein Treiber noetig - oder wahlweise die Handykamera, siehe HTTPS-Hinweis oben):
@@ -77,8 +77,8 @@ Neu in v1.5.0 (Drucker-Seite und Historie):
 Drucker-Seite, Live-Daten und Abgleich (v1.4.0):
 
 - ACE-Boxen werden mit Farbe, Material und SKU angezeigt; der Slot, der gerade eingezogen ist, ist markiert. Der ACE-Anschluss am Geraet ist als 'ACE' beschriftet.
-- Die Restmenge je Slot wird in Gramm angezeigt ('Drucker ca. 350 g - Spoolman 690 g'). Der Druckerwert ist eine Schaetzung (Restmenge in Prozent mal Startgewicht der zugeordneten Spule). Ab 15 Prozent Abweichung erscheint ein Warnhinweis.
-- Direkt am Slot kann Verbrauch gebucht werden: Gramm eingeben und 'Buchen' oder 'Angleichen' (bucht die Differenz bis zum Druckerwert, nur wenn Spoolman mehr anzeigt). Beides fragt vorher nach. Waehrend ein Druck laeuft, besser nicht angleichen.
+- Die Restmenge je Slot wird in Gramm angezeigt ('Drucker ca. 350 g - Lager 690 g'). Der Druckerwert ist eine Schaetzung (Restmenge in Prozent mal Startgewicht der zugeordneten Spule). Ab 15 Prozent Abweichung erscheint ein Warnhinweis.
+- Direkt am Slot kann Verbrauch gebucht werden: Gramm eingeben und 'Buchen' oder 'Angleichen' (bucht die Differenz bis zum Druckerwert, nur wenn Lager mehr anzeigt). Beides fragt vorher nach. Waehrend ein Druck laeuft, besser nicht angleichen.
 - Der zuletzt bekannte Stand der ACE-Box wird gespeichert und nach einem Neustart der Bridge als '(letzter Stand)' angezeigt, bis der Drucker neu meldet.
 - Laufende Drucke erscheinen in der Druckhistorie mit dem Status 'Laeuft' (nicht mehr als 'Fehlgeschlagen').
 
@@ -93,18 +93,22 @@ Statistik (eigener Menuepunkt): Verbrauch, Drucke und Prognose; Farbnamen koenne
 
 ```
 docker-compose.yml
-dashboard/   Frontend (nginx, statische SPA) + Reverse-Proxy zu Spoolman/Storage/Anycubic-Bridge
+dashboard/   Frontend (nginx, statische SPA) + Reverse-Proxy zu Storage/Anycubic-Bridge
 storage/     Eigenes Lagerplatz- und Label-Backend (FastAPI + SQLite + Playwright/Chromium fuer Label-Export)
-bridge/      Anycubic-Cloud-Bridge (FastAPI): liest Live-Druckstatus/ACE-Slots per Anycubic-Account aus und bucht Verbrauch in Spoolman
+bridge/      Anycubic-Cloud-Bridge (FastAPI): liest Live-Druckstatus/ACE-Slots per Anycubic-Account aus und bucht Verbrauch im Storage-Dienst
 ```
 
-Alle vier Dienste (Spoolman, Storage, Dashboard, Anycubic-Bridge) sind Teil desselben Compose-Projekts und starten gemeinsam mit `docker compose up -d`. Die Anycubic-Integration ist komplett optional **zur Nutzung** - ohne Anycubic-Account einfach ignorieren, unter Einstellungen -> Anycubic-Integration im Dashboard konfigurieren, wer sie braucht.
+Alle drei Dienste (Storage, Dashboard, Anycubic-Bridge) sind Teil desselben Compose-Projekts und starten gemeinsam mit `docker compose up -d`. Die Anycubic-Integration ist komplett optional **zur Nutzung** - ohne Anycubic-Account einfach ignorieren, unter Einstellungen -> Anycubic-Integration im Dashboard konfigurieren, wer sie braucht.
 
-Spoolman selbst laeuft als offizielles Image (`ghcr.io/donkie/spoolman`), Konfiguration/Doku dort: https://github.com/Donkie/Spoolman
+Die Spulen-/Filament-Verwaltung ist im `storage`-Dienst integriert (Spoolman-v1-kompatible API unter `/spoolman-v1`, Daten in `/data/spoolman_compat.db`). Ein separater Spoolman-Container wird nicht mehr benoetigt.
+
+**Dank & Quellen:** Das Datenmodell und die API-Form orientieren sich an [Spoolman](https://github.com/Donkie/Spoolman) von Donkie (MIT). Die Hersteller-/Filament-Datenbank stammt von [SpoolmanDB](https://github.com/Donkie/SpoolmanDB) (MIT) und wird vom Dienst taeglich selbst abgerufen und validiert. Vielen Dank an Donkie und alle Mitwirkenden!
+
+**Umstieg von einem bestehenden Spoolman:** Spoolman-Daten per API exportieren (`/api/v1/{vendor,filament,spool,field,setting}` als JSON in ein Verzeichnis) und im Storage-Container mit `python spoolman_compat.py import <verzeichnis>` einlesen. IDs bleiben unveraendert, damit gedruckte QR-Etiketten weiter funktionieren.
 
 ## Daten
 
-Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liegen in benannten Docker-Volumes (`spoolman_data`, `storage_data`). Zum Zuruecksetzen: `docker compose down -v`.
+Die Datenbank (Spulen/Filamente, Lagerplaetze, Label-Vorlagen) startet leer und liegt im benannten Docker-Volume `storage_data`. Zum Zuruecksetzen: `docker compose down -v`.
 
 ## Bekannte Einschraenkungen (Stand dieser Version)
 
@@ -114,6 +118,7 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.10.0 (2026-10-29)**: Spoolman ist nicht mehr noetig - Spulen-/Filamentverwaltung ist in den Storage-Dienst eingebaut (Spoolman-v1-API unter `/spoolman-v1`, Filament-Datenbank taeglich von SpoolmanDB). QR-Praefix jetzt `WEB+FILASTORAG:` (alter Praefix bleibt lesbar). Umstieg: siehe Abschnitt Aufbau. Compose ohne Spoolman-Container.
 - **v1.9.0 (2026-10-29)**: Neu: Spulenrechner (Menuepunkt). Gewicht und Leerspulengewicht (Hersteller-Liste, Spoolman-Werte oder eigene Eintraege) ergeben den Fuellstand; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.
 - **v1.8.1 (2026-10-29)**: Druckeransicht: aktive externe Spule der Kobra X wird in Karte und Schaubild markiert, Fuellstandsring zeigt den Spoolman-Wert statt des unzuverlaessigen Druckerwerts.
 - **v1.8.0 (2026-10-25)**: Wartungsbuch: Werte und Anleitungs-Links aus dem Anycubic-Wiki, Ersatzteile mit Druckerzuordnung/Sortierung/Filter, Einbauen und Ausbauen von Teilen (Lebensdauer erreicht, defekt, zurueck ins Lager) mit optionalem Einkaufslisten-Eintrag, Duesen 0,2/0,4/0,6/0,8 als Standard-Artikel.

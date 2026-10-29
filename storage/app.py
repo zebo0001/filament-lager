@@ -1170,9 +1170,9 @@ def build_label_html(tpl, spool):
             field = el.get("field")
             v = ld_resolve_field(field, spool) if field else ""
             if field == "spool.id" and v not in ("", None):
-                data = "WEB+SPOOLMAN:S-" + js_str(v)
+                data = "WEB+FILASTORAG:S-" + js_str(v)
             elif field == "filament.id" and v not in ("", None):
-                data = "WEB+SPOOLMAN:F-" + js_str(v)
+                data = "WEB+FILASTORAG:F-" + js_str(v)
             else:
                 data = js_str(v) if v != "" else ""
             qr_b64 = make_qr_png_b64(data, color, (ld_get_colors(spool) if len(ld_get_colors(spool)) > 1 else None), ((spool or {}).get("filament") or {}).get("multi_color_direction"))
@@ -1915,3 +1915,8 @@ def prints_skip(b: PrintSkip):
 # ---- Wartungsbuch ----
 import maintenance
 maintenance.setup(app, db, SPOOLMAN_URL)
+
+
+# ---- Spoolman-Ersatz (eigene Spoolman-API v1, Praefix /spoolman-v1) ----
+import spoolman_compat
+spoolman_compat.setup(app)

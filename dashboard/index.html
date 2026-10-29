@@ -1287,7 +1287,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.9.0</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.10.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1529,10 +1529,12 @@ const I18N = {
       <p>Über den runden Scan-Button unten rechts öffnest du den Scan-Modus. Er funktioniert mit einem Hardware-Barcode-/QR-Scanner (HID-Tastatur-Emulation, kein Treiber nötig) oder über die Geräte-Kamera. Die Kamera funktioniert nur über HTTPS. Scannst du zuerst einen Filament-QR-Code, dann einen Lagerplatz-Code, wird die Spule automatisch angelegt und zugewiesen. Alternativ kannst du im "Neue Spule"-Dialog ein gedrucktes Filament-QR-Label scannen, um Material/Hersteller/Farbe automatisch vorzubefüllen.</p>
       <h4>Sprache &amp; weitere Hinweise</h4>
       <p>Oben links kannst du jederzeit zwischen Deutsch und Englisch wechseln - die Auswahl wird pro Gerät im Browser gespeichert. Rückmeldungen, Bugs und Verbesserungsvorschläge sind sehr willkommen.</p>
+      <h4>Dank &amp; Quellen</h4>
+      <p>Die Filament-Datenbank (Hersteller, Farben, Materialien) stammt aus dem Community-Projekt <a href="https://github.com/Donkie/SpoolmanDB" target="_blank" rel="noopener">SpoolmanDB</a> (MIT-Lizenz) von Donkie und den Mitwirkenden - vielen Dank! Dieses Projekt baut auf der Idee und den Daten von <a href="https://github.com/Donkie/Spoolman" target="_blank" rel="noopener">Spoolman</a> auf. Die Liste wird t&auml;glich automatisch aktualisiert; eigene Eintr&auml;ge bleiben davon unber&uuml;hrt. QR-Codes: neue Etiketten tragen das Pr&auml;fix <code>WEB+FILASTORAG:</code>, alte Etiketten (<code>WEB+SPOOLMAN:</code>) werden weiterhin erkannt.</p>
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.9.0 &ndash; 29.10.2026</h4>
+      <h4>v1.10.0 &ndash; 29.10.2026</h4>
       <p>Neu: Spulenrechner (Men&uuml;punkt). Gewicht und Leerspule eingeben, F&uuml;llstand wird berechnet; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.</p>
       <h4>v1.8.1 &ndash; 29.10.2026</h4>
       <p>Druckeransicht: aktive externe Spule (Kobra X) wird in Karte und Schaubild markiert, F&uuml;llstandsring zeigt den Spoolman-Wert statt des unzuverl&auml;ssigen Druckerwerts.</p>
@@ -1843,10 +1845,12 @@ const I18N = {
       <p>The round scan button in the bottom right opens scan mode. It works with a hardware barcode/QR scanner (HID keyboard emulation, no driver needed) or the device camera. The camera only works over HTTPS. Scan a filament QR code first, then a storage location code, and the spool is created and assigned automatically. Alternatively, in the "New spool" dialog you can scan a printed filament QR label to auto-fill material/manufacturer/color.</p>
       <h4>Language &amp; other notes</h4>
       <p>You can switch between German and English at any time in the top left - the choice is stored per device in the browser. Feedback, bug reports and suggestions are very welcome.</p>
+      <h4>Credits &amp; sources</h4>
+      <p>The filament database (manufacturers, colors, materials) comes from the community project <a href="https://github.com/Donkie/SpoolmanDB" target="_blank" rel="noopener">SpoolmanDB</a> (MIT license) by Donkie and contributors - thank you! This project builds on the idea and data of <a href="https://github.com/Donkie/Spoolman" target="_blank" rel="noopener">Spoolman</a>. The list is refreshed automatically every day; your own entries are left untouched. QR codes: new labels use the prefix <code>WEB+FILASTORAG:</code>, old labels (<code>WEB+SPOOLMAN:</code>) are still recognized.</p>
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.9.0 &ndash; 2026-10-29</h4>
+      <h4>v1.10.0 &ndash; 2026-10-29</h4>
       <p>New: spool calculator (menu item). Enter weight and empty spool, fill level is calculated; assign to a spool or create a new one. Spool number in tooltips.</p>
       <h4>v1.8.1 &ndash; 2026-10-29</h4>
       <p>Printer view: the active external spool (Kobra X) is now highlighted in the card and the diagram; the level ring shows the Spoolman value instead of the unreliable printer value.</p>
@@ -3661,7 +3665,7 @@ document.getElementById('ns-mode-toggle').addEventListener('click', () => {
 
 document.getElementById('ns-filament-search').addEventListener('input', e => {
   const raw = e.target.value;
-  const m = raw.match(/^WEB\+SPOOLMAN:F-(\d+)$/i);
+  const m = raw.match(/^WEB\+(?:SPOOLMAN|FILASTORAG):F-(\d+)$/i);
   if (m) {
     const filId = parseInt(m[1], 10);
     e.target.value = '';
@@ -5123,12 +5127,12 @@ function ldQrData(el, spool) {
   const field = el.field;
   if (field === "spool.id") {
     const v = spool && spool.id;
-    return (v || v === 0) ? ("WEB+SPOOLMAN:S-" + v) : null;
+    return (v || v === 0) ? ("WEB+FILASTORAG:S-" + v) : null;
   }
   if (field === "filament.id") {
     const f = (spool && spool.filament) || {};
     const v = f.id;
-    return (v || v === 0) ? ("WEB+SPOOLMAN:F-" + v) : null;
+    return (v || v === 0) ? ("WEB+FILASTORAG:F-" + v) : null;
   }
   return null;
 }
@@ -5330,7 +5334,7 @@ function ldWireProps(el) {
     if (code === scanState.lastCode) return;
     scanState.lastCode = code;
     let m;
-    if ((m = code.match(/^WEB\+SPOOLMAN:S-(\d+)$/i))) {
+    if ((m = code.match(/^WEB\+(?:SPOOLMAN|FILASTORAG):S-(\d+)$/i))) {
       const spoolId = parseInt(m[1], 10);
       const spool = allSpools.find(s => s.id === spoolId);
       if (!spool) { setHint(t('scan.spoolNotFoundPrefix') + spoolId + t('scan.spoolNotFoundSuffix'), 'err'); toast(t('scan.spoolNotFoundPrefix') + spoolId + t('scan.spoolNotFoundSuffix'), 'err'); return; }
@@ -5341,7 +5345,7 @@ function ldWireProps(el) {
       toast(t('scan.spoolDetected') + scanState.spoolLabel, 'ok');
       updateScanDisplay();
       tryAutoAssign();
-    } else if ((m = code.match(/^WEB\+SPOOLMAN:F-(\d+)$/i))) {
+    } else if ((m = code.match(/^WEB\+(?:SPOOLMAN|FILASTORAG):F-(\d+)$/i))) {
       handleFilamentScan(parseInt(m[1], 10));
     } else if ((m = code.match(/^WEB\+LAGER:SLOT-(\d+)$/i))) {
       const slotId = parseInt(m[1], 10);

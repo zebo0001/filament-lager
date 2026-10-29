@@ -114,6 +114,7 @@ Beide Datenbanken (Spoolman, Lagerplaetze/Label-Vorlagen) starten leer und liege
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.9.0 (2026-10-29)**: Neu: Spulenrechner (Menuepunkt). Gewicht und Leerspulengewicht (Hersteller-Liste, Spoolman-Werte oder eigene Eintraege) ergeben den Fuellstand; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.
 - **v1.8.1 (2026-10-29)**: Druckeransicht: aktive externe Spule der Kobra X wird in Karte und Schaubild markiert, Fuellstandsring zeigt den Spoolman-Wert statt des unzuverlaessigen Druckerwerts.
 - **v1.8.0 (2026-10-25)**: Wartungsbuch: Werte und Anleitungs-Links aus dem Anycubic-Wiki, Ersatzteile mit Druckerzuordnung/Sortierung/Filter, Einbauen und Ausbauen von Teilen (Lebensdauer erreicht, defekt, zurueck ins Lager) mit optionalem Einkaufslisten-Eintrag, Duesen 0,2/0,4/0,6/0,8 als Standard-Artikel.
 - **v1.7.0 (2026-10-24)**: Neu: Wartungsbuch - Wartungsplan je Drucker nach Druckstunden, Zustands-Score, Prognose, Duese und Druckplatte mit eigener Laufzeit (abrasive Materialien zaehlen dreifach), Ersatzteillager, Kosten, Grosser Service, Service-Heft als PDF.

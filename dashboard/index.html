@@ -511,6 +511,7 @@ main>.panel.active{display:block;}
     <button class="nav-item" data-nav-target="products" type="button"><span class="nav-icon">&#128506;</span><span class="nav-label">Gedruckte Produkte</span></button>
     <button class="nav-item" data-nav-target="statistics" type="button"><span class="nav-icon">&#128202;</span><span class="nav-label">Statistik</span></button>
     <button class="nav-item" data-nav-target="maintenance" type="button"><span class="nav-icon">&#128295;</span><span class="nav-label">Wartungsbuch</span></button>
+    <button class="nav-item" data-nav-target="calc" type="button"><span class="nav-icon">&#9878;</span><span class="nav-label" id="calc-nav-label">Spulenrechner</span></button>
     <button class="nav-item" data-nav-target="settings" type="button"><span class="nav-icon">&#9881;</span><span class="nav-label">Einstellungen</span></button>
   </nav>
 </aside>
@@ -757,6 +758,7 @@ main>.panel.active{display:block;}
 <div id="mt-root"><p class="hint">...</p></div>
 </div>
 
+  <div class="panel" data-panel="calc" id="sc-panel"></div>
 </main>
 <script id="mt-script">
 (function(){
@@ -1285,7 +1287,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
   <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.8.1</span></footer>
+<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.9.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1530,6 +1532,8 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.9.0 &ndash; 29.10.2026</h4>
+      <p>Neu: Spulenrechner (Men&uuml;punkt). Gewicht und Leerspule eingeben, F&uuml;llstand wird berechnet; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.</p>
       <h4>v1.8.1 &ndash; 29.10.2026</h4>
       <p>Druckeransicht: aktive externe Spule (Kobra X) wird in Karte und Schaubild markiert, F&uuml;llstandsring zeigt den Spoolman-Wert statt des unzuverl&auml;ssigen Druckerwerts.</p>
       <h4>v1.8.0 &ndash; 25.10.2026</h4>
@@ -1842,6 +1846,8 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.9.0 &ndash; 2026-10-29</h4>
+      <p>New: spool calculator (menu item). Enter weight and empty spool, fill level is calculated; assign to a spool or create a new one. Spool number in tooltips.</p>
       <h4>v1.8.1 &ndash; 2026-10-29</h4>
       <p>Printer view: the active external spool (Kobra X) is now highlighted in the card and the diagram; the level ring shows the Spoolman value instead of the unreliable printer value.</p>
       <h4>v1.8.0 &ndash; 2026-10-25</h4>
@@ -6413,6 +6419,128 @@ root.addEventListener('change',function(e){if(e.target.id==='pr-st'){st.state=e.
 async function open(){st.opened=true;try{await load();}catch(e){root.innerHTML='<p class="hint">'+E(e.message)+'</p>';}sync(1).then(load).catch(function(){});}
 setInterval(function(){if(root.offsetParent!==null){if(!st.opened)open();}else{st.opened=false;}},1200);
 })();
+</script>
+<script>
+(function(){
+  var CAT=[['Anycubic',127],['Bambu Lab (Kunststoff)',250],['Bambu Lab Refill (Pappe)',100],['Creality',165],['Elegoo',160],['eSUN',245],['Polymaker (Pappe)',140],['Prusament',200],['Sunlu',160],['Pappspule allgemein',140],['Kunststoffspule allgemein',200]];
+  var MATS=['PLA','PLA+','PETG','ABS','ASA','TPU','PA','PC','*'];
+  var res=null;
+  function $(id){return document.getElementById(id);}
+  function tr(de,en){return (typeof T==='function')?T(de,en):de;}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+  function fmt(n){return (Math.round(n*10)/10).toString().replace('.',',');}
+  function spools(){try{return (typeof allSpools!=='undefined'&&allSpools)||[];}catch(e){return [];}}
+  function custom(){try{return JSON.parse(localStorage.getItem('sc_custom')||'[]');}catch(e){return [];}}
+  function saveCustom(a){try{localStorage.setItem('sc_custom',JSON.stringify(a));}catch(e){}}
+  function lbl(s){try{return spoolLabel(s);}catch(e){return 'Spule';}}
+  function emptyOpts(){
+    var h='<option value="">'+tr('– Hersteller wählen –','– choose manufacturer –')+'</option>';
+    var cu=custom();
+    if(cu.length){h+='<optgroup label="'+tr('Eigene Einträge','Custom entries')+'">'+cu.map(function(c){return '<option value="'+c.w+'">'+esc(c.n)+' ('+c.w+' g)</option>';}).join('')+'</optgroup>';}
+    var seen={},sm=[];
+    spools().forEach(function(s){
+      var f=s.filament||{},v=f.vendor||{};
+      var w=s.spool_weight||f.spool_weight||v.spool_weight;
+      if(!w||w<=0)return;
+      var n=(v.name||tr('Unbekannt','Unknown'))+(f.material?' ('+f.material+')':'');
+      var k=n+'|'+w;
+      if(seen[k])return; seen[k]=1; sm.push({n:n,w:w});
+    });
+    if(sm.length){h+='<optgroup label="'+tr('Aus Spoolman','From Spoolman')+'">'+sm.map(function(c){return '<option value="'+c.w+'">'+esc(c.n)+' ('+c.w+' g)</option>';}).join('')+'</optgroup>';}
+    h+='<optgroup label="'+tr('Richtwerte (Schätzung)','Reference values (estimate)')+'">'+CAT.map(function(c){return '<option value="'+c[1]+'">'+esc(c[0])+' (≈'+c[1]+' g)</option>';}).join('')+'</optgroup>';
+    return h;
+  }
+  function targetOpts(){
+    var m=$('sc-mat').value;
+    var list=spools().filter(function(s){
+      if(s.archived)return false;
+      if(m==='*')return true;
+      var sm=((s.filament&&s.filament.material)||'').toUpperCase();
+      return sm===m.toUpperCase();
+    });
+    var h='<option value="">'+tr('– Spule wählen –','– choose spool –')+'</option>';
+    h+=list.map(function(s){return '<option value="'+s.id+'">#'+s.id+' '+esc(lbl(s))+' · '+fmt(s.remaining_weight||0)+' g</option>';}).join('');
+    return h;
+  }
+  function build(){
+    var p=$('sc-panel'); if(!p||p.getAttribute('data-built'))return;
+    p.setAttribute('data-built','1');
+    var mats=MATS.map(function(m){return '<option value="'+m+'">'+(m==='*'?tr('Alle / egal','Any'):m)+'</option>';}).join('');
+    p.innerHTML=
+      '<h2>'+tr('Spulenrechner','Spool calculator')+'</h2>'+
+      '<p class="hint">'+tr('Spule samt Filament wiegen, Leerspulengewicht wählen – der ungefähre Füllstand wird berechnet. Danach einer vorhandenen Spule zuordnen oder eine neue Spule anlegen.','Weigh the spool with filament, pick the empty spool weight – the approximate fill level is calculated. Then assign it to an existing spool or create a new one.')+'</p>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;max-width:760px;margin:12px 0;">'+
+        '<div><label for="sc-gross">'+tr('Gewicht Spule + Filament (g)','Weight spool + filament (g)')+'</label><input type="number" id="sc-gross" min="0" step="1" inputmode="decimal"></div>'+
+        '<div><label for="sc-mat">'+tr('Material','Material')+'</label><select id="sc-mat">'+mats+'</select></div>'+
+        '<div><label for="sc-vendor">'+tr('Leerspule nach Hersteller','Empty spool by manufacturer')+'</label><select id="sc-vendor"></select></div>'+
+        '<div><label for="sc-empty">'+tr('Leerspulengewicht (g)','Empty spool weight (g)')+'</label><input type="number" id="sc-empty" min="0" step="1" inputmode="decimal"></div>'+
+        '<div><label for="sc-nom">'+tr('Nenninhalt Filament (g)','Nominal filament (g)')+'</label><input type="number" id="sc-nom" min="1" step="1" value="1000" inputmode="decimal"></div>'+
+      '</div>'+
+      '<div id="sc-result" style="max-width:760px;margin:8px 0 16px;"></div>'+
+      '<div style="max-width:760px;display:grid;gap:10px;">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><select id="sc-target" style="min-width:260px;"></select><button type="button" class="btn" id="sc-assign">'+tr('Restgewicht der Spule zuordnen','Assign to spool')+'</button></div>'+
+        '<div><button type="button" class="btn secondary" id="sc-new">'+tr('Neue Spule damit anlegen','Create new spool with this')+'</button></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;"><input type="text" id="sc-cname" placeholder="'+tr('Name für eigenen Eintrag','Name for custom entry')+'" style="min-width:200px;"><button type="button" class="btn secondary" id="sc-save">'+tr('Leerspulengewicht merken','Save empty spool weight')+'</button></div>'+
+        '<div id="sc-msg" class="hint"></div>'+
+      '</div>';
+    refresh(); calc();
+    ['sc-gross','sc-empty','sc-nom'].forEach(function(id){$(id).addEventListener('input',calc);});
+    $('sc-mat').addEventListener('change',function(){$('sc-target').innerHTML=targetOpts();});
+    $('sc-vendor').addEventListener('change',function(){var v=$('sc-vendor').value;if(v!==''){$('sc-empty').value=v;calc();}});
+    $('sc-assign').addEventListener('click',assign);
+    $('sc-new').addEventListener('click',newSpool);
+    $('sc-save').addEventListener('click',saveEntry);
+  }
+  function refresh(){ if(!$('sc-vendor'))return; var cur=$('sc-vendor').value; $('sc-vendor').innerHTML=emptyOpts(); $('sc-vendor').value=cur; $('sc-target').innerHTML=targetOpts(); }
+  function msg(t){var m=$('sc-msg'); if(m)m.textContent=t||'';}
+  function calc(){
+    var g=parseFloat($('sc-gross').value),e=parseFloat($('sc-empty').value),n=parseFloat($('sc-nom').value)||1000;
+    var r=$('sc-result');
+    if(isNaN(g)||isNaN(e)){res=null;r.innerHTML='<span class="hint">'+tr('Gewicht und Leerspulengewicht eingeben.','Enter weight and empty spool weight.')+'</span>';return;}
+    var net=g-e,pct=net/n*100;
+    res={gross:g,empty:e,net:net,nom:n,pct:pct};
+    var bar=Math.max(0,Math.min(100,pct));
+    var warn=net<0?'<div style="color:#e5534b;">'+tr('Gesamtgewicht ist kleiner als die Leerspule – Werte prüfen.','Total weight is below the empty spool – check values.')+'</div>':(pct>105?'<div style="color:#d29922;">'+tr('Mehr als der Nenninhalt – Nenninhalt oder Leerspule prüfen.','More than nominal – check nominal or empty spool.')+'</div>':'');
+    r.innerHTML='<div style="font-size:22px;font-weight:600;">≈ '+fmt(Math.max(0,net))+' g &nbsp; ('+fmt(Math.max(0,pct))+' %)</div>'+
+      '<div style="height:10px;background:rgba(128,128,128,.25);border-radius:5px;margin:8px 0;overflow:hidden;"><div style="height:100%;width:'+bar+'%;background:#3fb950;"></div></div>'+warn;
+  }
+  async function assign(){
+    if(!res||res.net<0){msg(tr('Erst gültige Werte berechnen.','Calculate valid values first.'));return;}
+    var id=parseInt($('sc-target').value,10);
+    if(!id){msg(tr('Bitte eine Spule wählen.','Please choose a spool.'));return;}
+    var s=spools().filter(function(x){return x.id===id;})[0]||{};
+    var rem=Math.round(res.net*10)/10;
+    if(!confirm('#'+id+' '+lbl(s)+'\n'+tr('Restgewicht','Remaining')+': '+fmt(s.remaining_weight||0)+' g → '+fmt(rem)+' g ?'))return;
+    try{
+      try{ await api(SP+'/spool/'+id,{method:'PATCH',body:JSON.stringify({remaining_weight:rem,spool_weight:res.empty})}); }
+      catch(e1){ var ini=s.initial_weight||(s.filament&&s.filament.weight)||res.nom; await api(SP+'/spool/'+id,{method:'PATCH',body:JSON.stringify({used_weight:Math.max(0,ini-rem),spool_weight:res.empty})}); }
+      var l=await api(SP+'/spool'); var a=spools();
+      if(Array.isArray(l)&&Array.isArray(a)){a.length=0;Array.prototype.push.apply(a,l.filter(function(x){return !x.archived;}).length===l.length?l:l);}
+      refresh(); $('sc-target').value=String(id);
+      msg('#'+id+': '+tr('Restgewicht gesetzt auf','remaining set to')+' '+fmt(rem)+' g');
+    }catch(e){msg(tr('Fehler beim Speichern: ','Save failed: ')+(e&&e.message?e.message:e));}
+  }
+  async function newSpool(){
+    if(!res||res.net<0){msg(tr('Erst gültige Werte berechnen.','Calculate valid values first.'));return;}
+    if(typeof openNewSpoolDialog!=='function'){msg('openNewSpoolDialog fehlt');return;}
+    try{await openNewSpoolDialog();}catch(e){}
+    function set(id,v){var el=$(id);if(el){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));}}
+    set('ns-initial-weight',res.nom); set('ns-spool-weight',res.empty); set('ns-gross',res.gross);
+    setTimeout(function(){set('ns-initial-weight',res.nom); set('ns-spool-weight',res.empty); set('ns-gross',res.gross);},400);
+  }
+  function saveEntry(){
+    var e=parseFloat($('sc-empty').value),n=($('sc-cname').value||'').trim();
+    if(isNaN(e)||e<=0||!n){msg(tr('Name und Leerspulengewicht angeben.','Enter a name and empty spool weight.'));return;}
+    var c=custom().filter(function(x){return x.n!==n;}); c.push({n:n,w:e}); saveCustom(c);
+    refresh(); msg(tr('Gemerkt: ','Saved: ')+n+' ('+e+' g)');
+  }
+  var lab=document.getElementById('calc-nav-label'); if(lab)lab.textContent=tr('Spulenrechner','Spool calculator');
+  var nb=document.querySelector('[data-nav-target="calc"]');
+  if(nb)nb.addEventListener('click',function(){build();refresh();});
+  document.addEventListener('DOMContentLoaded',build);
+  build();
+})();
+
 </script>
 </body>
 </html>

@@ -114,6 +114,7 @@ Both databases (Spoolman, storage locations/label templates) start out empty and
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.8.1 (2026-10-29)**: Printer view: the active external spool (Kobra X) is highlighted in card and diagram; level ring shows the Spoolman value instead of the unreliable printer value.
 - **v1.8.0 (2026-10-25)**: Maintenance log: values and guide links from the Anycubic wiki, spare parts with printer assignment/sorting/filter, install and remove parts (worn out, defective, back to stock) with optional shopping-list entry, nozzles 0.2/0.4/0.6/0.8 as standard items.
 - **v1.7.0 (2026-10-24)**: New: maintenance log - per-printer plan based on print hours, condition score, forecast, nozzle and build plate with own runtime (abrasive materials count triple), spare parts, costs, major service, PDF service booklet.
 - **v1.6.1 (2026-10-24)**: External spools beside the printer, storage view with sticky printer column next to the dryboxes, full-width responsive layout.

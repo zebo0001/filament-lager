@@ -1657,6 +1657,7 @@ async def list_printers():
             "name": p.get("name"),
             "current_status": p.get("current_status"),
             "progress": p.get("progress"),
+            "active": p.get("active"),
             "boxes": boxes,
         })
 

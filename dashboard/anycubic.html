@@ -63,7 +63,7 @@
 <div class="wrap">
   <a class="back" href="/">&larr; zurück zum Lagersystem</a>
   <h1>Anycubic-Integration</h1>
-  <p class="sub">Optionale Cloud-Anbindung: Verbrauch auf dem Drucker wird automatisch auf die zugeordnete Spoolman-Spule gebucht. Standardmäßig deaktiviert &mdash; wer nicht mit der Anycubic-Cloud arbeiten möchte, lässt dies einfach aus.</p>
+  <p class="sub">Optionale Cloud-Anbindung: Verbrauch auf dem Drucker wird automatisch auf die zugeordnete Spule gebucht. Standardmäßig deaktiviert &mdash; wer nicht mit der Anycubic-Cloud arbeiten möchte, lässt dies einfach aus.</p>
 
   <div class="card">
     <h2>Status</h2>
@@ -112,7 +112,7 @@
 
   <div class="card">
     <h2>Spulen-Zuordnung</h2>
-    <p class="hint">Welche Spoolman-Spule steckt in welchem ACE-Slot? Ohne Zuordnung wird nichts gebucht.</p>
+    <p class="hint">Welche Spule steckt in welchem ACE-Slot? Ohne Zuordnung wird nichts gebucht.</p>
     <div id="mapping-area"><p class="hint">Lädt...</p></div>
   </div>
 </div>
@@ -200,7 +200,7 @@ async function loadMappings() {
     return;
   }
 
-  let html = '<table><thead><tr><th>Drucker</th><th>ACE-Box</th><th>Slot</th><th>Material/Farbe</th><th>Spoolman-Spule</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th>Drucker</th><th>ACE-Box</th><th>Slot</th><th>Material/Farbe</th><th>Spule</th></tr></thead><tbody>';
   let rowCount = 0;
   for (const p of printers) {
     for (const box of (p.boxes || [])) {

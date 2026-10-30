@@ -616,7 +616,14 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
     ]
 
     log.info("BOOKDBG printer=%s task=%s delta_mm=%.1f boxes=%s", printer_id, task_id, delta_mm, [(getattr(b, "box_id", None), getattr(b, "loaded_slot", None), len(getattr(b, "slots", None) or [])) for b in (boxes or [])])
-    def _resolve_slot_from_loaded():
+    def _resolve_slot_from_loaded(_paint=None, _mtype=None):
+        if _paint:
+            _cb, _ci, _cm, _how = _choose_active(boxes, _paint, _mtype)
+            log.info("BOOKDBG v64 choose paint=%s mat=%s -> box=%s slot=%s (%s)", _paint, _mtype, _cb, _ci, _how)
+            if _cb is not None:
+                return _cb, _ci, _cm
+            if _how in ("ambiguous", "conflict") and any(getattr(_bb, "box_id", None) == -1 for _bb in boxes):
+                return None, None, None
         for box in boxes:
             loaded_slot = getattr(box, "loaded_slot", -1)
             if loaded_slot is not None and loaded_slot >= 0:
@@ -697,6 +704,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                         continue
                 except Exception:
                     continue
+                if not _slot_consistent(_b, _i):
+                    continue
                 _cur = await db.execute("SELECT spool_id FROM mappings WHERE printer_id = ? AND box_id = ? AND slot_index = ?", (printer_id, _bid, _i))
                 _row = await _cur.fetchone()
                 _sid = _row["spool_id"] if _row is not None else None
@@ -743,6 +752,19 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             if isinstance(used, (int, float)) and used > 0:
                 materials.append(m)
 
+    try:
+        _lpk = list(latest_project.keys()) if isinstance(latest_project, dict) else [a for a in dir(latest_project) if not a.startswith("_")]
+        log.info("BOOKDBG v65 lp_keys=%s", [a for a in _lpk if any(t in str(a).lower() for t in ("paint", "box", "slot", "ams", "map", "supply", "material", "filament"))])
+        log.info("BOOKDBG v65 raw_materials=%s", str([{kk: vv for kk, vv in m.items() if "url" not in str(kk).lower() and "thumb" not in str(kk).lower()} for m in (raw_materials if latest_project is not None else []) if isinstance(m, dict)])[:900])
+    except Exception as _e65:
+        log.info("BOOKDBG v65 dbg-fail %s", _e65)
+    try:
+        if len(materials) == 1:
+            _PAINT_CACHE[printer_id] = (materials[0].get("paint_color"), materials[0].get("material_type"), time.time())
+        else:
+            _PAINT_CACHE.pop(printer_id, None)
+    except Exception:
+        pass
     all_ok = True
 
     if len(materials) > 1:
@@ -820,7 +842,7 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         # Nur ein Material mit Verbrauch > 0: paint_index ist hier immer 0 und
         # sagt nichts ueber den physischen Slot aus -- den tatsaechlich
         # eingezogenen Slot verwenden (wie bisher).
-        box_id, slot_index, material = _resolve_slot_from_loaded()
+        box_id, slot_index, material = _resolve_slot_from_loaded(materials[0].get("paint_color"), materials[0].get("material_type"))
         if box_id is not None and slot_index is not None:
             grams = grams_from_mm(delta_mm, material)
             if grams > 0:
@@ -1091,6 +1113,88 @@ _printers_cache: dict[str, Any] = {"data": None, "ts": 0.0}
 PRINTERS_CACHE_TTL_SECONDS = 60  # 507fix
 
 
+_PAINT_CACHE = {}
+
+
+def _slot_consistent(box, idx):
+    # v66: loaded_slot (falls gemeldet) darf der Farbwahl nicht widersprechen
+    ls = getattr(box, "loaded_slot", -1)
+    if ls is None or ls < 0:
+        return True
+    if ls == idx:
+        return True
+    return False
+
+
+def _choose_active(boxes, paint, mtype):
+    # v67: eigener Slot des Druckers (Box -1) hat Vorrang, loaded_slot ist 0-basiert;
+    # sonst Farbe+Material, nur wenn mit loaded_slot vereinbar.
+    cands = []
+    if paint:
+        for _b in boxes:
+            _bid = getattr(_b, "box_id", None)
+            if _bid is None:
+                continue
+            for _i, _s in enumerate(getattr(_b, "slots", None) or []):
+                try:
+                    _sc = list(_s.color)
+                    if not _sc or _sc[:3] == [0, 0, 0]:
+                        continue
+                    _d = sum((int(x) - int(y)) ** 2 for x, y in zip(list(paint)[:3], _sc[:3])) ** 0.5
+                    if _d > 60:
+                        continue
+                    _mt = str(getattr(_s, "material_type", "") or "").upper()
+                    if mtype and _mt and _mt[:3] != str(mtype).upper()[:3]:
+                        continue
+                    cands.append((_bid, _i, getattr(_s, "material_type", None), getattr(_s, "consumables_percent", None), _slot_consistent(_b, _i)))
+                except Exception:
+                    continue
+    try:
+        _ext = [b for b in boxes if getattr(b, "box_id", None) == -1]
+        if _ext:
+            _eb = _ext[0]
+            _els = getattr(_eb, "loaded_slot", -1)
+            if _els is not None and _els >= 0:
+                _es = (getattr(_eb, "slots", None) or [])[_els]
+                _epct = getattr(_es, "consumables_percent", None)
+                _eempty = (_epct == 0) or list(_es.color)[:3] == [0, 0, 0]
+                if not _eempty and not [c for c in cands if c[0] != -1]:
+                    return -1, _els, getattr(_es, "material_type", None), "loaded-ext"
+    except Exception:
+        pass
+    if len(cands) > 1:
+        _nz = [c for c in cands if c[3] != 0]
+        if _nz:
+            cands = _nz
+    if cands:
+        okc = [c for c in cands if c[4]]
+        if len(okc) == 1:
+            c = okc[0]
+            return c[0], c[1], c[2], ("colour" if len(cands) == 1 else "colour+loaded")
+        return None, None, None, ("conflict" if not okc else "ambiguous")
+    return None, None, None, "none"
+
+
+def _active_for(p):
+    # v64: aktive Quelle fuer die Anzeige (gleiche Logik wie die Buchung)
+    try:
+        pid = str(getattr(p, "id", ""))
+        ent = _PAINT_CACHE.get(pid)
+        if ent and time.time() - ent[2] > 900:
+            ent = None
+        if not ent:
+            ent = (None, None, 0)
+        if not getattr(p, "latest_project_print_in_progress", False):
+            return None
+        bx = [b for b in (getattr(p, "primary_multi_color_box", None), getattr(p, "secondary_multi_color_box", None)) if b is not None]
+        b, i, m, how = _choose_active(bx, ent[0], ent[1])
+        if b is None:
+            return {"box_id": None, "slot_index": None, "how": how}
+        return {"box_id": b, "slot_index": i, "how": how}
+    except Exception:
+        return None
+
+
 async def _serialize_printers(printers) -> dict[str, Any]:  # 507fix
         result = []
         for p in printers:
@@ -1140,6 +1244,7 @@ async def _serialize_printers(printers) -> dict[str, Any]:  # 507fix
                 "target_hotbed_temp": getattr(p, "latest_project_target_hotbed_temp", None),
             },
                 "boxes": boxes,
+                "active": _active_for(p),
             })
         try:
             _db = await get_db()

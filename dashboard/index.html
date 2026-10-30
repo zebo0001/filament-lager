@@ -535,7 +535,7 @@ main>.panel.active{display:block;}
 <div class="panel new-spool-panel" data-panel="new-spool" id="new-spool-panel">
 <h2 class="new-spool-panel-header" id="new-spool-panel-toggle"><span data-i18n="panel.newSpool">&#10024; Neue Spule</span><span class="chevron" id="new-spool-chevron">&#9662;</span></h2>
 <div class="new-spool-panel-body" id="new-spool-panel-body">
-<p class="hint" data-i18n="ns.hint">Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.</p>
+<p class="hint" data-i18n="ns.hint">Neue Spule anlegen oder die komplette Spulenliste anzeigen.</p>
 <div class="row-actions">
 <button class="btn" id="new-spool-btn" type="button" data-i18n="ns.newSpoolBtn">+ Neue Spule</button>
 </div>
@@ -544,7 +544,7 @@ main>.panel.active{display:block;}
 
 <div class="panel" data-panel="spools">
 <h2 data-i18n="panel.spools">Spulen</h2>
-    <p class="hint" data-i18n="sp.hint">Standort kommt direkt aus den Lagerplätzen &mdash; kein manuelles Eintippen mehr. Über &bdquo;Auf Drucker/ACE&ldquo; bzw. &bdquo;In Drybox&ldquo; wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert &bdquo;Rolle leer&ldquo; sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.</p>
+    <p class="hint" data-i18n="sp.hint">Standort kommt direkt aus den Lagerplätzen &mdash; kein manuelles Eintippen mehr. Über &bdquo;Auf Drucker/ACE&ldquo; bzw. &bdquo;In Drybox&ldquo; wird ein freier Platz zugewiesen (Lager-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert &bdquo;Rolle leer&ldquo; sie in Lager als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.</p>
     <div class="spool-toolbar">
       <input type="text" id="spool-search" class="spool-search-input" data-i18n-placeholder="sp.searchPlaceholder" placeholder="Suche: Name, Material, Hersteller, Farbe...">
     </div>
@@ -565,7 +565,7 @@ main>.panel.active{display:block;}
 
   <div class="panel" data-panel="units">
 <h2 data-i18n="panel.locations">Lagerplätze</h2>
-    <p class="hint" data-i18n="sl.hint">Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Spoolman zurückgeschrieben.</p>
+    <p class="hint" data-i18n="sl.hint">Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z.&nbsp;B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Lager zurückgeschrieben.</p>
     <button type="button" class="pw-fab" id="pwOpenBtn" title="Drucker oder Drybox anlegen">🖨Geräte-Wizard</button>
 
     <div id="device-content"><div class="empty">Lade&hellip;</div></div>
@@ -683,7 +683,7 @@ main>.panel.active{display:block;}
 
 <div class="panel" data-panel="printers">
   <h2>Drucker</h2>
-  <p class="hint">Alle Drucker auf einen Blick &ndash; live aus der Anycubic-Bridge und manuell angelegte Platzhalter-Drucker, inklusive ACE-Slot-Belegung und automatischem Spoolman-Abgleich.</p>
+  <p class="hint">Alle Drucker auf einen Blick &ndash; live aus der Anycubic-Bridge und manuell angelegte Platzhalter-Drucker, inklusive ACE-Slot-Belegung und automatischem Restmengen-Abgleich.</p>
 
   <div class="printer-add-form">
     <div><label for="pr-name">Name</label><input type="text" id="pr-name" placeholder="z.B. Ersatzdrucker"></div>
@@ -1436,6 +1436,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
+window._slotActive = function (p, box, si) { if (p && p.active) { return p.active.box_id === box.box_id && p.active.slot_index === si; } return box.loaded_slot === si; };
 const SP = '/api/spoolman';
 
 const I18N = {
@@ -1542,7 +1543,7 @@ const I18N = {
       <h4>v1.9.0 &ndash; 29.10.2026</h4>
       <p>Neu: Spulenrechner (Men&uuml;punkt). Gewicht und Leerspule eingeben, F&uuml;llstand wird berechnet; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.</p>
       <h4>v1.8.1 &ndash; 29.10.2026</h4>
-      <p>Druckeransicht: aktive externe Spule (Kobra X) wird in Karte und Schaubild markiert, F&uuml;llstandsring zeigt den Spoolman-Wert statt des unzuverl&auml;ssigen Druckerwerts.</p>
+      <p>Druckeransicht: aktive externe Spule (Kobra X) wird in Karte und Schaubild markiert, F&uuml;llstandsring zeigt den Lagerwert statt des unzuverl&auml;ssigen Druckerwerts.</p>
       <h4>v1.8.0 &ndash; 25.10.2026</h4>
       <p>Wartungsbuch: Wartungsplan mit Werten aus dem Anycubic-Wiki und Links zu den offiziellen Anleitungen je Aufgabe. Ersatzteile mit Druckerzuordnung, Sortierung und Filter. Teile lassen sich in einen Drucker einbauen und mit Grund (Lebensdauer erreicht, defekt, zur&uuml;ck ins Lager) wieder ausbauen, auf Wunsch mit Eintrag in die Einkaufsliste. D&uuml;sen 0,2/0,4/0,6/0,8 als Standard-Artikel.</p>
       <h4>v1.7.0 &ndash; 24.10.2026</h4>
@@ -1556,7 +1557,7 @@ const I18N = {
       <h4>v1.5.0 &ndash; 24.10.2026</h4>
       <p>Drucker-Seite: neue Slot-Karten mit Spulenring (Restmenge in Filamentfarbe) und Markierung des aktiven Slots. Historie: Zuordnen eines Drucks mit Aufteilung auf zwei Spulen, Abfrage beim Spulenwechsel w&auml;hrend eines Drucks. Bridge: Slot-Erkennung per Farbe und Material beim Kobra X, zuverl&auml;ssigere Verbrauchsbuchung.</p>
       <h4>v1.4.0 &ndash; 16.10.2026</h4>
-      <p>Gro&szlig;es Update: Seitenleisten-Navigation, Drucker-Seite mit Live-Daten aus der Anycubic-Bridge (ACE-Boxen mit Farbe/Material, Restmenge in Gramm mit Abweichungshinweis zu Spoolman, Buchen und Angleichen direkt am Slot), Druckhistorie &bdquo;Gedruckte Produkte&ldquo; mit Zuordnung zu Spulen, Statistik, Farbnamen sowie Drybox/Drucker-Assistent. Laufende Drucke werden nicht mehr als fehlgeschlagen angezeigt.</p>
+      <p>Gro&szlig;es Update: Seitenleisten-Navigation, Drucker-Seite mit Live-Daten aus der Anycubic-Bridge (ACE-Boxen mit Farbe/Material, Restmenge in Gramm mit Abweichungshinweis zu Lager, Buchen und Angleichen direkt am Slot), Druckhistorie &bdquo;Gedruckte Produkte&ldquo; mit Zuordnung zu Spulen, Statistik, Farbnamen sowie Drybox/Drucker-Assistent. Laufende Drucke werden nicht mehr als fehlgeschlagen angezeigt.</p>
       <h4>v1.3.0 – 28.09.2026</h4>
       <p>Versionsanzeige und dieser Änderungsverlauf im Footer eingeführt, damit du als Tester immer siehst, welcher Stand gerade läuft.</p>
       <h4>v1.2.0 – 28.09.2026</h4>
@@ -1586,7 +1587,7 @@ const I18N = {
   'sl.deleteDeviceTitle': 'Gerät löschen',
   'sl.aceFeedNotePrefix': 'Platz',
   'sl.aceFeedNoteSuffix': 'ist für die ACE-Zuführung reserviert und nicht belegbar — bleibt auch bei mehreren über einen Hub gekoppelten ACE-Einheiten an dieser einen Position.',
-  'sl.confirmDeleteDevice': 'Gerät wirklich löschen? Alle Platzzuordnungen gehen verloren (Spulen selbst bleiben in Spoolman erhalten).',
+  'sl.confirmDeleteDevice': 'Gerät wirklich löschen? Alle Platzzuordnungen gehen verloren (Spulen selbst bleiben erhalten).',
   'sl.slotFreed': 'Platz freigemacht',
   'sl.slotSaved': 'Platz gespeichert',
   'sl.slotReservedAce': 'Dieser Platz ist für die ACE-Zuführung reserviert',
@@ -1671,7 +1672,7 @@ const I18N = {
   'sp.next': 'Weiter',
   'sp.spoolsWord': 'Spulen',
   'sp.page': 'Seite',
-  'sp.confirmRetire': 'Spule wirklich als leer markieren? Sie wird in Spoolman archiviert, der Lagerplatz freigegeben und ein Eintrag auf die Einkaufsliste gesetzt.',
+  'sp.confirmRetire': 'Spule wirklich als leer markieren? Sie wird archiviert, der Lagerplatz freigegeben und ein Eintrag auf die Einkaufsliste gesetzt.',
   'sp.noSlotSelected': 'Kein Platz ausgewählt',
   'sp.slotAssigned': 'Platz zugewiesen',
   'sp.needGrams': 'Bitte Grammzahl angeben',
@@ -1692,10 +1693,10 @@ const I18N = {
     'ov.spools': 'Spulen',
     'ov.remainingTotal': 'Rest gesamt',
     'ov.almostEmpty': 'Fast leer (<100g)',
-    'ns.hint': 'Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.',
+    'ns.hint': 'Neue Spule anlegen oder die komplette Spulenliste anzeigen.',
     'ns.newSpoolBtn': '+ Neue Spule',
-    'sp.hint': 'Standort kommt direkt aus den Lagerplätzen – kein manuelles Eintippen mehr. Über „Auf Drucker/ACE" bzw. „In Drybox" wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert „Rolle leer" sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.',
-    'sl.hint': 'Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Spoolman zurückgeschrieben.',
+    'sp.hint': 'Standort kommt direkt aus den Lagerplätzen – kein manuelles Eintippen mehr. Über „Auf Drucker/ACE" bzw. „In Drybox" wird ein freier Platz zugewiesen (Lager-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert „Rolle leer" sie in Lager als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.',
+    'sl.hint': 'Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Lager zurückgeschrieben.',
     'shop.hint': 'Wird automatisch befüllt, wenn eine leere Spule über „Rolle leer" aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.',
     'sl.level': 'Ebene',
     'sl.slot': 'Platz',
@@ -1858,7 +1859,7 @@ const I18N = {
       <h4>v1.9.0 &ndash; 2026-10-29</h4>
       <p>New: spool calculator (menu item). Enter weight and empty spool, fill level is calculated; assign to a spool or create a new one. Spool number in tooltips.</p>
       <h4>v1.8.1 &ndash; 2026-10-29</h4>
-      <p>Printer view: the active external spool (Kobra X) is now highlighted in the card and the diagram; the level ring shows the Spoolman value instead of the unreliable printer value.</p>
+      <p>Printer view: the active external spool (Kobra X) is now highlighted in the card and the diagram; the level ring shows the stored value instead of the unreliable printer value.</p>
       <h4>v1.8.0 &ndash; 2026-10-25</h4>
       <p>Maintenance log: plan with values from the Anycubic wiki and links to the official guides per task. Spare parts with printer assignment, sorting and filter. Parts can be installed in a printer and removed again with a reason (worn out, defective, back to stock), optionally adding an entry to the shopping list. Nozzles 0.2/0.4/0.6/0.8 as standard items.</p>
       <h4>v1.7.0 &ndash; 2026-10-24</h4>
@@ -1872,7 +1873,7 @@ const I18N = {
       <h4>v1.5.0 &ndash; 2026-10-24</h4>
       <p>Printer page: new slot cards with a spool ring (remaining amount in filament colour) and a marker for the active slot. History: assign a print split across two spools, prompt on spool change during a print. Bridge: slot detection by colour and material on the Kobra X, more reliable consumption booking.</p>
       <h4>v1.4.0 &ndash; 2026-10-16</h4>
-      <p>Major update: sidebar navigation, printer page with live data from the Anycubic bridge (ACE boxes with colour/material, remaining amount in grams with a deviation hint versus Spoolman, book and adjust directly on the slot), print history &ldquo;Printed products&rdquo; with spool assignment, statistics, colour names and a dry box/printer wizard. Running prints are no longer shown as failed.</p>
+      <p>Major update: sidebar navigation, printer page with live data from the Anycubic bridge (ACE boxes with colour/material, remaining amount in grams with a deviation hint versus Lager, book and adjust directly on the slot), print history &ldquo;Printed products&rdquo; with spool assignment, statistics, colour names and a dry box/printer wizard. Running prints are no longer shown as failed.</p>
       <h4>v1.3.0 – 2026-09-28</h4>
       <p>Added a version indicator and this changelog in the footer, so testers can always see which build is currently running.</p>
       <h4>v1.2.0 – 2026-09-28</h4>
@@ -1902,7 +1903,7 @@ const I18N = {
   'sl.deleteDeviceTitle': 'Delete device',
   'sl.aceFeedNotePrefix': 'Slot',
   'sl.aceFeedNoteSuffix': 'is reserved for the ACE feed and cannot be assigned — stays reserved at this one position even with multiple ACE units coupled through a hub.',
-  'sl.confirmDeleteDevice': 'Really delete this device? All slot assignments will be lost (the spools themselves remain in Spoolman).',
+  'sl.confirmDeleteDevice': 'Really delete this device? All slot assignments will be lost (the spools themselves are kept).',
   'sl.slotFreed': 'Slot freed',
   'sl.slotSaved': 'Slot saved',
   'sl.slotReservedAce': 'This slot is reserved for the ACE feed',
@@ -1987,7 +1988,7 @@ const I18N = {
   'sp.next': 'Next',
   'sp.spoolsWord': 'spools',
   'sp.page': 'Page',
-  'sp.confirmRetire': 'Really mark this spool as empty? It will be archived in Spoolman, the storage slot freed, and an entry added to the shopping list.',
+  'sp.confirmRetire': 'Really mark this spool as empty? It will be archived, the storage slot freed, and an entry added to the shopping list.',
   'sp.noSlotSelected': 'No slot selected',
   'sp.slotAssigned': 'Slot assigned',
   'sp.needGrams': 'Please enter a gram amount',
@@ -2008,10 +2009,10 @@ const I18N = {
     'ov.spools': 'Spools',
     'ov.remainingTotal': 'Remaining total',
     'ov.almostEmpty': 'Almost empty (<100g)',
-    'ns.hint': 'Create a new spool or open the full Spoolman interface.',
+    'ns.hint': 'Create a new spool or open the full spool list.',
     'ns.newSpoolBtn': '+ New spool',
-    'sp.hint': 'Location comes directly from the storage locations — no more manual typing. Using "On printer/ACE" or "In drybox" assigns a free slot (the Spoolman location updates automatically). When a spool is empty, marking it "Spool empty" archives it in Spoolman, frees the slot and adds an entry to the shopping list.',
-    'sl.hint': 'Create devices (printer and drybox) using the Device Wizard below. Specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. The location is written back to Spoolman automatically.',
+    'sp.hint': 'Location comes directly from the storage locations — no more manual typing. Using "On printer/ACE" or "In drybox" assigns a free slot (the storage location updates automatically). When a spool is empty, marking it "Spool empty" archives it in Lager, frees the slot and adds an entry to the shopping list.',
+    'sl.hint': 'Create devices (printer and drybox) using the Device Wizard below. Specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. The location is written back to Lager automatically.',
     'shop.hint': 'Filled automatically when an empty spool is removed from the system via "Spool empty". Entries can also be added or removed manually here.',
     'sl.level': 'Level',
     'sl.slot': 'Slot',
@@ -2079,7 +2080,7 @@ function T(de, en) { return currentLang === 'en' ? en : de; }
 var I18N_SW = {
 'menue':'Menu','uebersicht':'Overview','lagerplaetze':'Storage locations','drucker':'Printers','spulen':'Spools','neue spule':'New spool','einkaufsliste':'Shopping list','label designer':'Label designer','gedruckte produkte':'Printed products','statistik':'Statistics','einstellungen':'Settings',
 'anycubic integration':'Anycubic integration','token slot zuordnung verbindungsstatus':'Token, slot mapping, connection status','reihenfolge anpassen':'Adjust order','abschnitte in der uebersicht neu sortieren':'Re-sort sections on the overview','info hilfe':'Info / Help','anleitung und versionsinfo':'Guide and version info',
-'alle drucker auf einen blick live aus der anycubic bridge und manuell angelegte platzhalter drucker inklusive ace slot belegung und automatischem spoolman abgleich':'All printers at a glance - live from the Anycubic bridge and manually created placeholder printers, including ACE slot assignment and automatic Spoolman reconciliation',
+'alle drucker auf einen blick live aus der anycubic bridge und manuell angelegte platzhalter drucker inklusive ace slot belegung und automatischem restmengen abgleich':'All printers at a glance - live from the Anycubic bridge and manually created placeholder printers, including ACE slot assignment and automatic stock reconciliation',
 'hersteller':'Manufacturer','modell':'Model','notiz':'Note','manueller drucker':'Manual printer','lade':'Loading','bereit':'Ready','stand jetzt':'As of: now','geraete wizard':'Device wizard','verknuepfter live drucker':'Linked live printer',
 'keine':'none','z b ersatzdrucker':'e.g. spare printer','z b pla':'e.g. PLA','z b schwarz':'e.g. black','z b prusament':'e.g. Prusament'
 };
@@ -2271,7 +2272,7 @@ function findSlotForSpool(spoolId) {
   return null;
 }
 
-// ---------- Spoolman ----------
+// ---------- Lager ----------
 let allSpools = [];
 let livePrintersForLink = [];
 let unitsByPrinterId = {};
@@ -2306,7 +2307,7 @@ function renderSpoolTable() {
   const q = spoolSearchText.trim().toLowerCase();
 
   if (!allSpools.length) {
-    el.innerHTML = '<div class="empty">Keine Spulen erfasst. Neue Spulen bitte in Spoolman anlegen.</div>';
+    el.innerHTML = '<div class="empty">Keine Spulen erfasst. Neue Spulen bitte mit "Neue Spule" anlegen.</div>';
     if (pagEl) pagEl.innerHTML = '';
     return;
   }
@@ -4251,9 +4252,9 @@ function renderPrinterCard(p) {
           const sg = Math.round(sp2.remaining_weight);
           const diff = sg - pg;
           const warn = Math.abs(diff) >= ini * 0.15;
-          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker ca. ','Printer approx. ') + pg + ' g &middot; Spoolman ' + sg + ' g' + (warn ? ' <span style="color:#e0a030">&#9888;</span>' : '') + '</div>';
+          pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker ca. ','Printer approx. ') + pg + ' g &middot; Lager ' + sg + ' g' + (warn ? ' <span style="color:#e0a030">&#9888;</span>' : '') + '</div>';
           pctHtml += '<div class="sc-act" style="display:flex;gap:4px;margin-top:4px;align-items:center;flex-wrap:wrap;"><input type="number" min="1" step="1" placeholder="g" style="width:56px;font-size:11px;" data-pbi="' + sp2.id + '"><button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="input">' + T('Buchen','Book') + '</button>';
-          if (diff >= 5) pctHtml += '<button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="diff" data-g="' + diff + '" title="' + T('Spoolman an Drucker angleichen','Adjust Spoolman to printer') + '">' + T('Angleichen','Adjust') + ' &minus;' + diff + ' g</button>';
+          if (diff >= 5) pctHtml += '<button type="button" class="btn secondary" style="font-size:11px;padding:1px 6px;" data-pb="' + sp2.id + '" data-mode="diff" data-g="' + diff + '" title="' + T('Lager an Drucker angleichen','Adjust Lager to printer') + '">' + T('Angleichen','Adjust') + ' &minus;' + diff + ' g</button>';
           pctHtml += '</div>';
         } else {
           pctHtml = '<div class="sc-pct" style="font-size:11px;opacity:.85;margin-top:2px;">' + T('Drucker: ','Printer: ') + pp + ' %</div>';
@@ -6535,7 +6536,7 @@ setInterval(function(){if(root.offsetParent!==null){if(!st.opened)open();}else{s
       var k=n+'|'+w;
       if(seen[k])return; seen[k]=1; sm.push({n:n,w:w});
     });
-    if(sm.length){h+='<optgroup label="'+tr('Aus Spoolman','From Spoolman')+'">'+sm.map(function(c){return '<option value="'+c.w+'">'+esc(c.n)+' ('+c.w+' g)</option>';}).join('')+'</optgroup>';}
+    if(sm.length){h+='<optgroup label="'+tr('Aus dem Lager','From storage')+'">'+sm.map(function(c){return '<option value="'+c.w+'">'+esc(c.n)+' ('+c.w+' g)</option>';}).join('')+'</optgroup>';}
     h+='<optgroup label="'+tr('Richtwerte (Schätzung)','Reference values (estimate)')+'">'+CAT.map(function(c){return '<option value="'+c[1]+'">'+esc(c[0])+' (≈'+c[1]+' g)</option>';}).join('')+'</optgroup>';
     return h;
   }

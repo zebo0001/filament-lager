@@ -140,10 +140,12 @@ Wer dieses Repo bereits laufen hat und auf den neuesten Stand aktualisieren moec
 ```bash
 git pull
 docker compose down
-docker compose up -d --build
+docker compose up -d --build --remove-orphans
 ```
 
-Die SQLite-Datenbank im `storage`-Dienst migriert ihr Schema beim Start automatisch (fehlende Spalten/Tabellen werden per `ALTER TABLE` ergaenzt) - ein manueller DB-Migrationsschritt ist fuer bestehende Installationen nicht noetig. Eure Daten in den Volumes `spoolman_data` und `storage_data` bleiben beim Update erhalten (nur `docker compose down -v` wuerde sie loeschen - das NICHT verwenden, wenn ihr eure Daten behalten wollt).
+**Achtung beim Umstieg von v1.9.x oder aelter:** Spoolman laeuft ab v1.10.0 nicht mehr als eigener Container. Exportiert eure Spoolman-Daten **vor** dem Update (siehe Abschnitt Aufbau, Umstieg von einem bestehenden Spoolman); das alte Volume `spoolman_data` bleibt unangetastet liegen, wird aber nicht automatisch uebernommen.
+
+Die SQLite-Datenbank im `storage`-Dienst migriert ihr Schema beim Start automatisch (fehlende Spalten/Tabellen werden per `ALTER TABLE` ergaenzt) - ein manueller DB-Migrationsschritt ist fuer bestehende Installationen nicht noetig. Eure Daten im Volume `storage_data` bleiben beim Update erhalten (nur `docker compose down -v` wuerde sie loeschen - das NICHT verwenden, wenn ihr eure Daten behalten wollt).
 
 ## Status
 

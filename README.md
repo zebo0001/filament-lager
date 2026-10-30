@@ -38,6 +38,7 @@ Grundfunktionen:
 - Geraete im Geraete-Wizard anlegen (Dashboard -> Lagerplaetze -> Geraete-Wizard): Drucker (optional mit ACE/AMS-Zufuehrung) oder Drybox - mit Live-Vorschau waehrend der Eingabe. Alle Geraetetypen laufen durch denselben Wizard, kein separates Formular mehr noetig
 - Verschachtelte Geraete: ein Drucker mit ACE/AMS kann mehrere Zufuehrungs-Boxen als eigene Untergeraete enthalten. Die Lagerplaetze-Uebersicht stellt das eingerueckt dar
 - Spulen per Drag & Drop bzw. Zuweisungsdialog ('Auf Drucker/ACE', 'In Drybox') auf Plaetze legen
+- Geraetekarten in der Lagerplatz-Ansicht per Griff unten rechts skalieren (rastet bei 33 / 50 / 100 % ein, Doppelklick = zuruecksetzen) und per Pfeil im Kartenkopf ein-/ausklappen. Kleinere Karten stehen nebeneinander. Die Einstellung wird serverseitig gespeichert und gilt auf allen Geraeten.
 - Auf einen Spulennamen in der Tabelle klicken -> Detail-/Edit-Modal oeffnet sich (Preis, Gewichte, Lot-Nr., Kommentar, Temperatur-Overrides, Filament-Typ-Felder) - auch nachtraegliche Bearbeitung moeglich
 - 'Rolle leer' testen (archiviert die Spule im Lager, gibt den Platz frei, setzt einen Eintrag auf die Einkaufsliste inkl. Artikelnummer)
 - Suche und Pagination im Spulenverzeichnis
@@ -123,6 +124,7 @@ Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsver
 - **v1.8.1 (2026-10-29)**: Druckeransicht: aktive externe Spule der Kobra X wird in Karte und Schaubild markiert, Fuellstandsring zeigt den Spoolman-Wert statt des unzuverlaessigen Druckerwerts.
 - **v1.8.0 (2026-10-25)**: Wartungsbuch: Werte und Anleitungs-Links aus dem Anycubic-Wiki, Ersatzteile mit Druckerzuordnung/Sortierung/Filter, Einbauen und Ausbauen von Teilen (Lebensdauer erreicht, defekt, zurueck ins Lager) mit optionalem Einkaufslisten-Eintrag, Duesen 0,2/0,4/0,6/0,8 als Standard-Artikel.
 - **v1.7.0 (2026-10-24)**: Neu: Wartungsbuch - Wartungsplan je Drucker nach Druckstunden, Zustands-Score, Prognose, Duese und Druckplatte mit eigener Laufzeit (abrasive Materialien zaehlen dreifach), Ersatzteillager, Kosten, Grosser Service, Service-Heft als PDF.
+- **v1.11.0 (2026-10-30)**: Geraetekarten (Drybox, Drucker) per Maus skalierbar und ein-/ausklappbar; mehrere Karten passen nebeneinander; Einstellung serverseitig (neue Endpunkte GET/PUT /ui-scale). Update: git pull, docker compose up -d --build.
 - **v1.6.1 (2026-10-24)**: Externe Spulen neben dem Drucker, Lagerpltze mit mitlaufender Druckerspalte neben den Dryboxen, volle Fensterbreite (responsiv).
 - **v1.6.0 (2026-10-24)**: Neue Druckeransicht: ACE oben mit Schlauch, Rollen in echten Farben, aktiver Slot leuchtet, großer Fortschritt mit Schicht x/y und Infozeilen.
 - **v1.5.1 (2026-10-24)**: ACE/AMS zuverlässig im Druckerrahmen, Knopf "ACE/AMS hinzufügen", Warnung bei ACE ohne Drucker.

@@ -3,6 +3,7 @@
 *[Deutsch](README.md) | English*
 
 Self-hosted storage management system for 3D printing filament: its own spool management (Spoolman-v1-compatible API, filament database from SpoolmanDB) for spool tracking, plus a custom storage-location module that assigns spools to physical locations (printer, AMS/ACE unit, dry box, ...) - including drag & drop, a shopping list for empty rolls, a visual storage overview, a built-in label designer (with QR/barcode export as PNG/PDF), and a scan-driven workflow for receiving new spools and assigning storage locations (hardware scanner or phone camera).
+- Resize device cards in the storage view with the handle at the bottom right (snaps at 33 / 50 / 100 %, double-click = reset) and collapse/expand them with the arrow in the card header. Smaller cards sit side by side. The setting is stored on the server and applies on all devices.
 
 Running in production for us for several weeks now. Feedback, bug reports and feature suggestions are very welcome - preferably as an issue in this repo.
 
@@ -123,6 +124,7 @@ The current version is shown in the dashboard footer (including the changelog).
 - **v1.8.1 (2026-10-29)**: Printer view: the active external spool (Kobra X) is highlighted in card and diagram; level ring shows the Spoolman value instead of the unreliable printer value.
 - **v1.8.0 (2026-10-25)**: Maintenance log: values and guide links from the Anycubic wiki, spare parts with printer assignment/sorting/filter, install and remove parts (worn out, defective, back to stock) with optional shopping-list entry, nozzles 0.2/0.4/0.6/0.8 as standard items.
 - **v1.7.0 (2026-10-24)**: New: maintenance log - per-printer plan based on print hours, condition score, forecast, nozzle and build plate with own runtime (abrasive materials count triple), spare parts, costs, major service, PDF service booklet.
+- **v1.11.0 (2026-10-30)**: Device cards (dryboxes, printers) can be resized with the mouse and collapsed; several cards fit side by side; setting stored on the server (new endpoints GET/PUT /ui-scale). Update: git pull, docker compose up -d --build.
 - **v1.6.1 (2026-10-24)**: External spools beside the printer, storage view with sticky printer column next to the dryboxes, full-width responsive layout.
 - **v1.6.0 (2026-10-24)**: New printer view: ACE on top with hose, spools in real colours, glowing active slot, big progress with layer x/y and info rows.
 - **v1.5.1 (2026-10-24)**: ACE/AMS reliably shown inside the printer frame, "add ACE/AMS" button, warning for an ACE without a printer.

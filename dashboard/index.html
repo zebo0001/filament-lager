@@ -533,7 +533,6 @@ main>.panel.active{display:block;}
 <p class="hint" data-i18n="ns.hint">Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.</p>
 <div class="row-actions">
 <button class="btn" id="new-spool-btn" type="button" data-i18n="ns.newSpoolBtn">+ Neue Spule</button>
-<button class="btn secondary" id="spoolman-open-btn" type="button" data-i18n="ns.spoolmanOpen">Spoolman öffnen &rarr;</button>
 </div>
 </div>
 </div>
@@ -1284,10 +1283,9 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 </div>
 
 <div class="links">
-  <a class="link-card spoolman" id="spoolman-link" href="#" target="_blank"><span class="dot"></span><span data-i18n="footer.spoolmanLink">Spoolman (vollständige Oberfläche)</span></a>
 </div>
 
-<footer>Spoolman &middot; <span class="version-badge" id="version-badge">v1.10.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.10.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1534,7 +1532,9 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.10.0 &ndash; 29.10.2026</h4>
+      <h4>v1.10.0 &ndash; 30.10.2026</h4>
+      <p>Spoolman wird nicht mehr ben&ouml;tigt: Spulen- und Filamentverwaltung sind jetzt eingebaut (Filament-Datenbank: SpoolmanDB). QR-Pr&auml;fix <code>WEB+FILASTORAG:</code> (alte Etiketten bleiben lesbar). Drybox: dickere Ebenen-Trenner, bis zu 60 Pl&auml;tze pro Ebene, Hinweis zu Reihen. Spoolman-Links entfernt.</p>
+      <h4>v1.9.0 &ndash; 29.10.2026</h4>
       <p>Neu: Spulenrechner (Men&uuml;punkt). Gewicht und Leerspule eingeben, F&uuml;llstand wird berechnet; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.</p>
       <h4>v1.8.1 &ndash; 29.10.2026</h4>
       <p>Druckeransicht: aktive externe Spule (Kobra X) wird in Karte und Schaubild markiert, F&uuml;llstandsring zeigt den Spoolman-Wert statt des unzuverl&auml;ssigen Druckerwerts.</p>
@@ -1607,7 +1607,6 @@ const I18N = {
     'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
     'assign.title': 'Platz zuweisen',
     'assign.clear': 'Freimachen',
-    'footer.spoolmanLink': 'Spoolman (vollständige Oberfläche)',
     'sd.title': 'Spule bearbeiten',
     'sd.thisSpool': 'Diese Spule',
     'sd.price': 'Preis (€)',
@@ -1690,7 +1689,6 @@ const I18N = {
     'ov.almostEmpty': 'Fast leer (<100g)',
     'ns.hint': 'Neue Spule anlegen oder die vollständige Spoolman-Oberfläche öffnen.',
     'ns.newSpoolBtn': '+ Neue Spule',
-    'ns.spoolmanOpen': 'Spoolman öffnen →',
     'sp.hint': 'Standort kommt direkt aus den Lagerplätzen – kein manuelles Eintippen mehr. Über „Auf Drucker/ACE" bzw. „In Drybox" wird ein freier Platz zugewiesen (Spoolman-Standort wird automatisch aktualisiert). Ist eine Rolle leer, markiert „Rolle leer" sie in Spoolman als archiviert, gibt den Platz frei und setzt einen Eintrag auf die Einkaufsliste.',
     'sl.hint': 'Geräte (Drucker und Drybox) über den Geräte-Wizard unten anlegen. Bei Bedarf mehrere Reihen pro Ebene angeben (z. B. 2, wenn Spulen hintereinander liegen) und Spulen auf konkrete Plätze legen. Der Standort wird automatisch zu Spoolman zurückgeschrieben.',
     'shop.hint': 'Wird automatisch befüllt, wenn eine leere Spule über „Rolle leer" aus dem System genommen wird. Einträge können hier auch manuell ergänzt oder entfernt werden.',
@@ -1850,7 +1848,9 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.10.0 &ndash; 2026-10-29</h4>
+      <h4>v1.10.0 &ndash; 2026-10-30</h4>
+      <p>Spoolman is no longer required: spool and filament management is now built in (filament database: SpoolmanDB). QR prefix <code>WEB+FILASTORAG:</code> (old labels remain readable). Drybox: thicker level dividers, up to 60 slots per level, hint about rows. Spoolman links removed.</p>
+      <h4>v1.9.0 &ndash; 2026-10-29</h4>
       <p>New: spool calculator (menu item). Enter weight and empty spool, fill level is calculated; assign to a spool or create a new one. Spool number in tooltips.</p>
       <h4>v1.8.1 &ndash; 2026-10-29</h4>
       <p>Printer view: the active external spool (Kobra X) is now highlighted in the card and the diagram; the level ring shows the Spoolman value instead of the unreliable printer value.</p>
@@ -1923,7 +1923,6 @@ const I18N = {
     'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
     'assign.title': 'Assign slot',
     'assign.clear': 'Clear',
-    'footer.spoolmanLink': 'Spoolman (full interface)',
     'sd.title': 'Edit spool',
     'sd.thisSpool': 'This spool',
     'sd.price': 'Price (€)',
@@ -2006,7 +2005,6 @@ const I18N = {
     'ov.almostEmpty': 'Almost empty (<100g)',
     'ns.hint': 'Create a new spool or open the full Spoolman interface.',
     'ns.newSpoolBtn': '+ New spool',
-    'ns.spoolmanOpen': 'Open Spoolman →',
     'sp.hint': 'Location comes directly from the storage locations — no more manual typing. Using "On printer/ACE" or "In drybox" assigns a free slot (the Spoolman location updates automatically). When a spool is empty, marking it "Spool empty" archives it in Spoolman, frees the slot and adds an entry to the shopping list.',
     'sl.hint': 'Create devices (printer and drybox) using the Device Wizard below. Specify multiple rows per level if needed (e.g. 2, if spools sit one behind another) and place spools on specific slots. The location is written back to Spoolman automatically.',
     'shop.hint': 'Filled automatically when an empty spool is removed from the system via "Spool empty". Entries can also be added or removed manually here.',
@@ -2482,7 +2480,7 @@ function svgFrame(unit, levelHeight) {
     parts.push(`<rect x="4" y="18" width="${w-8}" height="${h-22}" rx="6" fill="#2b2f36" stroke="#454b55" stroke-width="2"/>`);
     for (let lvl = 1; lvl < unit.levels; lvl++) {
       const y = 18 + lvl * levelHeight;
-      parts.push(`<line x1="8" y1="${y}" x2="${w-8}" y2="${y}" stroke="#454b55" stroke-width="2"/>`);
+      parts.push(`<rect x="6" y="${y-2}" width="${w-12}" height="5" rx="2" fill="#8a94a6"/><rect x="6" y="${y+3}" width="${w-12}" height="2" fill="#14171c" opacity=".55"/>`);
     }
   } else if (unit.type === 'ace') {
     parts.push(`<rect x="4" y="4" width="${w-8}" height="${h-8}" rx="20" fill="#3a3f4a" stroke="#4b5563" stroke-width="2"/>`);
@@ -4412,10 +4410,6 @@ document.getElementById("new-spool-panel-toggle").addEventListener("click", () =
 document.getElementById("new-spool-panel").classList.toggle("collapsed");
 });
 
-document.getElementById("spoolman-open-btn").addEventListener("click", () => {
-window.open(window.location.protocol + "//" + window.location.hostname + ":8091", "_blank");
-});
-
 // ---------- Label-Designer ----------
 let ldTemplates = [];
 let ldFields = [];
@@ -5614,7 +5608,6 @@ function ldWireProps(el) {
   </div>
 </div>
 
-<script>(function(){var l=document.getElementById("spoolman-link");if(l){l.href=window.location.protocol+"//"+window.location.hostname+":8091";}})();</script>
 
 <script>
 (function(){
@@ -5789,12 +5782,13 @@ function ldWireProps(el) {
             </div>
             <div class="pw-field">
               <label for="pwDryboxSlots">Plaetze/Ebene</label>
-              <input type="number" id="pwDryboxSlots" min="1" max="12" value="4">
+              <input type="number" id="pwDryboxSlots" min="1" max="60" value="4">
             </div>
             <div class="pw-field">
               <label for="pwDryboxRows">Reihen/Ebene</label>
               <input type="number" id="pwDryboxRows" min="1" max="4" value="1">
             </div>
+            <div style="grid-column:1/-1;font-size:.78rem;color:var(--muted,#94a3b8);margin-top:6px;line-height:1.4">Reihen = Spulen hintereinander. <b>Plaetze/Ebene</b> zaehlt alle Reihen zusammen (Beispiel: 22 Plaetze bei 2 Reihen = 2 x 11). Plaetze muessen durch Reihen teilbar sein.</div>
           </div>
         </div>
       </div>
@@ -5904,10 +5898,10 @@ function ldWireProps(el) {
     if (pwDeviceType === 'drybox'){
       var dbName = (document.getElementById('pwName').value || 'Drybox').trim();
       var dbLevels = Math.max(1, Math.min(10, parseInt(document.getElementById('pwDryboxLevels').value,10) || 1));
-      var dbSlots = Math.max(1, Math.min(12, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
+      var dbSlots = Math.max(1, Math.min(60, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
       var dbRows = Math.max(1, Math.min(4, parseInt(document.getElementById('pwDryboxRows').value,10) || 1));
       previewEl.innerHTML = '<div class="pw-pv-printer"><div class="pw-pv-name">' + escapeHtml(dbName) + '</div>' +
-        '<div style="font-size:.75rem;color:var(--muted,#94a3b8);margin-top:4px;">' + dbLevels + ' Ebene(n) &middot; ' + dbSlots + ' Plaetze/Ebene &middot; ' + dbRows + ' Reihe(n)/Ebene</div></div>';
+        '<div style="font-size:.75rem;color:var(--muted,#94a3b8);margin-top:4px;">' + dbLevels + ' Ebene(n) &middot; ' + dbSlots + ' Plaetze/Ebene &middot; ' + dbRows + ' Reihe(n)/Ebene' + (dbSlots % dbRows === 0 ? (dbRows > 1 ? ' (' + (dbSlots / dbRows) + ' pro Reihe)' : '') : '<br><span style="color:#f87171">Plaetze/Ebene muessen durch Reihen teilbar sein</span>') + '</div></div>';
       return;
     }
     var name = (document.getElementById('pwName').value || 'Drucker').trim();
@@ -5983,16 +5977,17 @@ function ldWireProps(el) {
 
     if (pwDeviceType === 'drybox'){
       var dbLevels2 = Math.max(1, Math.min(10, parseInt(document.getElementById('pwDryboxLevels').value,10) || 1));
-      var dbSlots2 = Math.max(1, Math.min(12, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
+      var dbSlots2 = Math.max(1, Math.min(60, parseInt(document.getElementById('pwDryboxSlots').value,10) || 4));
       var dbRows2 = Math.max(1, Math.min(4, parseInt(document.getElementById('pwDryboxRows').value,10) || 1));
-      var dryboxBody = { name: name, type: 'drybox', levels: dbLevels2, slots_per_level: dbSlots2, layout: 'row', rows_per_level: dbRows2 };
+      if (dbSlots2 % dbRows2 !== 0) { errEl.textContent = 'Plaetze/Ebene (' + dbSlots2 + ') muessen durch Reihen/Ebene (' + dbRows2 + ') teilbar sein.'; nextBtn.disabled = false; return; }
+    var dryboxBody = { name: name, type: 'drybox', levels: dbLevels2, slots_per_level: dbSlots2, layout: 'row', rows_per_level: dbRows2 };
       fetch('/api/storage/units', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dryboxBody)
       }).then(function(r){
-        if (!r.ok) throw new Error('Drybox konnte nicht angelegt werden (HTTP ' + r.status + ')');
+        if (!r.ok) return r.json().catch(function(){return {};}).then(function(j){ throw new Error('Drybox konnte nicht angelegt werden (HTTP ' + r.status + ')' + (j && j.detail ? ': ' + j.detail : '')); });
         return r.json();
       }).then(function(){
         closeWizard();

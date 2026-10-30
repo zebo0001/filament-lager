@@ -4041,7 +4041,7 @@ function buildPrinterIllustration(p, statusCls) {
   }
   var vbY = ace ? 0 : 66;
   var vbH = 290 - vbY;
-  var actIdx = ace ? ace.loaded_slot : -1;
+  var actIdx = ace ? ace.loaded_slot : -1; if (p.active) { actIdx = (ace && p.active.box_id === ace.box_id && p.active.slot_index != null) ? p.active.slot_index : -1; }
   var hoseCol = '#64748b';
   var aceSvg = '';
   if (ace) {
@@ -4094,7 +4094,7 @@ if (pu) {
     extList.push({ pos: sl2.position, hex: '#' + hx, title: ((fl.vendor && fl.vendor.name) ? fl.vendor.name + ' ' : '') + (fl.name || ('#' + sl2.spool_id)) });
   });
 }
-var extBox = null; for (var xb = 0; xb < boxes.length; xb++) { if (boxes[xb].box_id === -1) { extBox = boxes[xb]; break; } } var extActive = -1; if (building && extBox && extBox.loaded_slot > 0) { for (var xe = 0; xe < extList.length; xe++) { if (extList[xe].pos === extBox.loaded_slot - 1) extActive = xe; } } if (extActive < 0 && building && extList.length === 1 && (!ace || ace.loaded_slot < 0)) extActive = 0;
+var extBox = null; for (var xb = 0; xb < boxes.length; xb++) { if (boxes[xb].box_id === -1) { extBox = boxes[xb]; break; } } var extActive = -1; if (building && extBox && extBox.loaded_slot >= 0) { for (var xe = 0; xe < extList.length; xe++) { if (extList[xe].pos === extBox.loaded_slot) extActive = xe; } } if (extActive < 0 && building && extList.length === 1 && (!ace || ace.loaded_slot < 0)) extActive = 0; if (p.active) { extActive = -1; if (extBox && p.active.box_id === extBox.box_id) { for (var xa = 0; xa < extList.length; xa++) { if (extList[xa].pos === p.active.slot_index) extActive = xa; } } }
 extList.forEach(function (ex, k) {
   var left = (k % 2 === 0);
   var row = Math.floor(k / 2);
@@ -4261,8 +4261,8 @@ function renderPrinterCard(p) {
         }
       }
       const ssR = (linkedUnit && linkedUnit.slots) ? linkedUnit.slots.find(function (x) { return x.position === si; }) : null; const spR = (ssR && ssR.spool_id) ? allSpools.find(function (x) { return x.id === ssR.spool_id; }) : null; const iniR = spR ? (spR.initial_weight || (spR.filament && spR.filament.weight) || 0) : 0; const rpv = (spR && spR.remaining_weight != null && iniR > 0) ? Math.max(0, Math.min(100, Math.round(spR.remaining_weight / iniR * 100))) : (!empty && slot.consumables_percent != null) ? Math.max(0, Math.min(100, Math.round(slot.consumables_percent))) : null;
-const ldHtml = (((box.box_id === -1 ? box.loaded_slot - 1 : box.loaded_slot) === si)) ? ' <span title="' + T('aktuell eingezogen','currently feeding') + '">&#9654;</span>' : '';
-      return '<div class="slot-chip spooly' + (empty ? ' empty' : '') + (((box.box_id === -1 ? box.loaded_slot - 1 : box.loaded_slot) === si) ? ' active' : '') + '"' + (spR ? ' title="#' + spR.id + ' ' + prEsc(spoolLabel(spR)) + '"' : '') + '><div class="sp-ring" style="--c:' + hex + ';--p:' + (rpv != null ? rpv : (empty ? 0 : 100)) + '"><span>' + (rpv != null ? rpv + '%' : '') + '</span></div>' +
+const ldHtml = (_slotActive(p, box, si)) ? ' <span title="' + T('aktuell eingezogen','currently feeding') + '">&#9654;</span>' : '';
+      return '<div class="slot-chip spooly' + (empty ? ' empty' : '') + (_slotActive(p, box, si) ? ' active' : '') + '"' + (spR ? ' title="#' + spR.id + ' ' + prEsc(spoolLabel(spR)) + '"' : '') + '><div class="sp-ring" style="--c:' + hex + ';--p:' + (rpv != null ? rpv : (empty ? 0 : 100)) + '"><span>' + (rpv != null ? rpv + '%' : '') + '</span></div>' +
           '<div class="sp-body"><div class="sc-top">' + prEsc(label) + ldHtml + '</div>' +
           match + storInfo + pctHtml + '</div></div>';
       }).join('');

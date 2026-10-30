@@ -742,6 +742,54 @@ def set_layout(payload: LayoutUpdate):
 
 
 
+class UiScaleUpdate(BaseModel):
+    unit_id: int
+    width: Optional[int] = None
+    collapsed: Optional[bool] = None
+
+
+def _read_ui_scale(conn):
+    row = conn.execute("SELECT value FROM app_settings WHERE key=?", ("ui_scale",)).fetchone()
+    if row:
+        try:
+            d = json.loads(row["value"])
+            if isinstance(d, dict):
+                return d
+        except Exception:
+            pass
+    return {}
+
+
+@app.get("/ui-scale")
+def get_ui_scale():
+    with db() as conn:
+        return {"scale": _read_ui_scale(conn)}
+
+
+@app.put("/ui-scale")
+def set_ui_scale(p: UiScaleUpdate):
+    with db() as conn:
+        d = _read_ui_scale(conn)
+        e = d.get(str(p.unit_id), {})
+        if p.width is not None:
+            w = max(20, min(100, p.width))
+            if w >= 100:
+                e.pop("w", None)
+            else:
+                e["w"] = w
+        if p.collapsed is not None:
+            if p.collapsed:
+                e["c"] = 1
+            else:
+                e.pop("c", None)
+        if e:
+            d[str(p.unit_id)] = e
+        else:
+            d.pop(str(p.unit_id), None)
+        conn.execute("INSERT INTO app_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", ("ui_scale", json.dumps(d)))
+    return {"ok": True, "scale": d}
+
+
 # --- Label-Designer: gespeicherte Vorlagen (Vorder-/Rueckseite, Kartenmasse, Elemente) ---
 with db() as conn:
     conn.execute(

@@ -228,6 +228,11 @@
   .device-card-head .name { font-weight: 600; font-size: .95rem; }
   .device-card-head .type { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; }
   .device-illustration { width: 100%; height: auto; display: block; }
+  .dev-scale-wrap{position:relative;margin:0}
+  .dev-scale-handle{position:absolute;right:-6px;bottom:-6px;width:20px;height:20px;cursor:nwse-resize;touch-action:none;opacity:.6;background:linear-gradient(135deg,transparent 48%,#8a94a6 48%,#8a94a6 58%,transparent 58%,transparent 70%,#8a94a6 70%,#8a94a6 80%,transparent 80%)}
+  .dev-scale-handle:hover{opacity:1}
+  .device-card.dev-collapsed .dev-scale-wrap,.device-card.dev-collapsed .dev-settings-wrap{display:none}
+  .dev-collapse{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1rem;padding:0 .4rem;line-height:1}
   .slot-circle { cursor: pointer; transition: filter .1s; }
   .slot-circle:hover { filter: brightness(1.25); }
   .slot-reserved { cursor: help; }
@@ -1285,7 +1290,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.10.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.11.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1532,7 +1537,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.10.0 &ndash; 30.10.2026</h4>
+      <h4>v1.11.0 &ndash; 30.10.2026</h4><ul><li>Lagerpl&auml;tze: Ger&auml;te-Karten per Maus skalierbar (Griff unten rechts, Doppelklick = zur&uuml;cksetzen) und ein-/ausklappbar. Die Einstellung wird serverseitig gespeichert und gilt auf allen Ger&auml;ten.</li></ul><h4>v1.10.0 &ndash; 30.10.2026</h4>
       <p>Spoolman wird nicht mehr ben&ouml;tigt: Spulen- und Filamentverwaltung sind jetzt eingebaut (Filament-Datenbank: SpoolmanDB). QR-Pr&auml;fix <code>WEB+FILASTORAG:</code> (alte Etiketten bleiben lesbar). Drybox: dickere Ebenen-Trenner, bis zu 60 Pl&auml;tze pro Ebene, Hinweis zu Reihen. Spoolman-Links entfernt.</p>
       <h4>v1.9.0 &ndash; 29.10.2026</h4>
       <p>Neu: Spulenrechner (Men&uuml;punkt). Gewicht und Leerspule eingeben, F&uuml;llstand wird berechnet; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.</p>
@@ -1848,7 +1853,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.10.0 &ndash; 2026-10-30</h4>
+      <h4>v1.11.0 &ndash; 2026-10-30</h4><ul><li>Storage locations: device cards can be resized with the mouse (handle bottom right, double-click = reset) and collapsed. The setting is stored on the server and applies on all devices.</li></ul><h4>v1.10.0 &ndash; 2026-10-30</h4>
       <p>Spoolman is no longer required: spool and filament management is now built in (filament database: SpoolmanDB). QR prefix <code>WEB+FILASTORAG:</code> (old labels remain readable). Drybox: thicker level dividers, up to 60 slots per level, hint about rows. Spoolman links removed.</p>
       <h4>v1.9.0 &ndash; 2026-10-29</h4>
       <p>New: spool calculator (menu item). Enter weight and empty spool, fill level is calculated; assign to a spool or create a new one. Spool number in tooltips.</p>
@@ -2621,15 +2626,89 @@ function renderDeviceCard(unit) {
   const rowsTag = dims.rows > 1 ? ' &middot; ' + dims.rows + ' ' + t('sl.rowsPerLevel') : '';
   const aceTag = (unit.type === 'printer' && unit.ace_feed_slot) ? (' &middot; ' + t('sl.aceAtSlot') + ' ' + unit.ace_feed_slot) : '';
 
-  return '<div class="device-card" data-unit-id="' + unit.id + '">' +
+  return '<div class="device-card' + (uiScaleOf(unit.id).c ? ' dev-collapsed' : '') + '" data-unit-id="' + unit.id + '">' +
     '<div class="device-card-head">' +
       '<div><div class="name">' + unit.name + ' <a class="unitLabelsPrintBtn" href="/api/storage/units/' + unit.id + '/labels-print" target="_blank" title="Slot-Labels drucken" style="font-size:12px;font-weight:normal;text-decoration:none;">\uD83D\uDDA8\uFE0F</a>' + '<\/div><div class="type">' + unit.type + ' &middot; ' + occupied + '/' + unit.slots.length + ' ' + t('sl.occupied') + rowsTag + aceTag + '</div></div>' +
-      '<button class="btn secondary danger dev-delete" data-unit-id="' + unit.id + '" title="' + t('sl.deleteDeviceTitle') + '">&times;</button>' +
+      '<span style="display:flex;gap:.25rem;align-items:center"><button class="dev-collapse" data-unit-id="' + unit.id + '" title="' + T('Ein-/ausklappen','Collapse/expand') + '">' + (uiScaleOf(unit.id).c ? '&#9656;' : '&#9662;') + '</button>' + '<button class="btn secondary danger dev-delete" data-unit-id="' + unit.id + '" title="' + t('sl.deleteDeviceTitle') + '">&times;</button></span>' +
     '</div>' +
-    svg +
+    wrapDeviceSvg(unit, svg) +
     '<details class="dev-settings-wrap"><summary>' + T('Einstellungen','Settings') + '</summary>' + renderDeviceSettings(unit) + '</details>' +
   '</div>';
 }
+
+var UI_SCALE = {};
+function uiScaleOf(id) { return UI_SCALE[String(id)] || {}; }
+function wrapDeviceSvg(unit, svg) {
+  var w = uiScaleOf(unit.id).w;
+  var st = (w && w < 100) ? ' style="width:' + w + '%"' : '';
+  return '<div class="dev-scale-wrap" data-unit-id="' + unit.id + '"' + st + '>' + svg +
+    '<div class="dev-scale-handle" data-unit-id="' + unit.id + '" title="' + T('Ziehen = Groesse aendern, Doppelklick = zuruecksetzen', 'Drag to resize, double-click to reset') + '"></div></div>';
+}
+function saveUiScale(id, patch) {
+  var cur = UI_SCALE[String(id)] || {};
+  if (patch.width !== undefined) { if (patch.width >= 100) { delete cur.w; } else { cur.w = patch.width; } }
+  if (patch.collapsed !== undefined) { if (patch.collapsed) { cur.c = 1; } else { delete cur.c; } }
+  UI_SCALE[String(id)] = cur;
+  api(ST + '/ui-scale', { method: 'PUT', body: JSON.stringify({ unit_id: Number(id), width: patch.width, collapsed: patch.collapsed }) }).catch(function () {});
+}
+function applyUiScale() {
+  document.querySelectorAll('.dev-scale-wrap').forEach(function (w) {
+    var s = uiScaleOf(w.dataset.unitId);
+    w.style.width = (s.w && s.w < 100) ? s.w + '%' : '';
+  });
+  document.querySelectorAll('.device-card').forEach(function (c) {
+    var s = uiScaleOf(c.dataset.unitId);
+    c.classList.toggle('dev-collapsed', !!s.c);
+    var b = c.querySelector('.dev-collapse');
+    if (b) { b.innerHTML = s.c ? '&#9656;' : '&#9662;'; }
+  });
+}
+(function () {
+  var drag = null;
+  function onHandle(e) { return e.target && e.target.closest && e.target.closest('.dev-scale-handle'); }
+  ['mousedown', 'touchstart'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { if (onHandle(e)) { e.stopPropagation(); } }, true);
+  });
+  document.addEventListener('pointerdown', function (e) {
+    var h = onHandle(e);
+    if (!h) { return; }
+    e.preventDefault(); e.stopPropagation();
+    var wrap = h.parentNode, card = wrap.closest('.device-card');
+    var cs = getComputedStyle(card);
+    var full = card.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    drag = { wrap: wrap, id: wrap.dataset.unitId, full: full, left: wrap.getBoundingClientRect().left, pct: null };
+    try { h.setPointerCapture(e.pointerId); } catch (err) {}
+  }, true);
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) { return; }
+    var pct = Math.round((e.clientX - drag.left) / drag.full * 100);
+    pct = Math.max(25, Math.min(100, pct));
+    drag.pct = pct;
+    drag.wrap.style.width = pct >= 100 ? '' : pct + '%';
+  });
+  function end() {
+    if (!drag) { return; }
+    if (drag.pct !== null) { saveUiScale(drag.id, { width: drag.pct }); }
+    drag = null;
+  }
+  document.addEventListener('pointerup', end);
+  document.addEventListener('pointercancel', end);
+  document.addEventListener('dblclick', function (e) {
+    var h = onHandle(e);
+    if (!h) { return; }
+    h.parentNode.style.width = '';
+    saveUiScale(h.parentNode.dataset.unitId, { width: 100 });
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target && e.target.closest && e.target.closest('.dev-collapse');
+    if (!b) { return; }
+    var card = b.closest('.device-card');
+    var c = card.classList.toggle('dev-collapsed');
+    b.innerHTML = c ? '&#9656;' : '&#9662;';
+    saveUiScale(card.dataset.unitId, { collapsed: c });
+  });
+  api(ST + '/ui-scale').then(function (d) { UI_SCALE = (d && d.scale) || {}; applyUiScale(); }).catch(function () {});
+})();
 
 function renderDeviceSettings(unit) {
   let html = '<div class="device-settings" data-unit-id="' + unit.id + '" data-levels="' + unit.levels + '" data-slots-per-level="' + unit.slots_per_level + '">' +

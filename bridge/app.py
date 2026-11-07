@@ -290,14 +290,14 @@ class MappingPayload(BaseModel):
 
 # -------------------------------------------------------------------- poll --
 
-_CUR_PRINT = {"name": None}
+_CUR_PRINT = {"name": None, "task_id": None}
 
 
 async def book_usage(session: aiohttp.ClientSession, spool_id: int, grams: float) -> bool:
     try:
         async with session.post(
             f"{STORAGE_BASE_URL}/spools/{spool_id}/use",
-            json={"grams": grams, "source": "bridge", "print_name": _CUR_PRINT.get("name")},
+            json={"grams": grams, "source": "bridge", "print_name": _CUR_PRINT.get("name"), "print_ref": _CUR_PRINT.get("task_id")},
             timeout=aiohttp.ClientTimeout(total=10),
         ) as resp:
             if resp.status >= 400:
@@ -607,6 +607,7 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
         return
 
     _CUR_PRINT["name"] = getattr(printer, "latest_project_name", None)
+    _CUR_PRINT["task_id"] = task_id
     # Aktiven Slot ermitteln (ueber alle ACE-Boxen des Druckers).
     boxes = [
         b for b in (
@@ -628,6 +629,9 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
             loaded_slot = getattr(box, "loaded_slot", -1)
             if loaded_slot is not None and loaded_slot >= 0:
                 box_id = getattr(box, "box_id", None)
+                if _paint and box_id is not None and box_id >= 0 and loaded_slot == 0 and not _color_ok(_paint, _slot_color(box_id, loaded_slot)):  # v72: nur Slot 0 (Default-Wert) bei Farbkonflikt anzweifeln
+                    log.warning("v69: loaded_slot=%s (box %s) widerspricht Druckfarbe %s -> keine Buchung (Zuordnung unklar)", loaded_slot, box_id, _paint)
+                    return None, None, None
                 material = None
                 try:
                     slots = getattr(box, "slots", None) or []
@@ -865,6 +869,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 _st63 = str(getattr(printer, "current_status", "")).lower()
                 if "busy" in _st63 or "print" in _st63:
                     all_ok = False
+                else:
+                    await _record_unassigned(db, printer_id, task_id, _CUR_PRINT.get("name"), delta_mm, (materials[0].get("material_type") if materials else None) or "PLA")
     else:
         # Keine Slicer-Materialinfo verfuegbar (z.B. lokal gesliced) -- Fallback
         # auf den aktuell eingezogenen Slot, wie zuvor.
@@ -891,6 +897,8 @@ async def process_printer(db: aiosqlite.Connection, session: aiohttp.ClientSessi
                 _st63 = str(getattr(printer, "current_status", "")).lower()
                 if "busy" in _st63 or "print" in _st63:
                     all_ok = False
+                else:
+                    await _record_unassigned(db, printer_id, task_id, _CUR_PRINT.get("name"), delta_mm, (materials[0].get("material_type") if materials else None) or "PLA")
 
     if all_ok:
         await db.execute(
@@ -1189,7 +1197,7 @@ def _active_for(p):
         bx = [b for b in (getattr(p, "primary_multi_color_box", None), getattr(p, "secondary_multi_color_box", None)) if b is not None]
         b, i, m, how = _choose_active(bx, ent[0], ent[1])
         if b is None:
-            return {"box_id": None, "slot_index": None, "how": how}
+            return None  # v71: kein Farbtreffer -> Dashboard nutzt loaded_slot der Box
         return {"box_id": b, "slot_index": i, "how": how}
     except Exception:
         return None
@@ -1227,6 +1235,7 @@ async def _serialize_printers(printers) -> dict[str, Any]:  # 507fix
                 "printer_id": str(getattr(p, "id", "")),
                 "name": getattr(p, "name", "?"),
                 "current_status": str(getattr(p, "current_status", "")),
+                "online": (getattr(p, "printer_online", True) is not False),
             "progress": {
                 "project_name": getattr(p, "latest_project_name", None),
                 "image_url": getattr(p, "latest_project_image_url", None),
@@ -1389,6 +1398,80 @@ async def _fetch_printers_live() -> dict[str, Any]:
                     pass
 
     return await _serialize_printers(printers)
+
+
+from fastapi import Body as _Body
+
+
+async def _ensure_unassigned(db) -> None:
+    await db.execute("CREATE TABLE IF NOT EXISTS unassigned_usage (id INTEGER PRIMARY KEY AUTOINCREMENT, printer_id TEXT, task_id TEXT, print_name TEXT, delta_mm REAL, material TEXT, created_at REAL, status TEXT DEFAULT 'open')")
+
+
+async def _record_unassigned(db, printer_id, task_id, name, delta_mm, material) -> None:
+    """v70: Verbrauch ohne Slot-Zuordnung merken, Dashboard fragt nach."""
+    try:
+        await _ensure_unassigned(db)
+        cur = await db.execute("SELECT id FROM unassigned_usage WHERE printer_id = ? AND task_id = ? AND status = 'open'", (str(printer_id), str(task_id)))
+        row = await cur.fetchone()
+        if row is not None:
+            await db.execute("UPDATE unassigned_usage SET delta_mm = delta_mm + ? WHERE id = ?", (float(delta_mm), row[0]))
+        else:
+            await db.execute("INSERT INTO unassigned_usage (printer_id, task_id, print_name, delta_mm, material, created_at) VALUES (?, ?, ?, ?, ?, ?)", (str(printer_id), str(task_id), name, float(delta_mm), material, time.time()))
+        await db.commit()
+        log.warning("v70: Verbrauch %.1f mm (Druck %r) als 'nicht zugeordnet' gemerkt.", float(delta_mm), name)
+    except Exception as exc:
+        log.warning("v70: unassigned speichern fehlgeschlagen: %s", exc)
+
+
+@app.get("/api/unassigned")
+async def list_unassigned() -> dict[str, Any]:
+    db = await get_db()
+    try:
+        await _ensure_unassigned(db)
+        cur = await db.execute("SELECT id, printer_id, task_id, print_name, delta_mm, material, created_at FROM unassigned_usage WHERE status = 'open' ORDER BY id")
+        rows = await cur.fetchall()
+        items = []
+        for r in rows:
+            items.append({"id": r[0], "printer_id": r[1], "task_id": r[2], "print_name": r[3], "delta_mm": r[4], "material": r[5], "created_at": r[6], "grams": round(grams_from_mm(r[4], r[5] or "PLA"), 1)})
+        return {"items": items}
+    finally:
+        await db.close()
+
+
+@app.post("/api/unassigned/{uid}/resolve")
+async def resolve_unassigned(uid: int, payload: dict = _Body(...)) -> dict[str, Any]:
+    spool_id = int(payload.get("spool_id") or 0)
+    if not spool_id:
+        raise HTTPException(status_code=400, detail="spool_id fehlt")
+    db = await get_db()
+    try:
+        await _ensure_unassigned(db)
+        cur = await db.execute("SELECT print_name, delta_mm, material, task_id FROM unassigned_usage WHERE id = ? AND status = 'open'", (uid,))
+        row = await cur.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="nicht gefunden")
+        grams = float(payload.get("grams") or grams_from_mm(row[1], row[2] or "PLA"))
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{STORAGE_BASE_URL}/spools/{spool_id}/use", json={"grams": grams, "source": "bridge", "print_name": row[0], "print_ref": row[3]}, timeout=aiohttp.ClientTimeout(total=10)) as resp:
+                if resp.status >= 400:
+                    raise HTTPException(status_code=502, detail="Buchung fehlgeschlagen: " + (await resp.text())[:200])
+        await db.execute("UPDATE unassigned_usage SET status = 'resolved' WHERE id = ?", (uid,))
+        await db.commit()
+        return {"ok": True, "grams": round(grams, 1), "spool_id": spool_id}
+    finally:
+        await db.close()
+
+
+@app.post("/api/unassigned/{uid}/dismiss")
+async def dismiss_unassigned(uid: int) -> dict[str, Any]:
+    db = await get_db()
+    try:
+        await _ensure_unassigned(db)
+        await db.execute("UPDATE unassigned_usage SET status = 'dismissed' WHERE id = ?", (uid,))
+        await db.commit()
+        return {"ok": True}
+    finally:
+        await db.close()
 
 
 @app.get("/api/mappings")

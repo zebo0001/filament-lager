@@ -135,6 +135,9 @@ def stats_init():
                 grams REAL, material TEXT, color_hex TEXT, vendor TEXT,
                 name TEXT, cost REAL, source TEXT, print_name TEXT)"""
         )
+        _ucols = [r["name"] for r in conn.execute("PRAGMA table_info(usage_log)").fetchall()]
+        if "print_ref" not in _ucols:
+            conn.execute("ALTER TABLE usage_log ADD COLUMN print_ref TEXT")
 
 
 stats_init()
@@ -154,7 +157,7 @@ def _spool_initial(s):
     return float(v) if v else None
 
 
-def _log_usage(spool, grams, source=None, print_name=None):
+def _log_usage(spool, grams, source=None, print_name=None, print_ref=None):
     try:
         f = spool.get("filament") or {}
         price = _spool_price(spool)
@@ -163,10 +166,10 @@ def _log_usage(spool, grams, source=None, print_name=None):
         now = _dt.datetime.now()
         with db() as conn:
             conn.execute(
-                "INSERT INTO usage_log (ts, day, spool_id, grams, material, color_hex, vendor, name, cost, source, print_name) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO usage_log (ts, day, spool_id, grams, material, color_hex, vendor, name, cost, source, print_name, print_ref) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                 (now.isoformat(timespec="seconds"), now.date().isoformat(), spool.get("id"), grams,
                  f.get("material"), f.get("color_hex"), (f.get("vendor") or {}).get("name"),
-                 f.get("name"), cost, source or "manual", print_name),
+                 f.get("name"), cost, source or "manual", print_name, print_ref),
             )
     except Exception as exc:
         print("usage_log failed:", exc)
@@ -349,6 +352,7 @@ class SlotAssign(BaseModel):
 class SpoolUseRequest(BaseModel):
     source: Optional[str] = None
     print_name: Optional[str] = None
+    print_ref: Optional[str] = None
     grams: float
 
 
@@ -628,7 +632,7 @@ async def use_spool(spool_id: int, body: SpoolUseRequest):
         except Exception:
             raise HTTPException(502, "Spoolman nicht erreichbar")
     _spool = resp.json()
-    _log_usage(_spool, body.grams, getattr(body, "source", None), getattr(body, "print_name", None))
+    _log_usage(_spool, body.grams, getattr(body, "source", None), getattr(body, "print_name", None), getattr(body, "print_ref", None))
     return _spool
 
 
@@ -1656,6 +1660,7 @@ async def list_printers():
             "printer_id": p.get("printer_id"),
             "name": p.get("name"),
             "current_status": p.get("current_status"),
+            "online": p.get("online"),
             "progress": p.get("progress"),
             "active": p.get("active"),
             "boxes": boxes,
@@ -1769,6 +1774,17 @@ def _prints_win(start_ts, end_ts):
     return a, b
 
 
+def _print_parts(conn, name, wa, wb, ref=None):
+    nm = (name or '').replace('.gcode.3mf', '').replace('.gcode', '')
+    cols = "SELECT spool_id, SUM(grams) g, MAX(color_hex) color_hex, MAX(material) material, MAX(vendor) vendor, MAX(name) sname FROM usage_log WHERE "
+    rows = []
+    if ref:
+        rows = conn.execute(cols + "print_ref=? GROUP BY spool_id ORDER BY g DESC", (str(ref),)).fetchall()
+    if not rows:
+        rows = conn.execute(cols + "print_ref IS NULL AND REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (nm, wa, wb)).fetchall()
+    return [{"spool_id": r["spool_id"], "grams": round(r["g"] or 0, 2), "color_hex": r["color_hex"], "material": r["material"], "vendor": r["vendor"], "name": r["sname"]} for r in rows]
+
+
 def _ensure_prints_note(conn):
     cols = [r["name"] for r in conn.execute("PRAGMA table_info(prints)").fetchall()]
     if "note" not in cols:
@@ -1802,10 +1818,12 @@ def _reconcile_info(conn, name, a, b, cloud_g, printer=None):
         return 0.0, None, None
     spools = [r['spool_id'] for r in rows]
     tgt = _slot_spool_for_printer(conn, printer)
-    if len(spools) == 1 and (tgt is None or tgt == spools[0]):
+    if len(spools) == 1 and tgt == spools[0]:  # v-fix3: nur auto-korrigieren, wenn der Slot die Spule bestaetigt
         return round(diff, 2), 'auto-korrigiert: +%.1f g (Live %.1f g, Cloud %.1f g)' % (diff, booked_g, cloud_g), spools[0]
     if tgt:
         return round(diff, 2), 'Spulenwechsel, Rest auf Spule %d: +%.1f g (Live %.1f g auf %d Spulen, Cloud %.1f g)' % (tgt, diff, booked_g, len(spools), cloud_g), tgt
+    if len(spools) == 1 and tgt is None:
+        return 0.0, 'pruefen: Slot unklar - Live %.1f g auf Spule %s, Cloud %.1f g (Rest %.1f g)' % (booked_g, spools[0], cloud_g, diff), None
     return 0.0, 'pruefen: Live %.1f g auf %d Spulen, Cloud %.1f g (Rest %.1f g)' % (booked_g, len(spools), cloud_g, diff), None
 
 
@@ -1830,12 +1848,13 @@ async def prints_import(body: PrintImport):
                     wa, wb = _prints_win(it.start_ts, it.end_ts)
                     mr = conn.execute("SELECT spool_id, SUM(grams) g FROM usage_log WHERE REPLACE(REPLACE(print_name,'.gcode.3mf',''),'.gcode','')=? AND ts>=? AND ts<=? GROUP BY spool_id ORDER BY g DESC", (it.name, wa, wb)).fetchone()
                     if mr:
-                        mg = mr["g"]
+                        _pp = _print_parts(conn, it.name, wa, wb, it.cloud_id)
+                        mg = sum(x["grams"] for x in _pp) or mr["g"]
                         extra, note, tgt = _reconcile_info(conn, it.name, wa, wb, it.grams, it.printer)
                         if extra > 0:
-                            corrections.append((tgt or mr["spool_id"], extra, it.name))
+                            corrections.append((tgt or mr["spool_id"], extra, it.name, it.cloud_id))
                             mg = round(mg + extra, 2)
-                        conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=?, note=? WHERE id=?", (mr["spool_id"], mg, note, ex["id"]))
+                        conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=?, note=? WHERE id=?", ((_pp[0]["spool_id"] if _pp else mr["spool_id"]), mg, note, ex["id"]))
                         booked += 1
                 upd += 1
                 continue
@@ -1853,7 +1872,7 @@ async def prints_import(body: PrintImport):
                     booked += 1
                     extra, note_val, tgt = _reconcile_info(conn, it.name, a, b, it.grams, it.printer)
                     if extra > 0:
-                        corrections.append((tgt or spool, extra, it.name))
+                        corrections.append((tgt or spool, extra, it.name, it.cloud_id))
                         g = round(g + extra, 2)
             conn.execute(
                 "INSERT INTO prints (cloud_id,name,printer,start_ts,end_ts,duration_min,status,grams,length_mm,thumb,reason,spool_id,state,source) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -1862,9 +1881,9 @@ async def prints_import(body: PrintImport):
             new += 1
             if note_val:
                 conn.execute("UPDATE prints SET note=? WHERE cloud_id=?", (note_val, it.cloud_id))
-    for sp, ex_g, nm in corrections:
+    for sp, ex_g, nm, pref in corrections:
         try:
-            await use_spool(sp, SpoolUseRequest(grams=ex_g, source="print", print_name=nm))
+            await use_spool(sp, SpoolUseRequest(grams=ex_g, source="print", print_name=nm, print_ref=pref))
         except Exception:
             with db() as c2:
                 c2.execute("UPDATE prints SET note=COALESCE(note,'') || ' [Nachbuchung fehlgeschlagen]' WHERE name=?", (nm,))
@@ -1890,6 +1909,9 @@ def prints_list(q: str = "", printer: str = "", state: str = "", sort: str = "ne
         tot = dict(conn.execute("SELECT COUNT(*) n, COALESCE(SUM(grams),0) g, COALESCE(SUM(duration_min),0) d FROM prints" + w, args).fetchone())
         per = [dict(r) for r in conn.execute("SELECT printer, COUNT(*) n, COALESCE(SUM(grams),0) g, COALESCE(SUM(duration_min),0) d FROM prints" + w + " GROUP BY printer", args).fetchall()]
         cnt = [dict(r) for r in conn.execute("SELECT state, COUNT(*) n FROM prints GROUP BY state").fetchall()]
+    with db() as conn2:
+        for r in rows:
+            r["parts"] = _print_parts(conn2, r["name"], *_prints_win(r["start_ts"], r["end_ts"]), r.get("cloud_id")) if r.get("start_ts") and r.get("name") else []
     return {"items": rows, "total": tot, "per_printer": per, "states": cnt}
 
 
@@ -1925,7 +1947,7 @@ async def prints_assign(pid: int, body: PrintAssign):
                 raise HTTPException(400, "Gramm fehlen")
         for p in body.parts:
             gg = float(p["grams"])
-            await use_spool(int(p["spool_id"]), SpoolUseRequest(grams=gg, source="print", print_name=r["name"]))
+            await use_spool(int(p["spool_id"]), SpoolUseRequest(grams=gg, source="print", print_name=r["name"], print_ref=r["cloud_id"]))
             tot += gg
         main = max(body.parts, key=lambda p: float(p["grams"]))["spool_id"]
         note = "Aufteilung: " + ", ".join("Spule %s %.1f g" % (p["spool_id"], float(p["grams"])) for p in body.parts)
@@ -1936,7 +1958,7 @@ async def prints_assign(pid: int, body: PrintAssign):
     g = body.grams if body.grams is not None else r["grams"]
     if not g or g <= 0:
         raise HTTPException(400, "Gramm fehlen")
-    await use_spool(body.spool_id, SpoolUseRequest(grams=g, source="print", print_name=r["name"]))
+    await use_spool(body.spool_id, SpoolUseRequest(grams=g, source="print", print_name=r["name"], print_ref=r["cloud_id"]))
     with db() as conn:
         conn.execute("UPDATE prints SET state='booked', spool_id=?, grams=? WHERE id=?", (body.spool_id, g, pid))
     return {"ok": True}

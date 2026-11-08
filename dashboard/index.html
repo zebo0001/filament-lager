@@ -1378,7 +1378,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.16.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.16.1</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1728,6 +1728,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: Erfahrungsformular im Filament-Dialog wird beim &Ouml;ffnen geleert, Browser-Autovervollst&auml;ndigung deaktiviert (falsche Vorbelegung, z. B. bei Haftmittel).</li></ul>
       <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>Neu: Slicer-Import auf der Seite Filamente. Anycubic-Slicer-/OrcaSlicer-Filamentprofile (.json) hochladen, Vorschau pr&uuml;fen und Filamente anlegen oder bestehende erg&auml;nzen (Zuordnung &uuml;ber Artikelnummer).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>Neue-Spule-Dialog neu gestaltet: Kopfzeile mit Anlegen/Abbrechen, Karten f&uuml;r Filament und Spule.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Filament-Dialog neu gestaltet: breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten f&uuml;r Stammdaten und Bestand.</li></ul>
@@ -2051,6 +2052,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: experience form in the filament dialog is cleared on open, browser autofill disabled (wrong prefilled values, e.g. adhesive).</li></ul>
       <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>New: slicer import on the Filaments page. Upload Anycubic Slicer / OrcaSlicer filament presets (.json), review the preview and create filaments or complete existing ones (matched by article number).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>New spool dialog redesigned: header with Create/Cancel, filament and spool cards.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Redesigned filament dialog: wide layout, header with Save/Cancel, collapsible sections, master data and stock cards.</li></ul>
@@ -7149,8 +7151,7 @@ document.addEventListener('change',function(ev){
 <script id="flm-script2">
 var flmCur=null;
 function fdg(i){return document.getElementById(i);}
-async function flmOpen(fid){
-  await flmOpen0(fid);
+async function flmOpen(fid){ try{ document.querySelectorAll('#flm-dialog-overlay input,#flm-dialog-overlay textarea,#flm-dialog-overlay select').forEach(function(el){ el.setAttribute('autocomplete','off'); if(/^fd-exp-/.test(el.id)){ if(el.tagName==='SELECT') el.selectedIndex=0; else el.value=''; } }); }catch(e){} await flmOpen0(fid);
   try{ await flmHeadExtras(fid); }catch(e){ console.warn('flmHeadExtras',e); }
 }
 var _fdSwatchBound=false;

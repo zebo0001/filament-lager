@@ -119,6 +119,7 @@ Die Datenbank (Spulen/Filamente, Lagerplaetze, Label-Vorlagen) startet leer und 
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.16.1 (2026-11-08)**: Fix: Erfahrungsformular im Filament-Dialog wird beim Öffnen geleert, Browser-Autovervollständigung deaktiviert.
 - **v1.16.0 (2026-11-08)**: Neu: Slicer-Import auf der Seite Filamente. Anycubic-Slicer-/OrcaSlicer-Filamentprofile (.json) hochladen, Vorschau prüfen, Filamente anlegen oder bestehende ergänzen (Zuordnung über Artikelnummer).
 - **v1.15.2 (2026-11-08)**: Neue-Spule-Dialog neu gestaltet (Kopfzeile mit Anlegen/Abbrechen, Karten für Filament und Spule).
 - **v1.15.1 (2026-11-08)**: Filament-Dialog neu gestaltet (breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten für Stammdaten und Bestand).

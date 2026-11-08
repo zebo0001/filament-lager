@@ -481,6 +481,46 @@ main>.panel.active{display:block;}
 @media (min-width:1500px){.device-grid{grid-template-columns:minmax(700px,52%) 1fr}.dev-col-printers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}.dev-col-printers>.dev-col-title{grid-column:1/-1}}
 @media (max-width:900px){.device-grid{grid-template-columns:1fr}.dev-col-printers{position:static;max-height:none;overflow:visible}}
 </style>
+<style id="flm-style2">
+#flm-dialog-overlay .assign-box{max-width:1040px;width:96vw;padding:0}
+.fd-head{position:sticky;top:0;z-index:6;display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;padding:1rem 1.25rem;background:#0f172a;border-bottom:1px solid rgba(148,163,184,.2);border-radius:14px 14px 0 0}
+.fd-head h3{margin:0;font-size:1.25rem}
+.fd-sub{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;margin-top:.45rem}
+.fd-chip{font-size:.72rem;padding:.15rem .55rem;border-radius:6px;background:rgba(148,163,184,.16);color:#cbd5e1;border:1px solid rgba(148,163,184,.25)}
+.fd-chip.warn{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.35);color:#fbbf24}
+.fd-head .row-actions{margin:0;display:flex;gap:.5rem;flex:none}
+#fd-save{background:#3ecf8e;color:#04210f;font-weight:700;border:0}
+.fd-body{padding:0 1.25rem 1.25rem}
+details.fd-card{margin-top:1rem;border:1px solid rgba(148,163,184,.2);border-radius:12px;background:rgba(15,23,42,.55)}
+details.fd-card>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:.6rem;padding:.85rem 1rem;font-weight:700}
+details.fd-card>summary::-webkit-details-marker{display:none}
+.fd-chev{margin-left:auto;font-size:.7rem;color:#94a3b8;transition:transform .2s}
+details.fd-card[open]>summary .fd-chev{transform:rotate(180deg)}
+.fd-card-body{padding:0 1rem 1rem}
+.fd-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.fd-panel{--pc:#38bdf8;border:1px solid rgba(148,163,184,.18);border-left:4px solid var(--pc);border-radius:10px;padding:.85rem;background:rgba(2,6,23,.35)}
+.fd-panel.green{--pc:#34d399}
+.fd-panel.amber{--pc:#f59e0b}
+.fd-panel-title{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:.7rem}
+.fd-panel .field-grid input,.fd-panel .field-grid select{border-left:3px solid var(--pc)}
+.fd-colorrow{display:flex;gap:.5rem;align-items:center}
+.fd-colorrow input{flex:1}
+.fd-swatch{width:34px;height:34px;border-radius:8px;border:1px solid rgba(148,163,184,.45);flex:none;background:#888}
+.fd-lbl{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8}
+.fd-stockrow{display:flex;align-items:baseline;gap:.8rem;margin-bottom:.4rem}
+.fd-stockrow b{font-size:1.5rem}
+.fd-state{margin-left:auto;padding:.3rem .7rem;border-radius:8px;border:1px solid #10b981;background:rgba(16,185,129,.12);color:#6ee7b7;font-weight:600;font-size:.85rem}
+.fd-state.empty{border-color:#ef4444;background:rgba(239,68,68,.12);color:#fca5a5}
+.fd-bar{height:8px;border-radius:99px;background:rgba(148,163,184,.2);overflow:hidden;margin-bottom:.8rem}
+.fd-bar i{display:block;height:100%;background:linear-gradient(90deg,#10b981,#34d399)}
+.fd-stat{display:flex;gap:1.6rem;flex-wrap:wrap;margin-bottom:.8rem}
+.fd-stat b{display:block;font-size:1.15rem}
+.fd-info{border:1px solid rgba(56,189,248,.35);background:rgba(56,189,248,.08);border-radius:10px;padding:.7rem .9rem;margin-bottom:.9rem;font-size:.85rem;color:#cbd5e1}
+.fd-info b{display:block;margin-bottom:.15rem;color:#e2e8f0}
+#fd-exp-form{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.fd-cols{grid-template-columns:1fr}#fd-exp-form{grid-template-columns:1fr 1fr}.fd-head{flex-direction:column}}
+</style>
+
 <style id="flm-style">
 .flm-toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0 1rem}
 .flm-toolbar input[type=text]{min-width:220px;flex:1 1 220px}
@@ -1329,7 +1369,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.1</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1360,36 +1400,47 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 
 <div class="assign-overlay" id="flm-dialog-overlay">
 <div class="assign-box wide scrollable">
+<div class="fd-head">
+<div class="fd-head-l">
 <h3 id="fd-title" data-i18n="flm.editTitle">Filament bearbeiten</h3>
-<p class="slot-label" id="fd-subtitle"></p>
-<p class="section-note warn" data-i18n="flm.sharedNote">Aenderungen gelten fuer alle Spulen dieses Filaments.</p>
-<div class="fd-sec" data-i18n="flm.secBasic">Basisdaten</div>
-<div class="field-grid">
-<div><label data-i18n="flm.name">Name</label><input type="text" id="fd-fil-name"></div>
-<div><label data-i18n="flm.vendor">Hersteller</label><select id="fd-fil-vendor"></select></div>
-<div><label data-i18n="flm.material">Material</label><input type="text" id="fd-fil-material"></div>
-<div><label data-i18n="flm.article">Artikelnummer</label><input type="text" id="fd-fil-article"></div>
-<div><label data-i18n="flm.colorName">Farbname</label><input type="text" id="fd-fil-colorname"></div>
-<div><label data-i18n="flm.colorHex">Farbe (Hex)</label><input type="text" id="fd-fil-color"></div>
-<div class="full"><button type="button" class="new-spool-toggle" id="fd-color-mode-toggle" data-mode="single" data-i18n="flm.multi">Mehrfarbig?</button>
-<div id="fd-multicolor-block" style="display:none"><label data-i18n="flm.direction">Ausrichtung</label>
+<div class="fd-sub"><span class="fd-chip" id="fd-subtitle">#</span><span class="fd-chip" id="fd-head-chip"></span><span class="fd-chip warn" data-i18n="flm.sharedNote">Aenderungen gelten fuer alle Spulen dieses Filaments.</span></div>
+</div>
+<div class="row-actions"><button class="btn secondary" id="fd-cancel" data-i18n="common.cancel">Abbrechen</button><button class="btn" id="fd-save" data-i18n="common.save">Speichern</button></div>
+</div>
+<div class="fd-body">
+<details class="fd-card" open>
+<summary><span>&#128230;</span><span data-i18n="flm.secBasic">Basisdaten</span><span class="fd-chev">&#9660;</span></summary>
+<div class="fd-card-body"><div class="fd-cols">
+<div class="fd-panel">
+<div class="fd-panel-title" data-i18n="flm.master">Stammdaten</div>
+<div class="field-grid"><div><label data-i18n="flm.name">Name</label><input type="text" id="fd-fil-name"></div><div><label data-i18n="flm.vendor">Hersteller</label><select id="fd-fil-vendor"></select></div><div><label data-i18n="flm.material">Material</label><input type="text" id="fd-fil-material"></div><div><label data-i18n="flm.article">Artikelnummer</label><input type="text" id="fd-fil-article"></div><div><label data-i18n="flm.colorName">Farbname</label><input type="text" id="fd-fil-colorname"></div><div><label data-i18n="flm.colorHex">Farbe (Hex)</label><div class="fd-colorrow"><span class="fd-swatch" id="fd-swatch"></span><input type="text" id="fd-fil-color"></div></div></div>
+<div style="margin-top:.6rem"><button type="button" class="new-spool-toggle" id="fd-color-mode-toggle" data-mode="single" data-i18n="flm.multi">Mehrfarbig?</button><div id="fd-multicolor-block" style="display:none"><label data-i18n="flm.direction">Ausrichtung</label>
 <select id="fd-fil-multi-direction"><option value="longitudinal" data-i18n="flm.longitudinal">Laengsstreifen</option><option value="coaxial" data-i18n="flm.radial">Radial</option></select>
 <div id="fd-multicolor-rows"></div>
 <button type="button" class="new-spool-toggle" id="fd-multicolor-add" data-i18n="flm.addColor">+ Farbe</button></div></div>
-<div><label data-i18n="flm.price">Preis (EUR)</label><input type="number" step="0.01" id="fd-fil-price"></div>
-<div><label data-i18n="flm.weight">Netto-Gewicht (g)</label><input type="number" step="1" id="fd-fil-weight"></div>
-<div><label data-i18n="flm.spoolWeight">Leerspule (g)</label><input type="number" step="1" id="fd-fil-spoolweight"></div>
 </div>
-<div class="fd-sec" data-i18n="flm.secPrint">Druck und Hardware</div>
-<div class="field-grid">
-<div><label data-i18n="flm.diameter">Durchmesser (mm)</label><input type="number" step="0.01" id="fd-fil-diameter"></div>
-<div><label data-i18n="flm.density">Dichte (g/cm3)</label><input type="number" step="0.01" id="fd-fil-density"></div>
-<div><label data-i18n="flm.extTemp">Duesentemperatur</label><input type="number" step="1" id="fd-fil-ext"></div>
-<div><label data-i18n="flm.bedTempFull">Betttemperatur</label><input type="number" step="1" id="fd-fil-bed"></div>
+<div class="fd-panel green">
+<div class="fd-panel-title" data-i18n="flm.stockTitle">Bestand und Bewertung</div>
+<div class="fd-stockrow"><span class="fd-lbl" data-i18n="flm.stockPct">Bestand</span><b id="fd-stock-pct">0%</b><span class="fd-state" id="fd-stock-state"></span></div>
+<div class="fd-bar"><i id="fd-stock-bar" style="width:0%"></i></div>
+<div class="fd-stat"><div><span class="fd-lbl" data-i18n="flm.spoolsLbl">Spulen</span><b id="fd-stock-spools">0</b></div><div><span class="fd-lbl" data-i18n="flm.restLbl">Rest (g)</span><b id="fd-stock-rem">0</b></div><div><span class="fd-lbl" data-i18n="flm.ratingLbl">Bewertung</span><b id="fd-rating-avg">-</b></div></div>
+<div class="field-grid"><div><label data-i18n="flm.price">Preis (EUR)</label><input type="number" step="0.01" id="fd-fil-price"></div><div><label data-i18n="flm.weight">Netto-Gewicht (g)</label><input type="number" step="1" id="fd-fil-weight"></div><div><label data-i18n="flm.spoolWeight">Leerspule (g)</label><input type="number" step="1" id="fd-fil-spoolweight"></div></div>
 </div>
-<div class="fd-sec" data-i18n="exp.title">Erfahrung</div>
-<div id="fd-exp-list"></div>
-<div class="field-grid" id="fd-exp-form">
+</div></div>
+</details>
+<details class="fd-card" open>
+<summary><span>&#9881;</span><span data-i18n="flm.secPrint">Druck und Hardware</span><span class="fd-chev">&#9660;</span></summary>
+<div class="fd-card-body">
+<div class="fd-info"><b data-i18n="flm.autoTitle">Slicer-Werte</b><span data-i18n="flm.autoInfo">Temperaturen und Fluss kommen kuenftig aus dem Slicer-Import. Bis dahin hier manuell pflegen.</span></div>
+<div class="fd-cols">
+<div class="fd-panel"><div class="fd-panel-title" data-i18n="flm.printParams">Druckparameter</div><div class="field-grid"><div><label data-i18n="flm.extTemp">Duesentemperatur</label><input type="number" step="1" id="fd-fil-ext"></div><div><label data-i18n="flm.bedTempFull">Betttemperatur</label><input type="number" step="1" id="fd-fil-bed"></div></div></div>
+<div class="fd-panel green"><div class="fd-panel-title" data-i18n="flm.filamentParams">Filament</div><div class="field-grid"><div><label data-i18n="flm.diameter">Durchmesser (mm)</label><input type="number" step="0.01" id="fd-fil-diameter"></div><div><label data-i18n="flm.density">Dichte (g/cm3)</label><input type="number" step="0.01" id="fd-fil-density"></div></div></div>
+</div></div>
+</details>
+<details class="fd-card" open>
+<summary><span>&#9733;</span><span data-i18n="exp.title">Erfahrung</span><span class="fd-chev">&#9660;</span></summary>
+<div class="fd-card-body"><div class="fd-panel amber">
+<div id="fd-exp-list"></div><div class="field-grid" id="fd-exp-form">
 <div><label data-i18n="exp.nozzle">Duese (mm)</label><input type="number" id="fd-exp-nozzle" step="0.1" placeholder="0.4"></div>
 <div><label data-i18n="exp.layer">Schichthoehe (mm)</label><input type="number" id="fd-exp-layer" step="0.04" placeholder="0.2"></div>
 <div><label data-i18n="exp.plate">Druckplatte</label><input type="text" id="fd-exp-plate"></div>
@@ -1401,9 +1452,10 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div><label data-i18n="exp.rating">Bewertung</label><select id="fd-exp-rating"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
 <div><label data-i18n="exp.tags">Tags (Komma)</label><input type="text" id="fd-exp-tags"></div>
 <div class="full"><label data-i18n="exp.text">Notiz</label><input type="text" id="fd-exp-text"></div>
+</div><div class="row-actions"><button type="button" class="btn secondary" id="fd-exp-add" data-i18n="exp.add">Eintrag speichern</button></div>
+</div></div>
+</details>
 </div>
-<div class="row-actions"><button type="button" class="btn secondary" id="fd-exp-add" data-i18n="exp.add">Eintrag speichern</button></div>
-<div class="row-actions"><button class="btn secondary" id="fd-cancel" data-i18n="common.cancel">Abbrechen</button><button class="btn" id="fd-save" data-i18n="common.save">Speichern</button></div>
 </div>
 </div>
 
@@ -1645,6 +1697,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Filament-Dialog neu gestaltet: breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten f&uuml;r Stammdaten und Bestand.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>Neu: Men&uuml;punkt Filamente mit Kartenansicht (Marke, Material, Bestand aus den Spulen, Temperaturen, Erfahrungswerte, Bewertung), Suche und Filter.</li><li>Neu: eigener Filament-Dialog (Basisdaten, Druck und Hardware, Erfahrung). Der Spulen-Dialog zeigt nur noch Spulendaten und &ouml;ffnet den Filament-Dialog per Knopf.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Drucker offline: Offline-Drucker zeigen jetzt &bdquo;offline&ldquo; statt &bdquo;available&ldquo;, ohne Modellbild mit abgelaufenem Link, ohne falsche &bdquo;Drucker ca. 0 g&ldquo;-Warnung und ohne veralteten aktiven Slot.</li><li>Gedruckte Produkte: Bei Mehrfarbdrucken wird der Verbrauch pro Spule angezeigt (Farbpunkt, Spule, Gramm). Die Druckzeile speichert jetzt die Summe aller Spulen statt nur der gr&ouml;&szlig;ten.</li><li>Jede Verbrauchsbuchung tr&auml;gt jetzt die Druck-ID der Anycubic-Cloud; Altdaten wurden automatisch zugeordnet, mehrdeutige F&auml;lle bleiben unver&auml;ndert.</li></ul>
       <h4>v1.11.0 &ndash; 30.10.2026</h4><ul><li>Lagerpl&auml;tze: Ger&auml;te-Karten per Maus skalierbar (Griff unten rechts, rastet bei 33 / 50 / 100 % ein, Doppelklick = zur&uuml;cksetzen). Die Karte selbst wird schmaler, mehrere Dryboxen/Drucker passen nebeneinander. Karten lassen sich ein-/ausklappen. Die Einstellung wird serverseitig gespeichert und gilt auf allen Ger&auml;ten.</li></ul><h4>v1.10.0 &ndash; 30.10.2026</h4>
@@ -1722,7 +1775,7 @@ const I18N = {
     'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
     'assign.title': 'Platz zuweisen',
     'assign.clear': 'Freimachen',
-    'flm.spool1': 'Spule', 'flm.nav': 'Filamente', 'flm.title': 'Filamente', 'flm.hint': 'Filament-Typen mit Bestand und Erfahrungswerten. Bearbeiten wirkt auf alle Spulen dieses Filaments.', 'flm.search': 'Suche (Marke, Name, Material)', 'flm.allMat': 'Alle Materialien', 'flm.sortName': 'Name', 'flm.sortVendor': 'Hersteller', 'flm.sortStock': 'Bestand', 'flm.inStock': 'Nur mit Bestand', 'flm.spools': 'Spulen', 'flm.rest': 'Rest', 'flm.nozzleTemp': 'Düse', 'flm.bedTemp': 'Bett', 'flm.noExp': 'Noch keine Erfahrung', 'flm.expCount': 'Einträge', 'flm.edit': 'Bearbeiten', 'flm.empty': 'Keine Filamente gefunden.', 'flm.editTitle': 'Filament bearbeiten', 'flm.sharedNote': 'Änderungen gelten für alle Spulen dieses Filaments.', 'flm.secBasic': 'Basisdaten', 'flm.secPrint': 'Druck und Hardware', 'flm.name': 'Name', 'flm.vendor': 'Hersteller', 'flm.material': 'Material', 'flm.article': 'Artikelnummer', 'flm.colorName': 'Farbname', 'flm.colorHex': 'Farbe (Hex)', 'flm.multi': 'Mehrfarbig?', 'flm.direction': 'Ausrichtung', 'flm.longitudinal': 'Längsstreifen', 'flm.radial': 'Radial', 'flm.addColor': '+ Farbe', 'flm.price': 'Preis (EUR)', 'flm.weight': 'Netto-Gewicht (g)', 'flm.spoolWeight': 'Leerspule (g)', 'flm.diameter': 'Durchmesser (mm)', 'flm.density': 'Dichte (g/cm3)', 'flm.extTemp': 'Düsentemperatur (°C)', 'flm.bedTempFull': 'Betttemperatur (°C)', 'flm.saveErr': 'Speichern fehlgeschlagen: ',
+    'flm.spool1': 'Spule', 'flm.master': 'Stammdaten', 'flm.stockTitle': 'Bestand und Bewertung', 'flm.stockPct': 'Bestand', 'flm.spoolsLbl': 'Spulen', 'flm.restLbl': 'Rest (g)', 'flm.ratingLbl': 'Bewertung', 'flm.stockAvail': 'Verfügbar', 'flm.stockEmpty': 'Leer', 'flm.autoTitle': 'Slicer-Werte', 'flm.autoInfo': 'Temperaturen und Fluss kommen künftig aus dem Slicer-Import. Bis dahin hier manuell pflegen.', 'flm.printParams': 'Druckparameter', 'flm.filamentParams': 'Filament', 'flm.nav': 'Filamente', 'flm.title': 'Filamente', 'flm.hint': 'Filament-Typen mit Bestand und Erfahrungswerten. Bearbeiten wirkt auf alle Spulen dieses Filaments.', 'flm.search': 'Suche (Marke, Name, Material)', 'flm.allMat': 'Alle Materialien', 'flm.sortName': 'Name', 'flm.sortVendor': 'Hersteller', 'flm.sortStock': 'Bestand', 'flm.inStock': 'Nur mit Bestand', 'flm.spools': 'Spulen', 'flm.rest': 'Rest', 'flm.nozzleTemp': 'Düse', 'flm.bedTemp': 'Bett', 'flm.noExp': 'Noch keine Erfahrung', 'flm.expCount': 'Einträge', 'flm.edit': 'Bearbeiten', 'flm.empty': 'Keine Filamente gefunden.', 'flm.editTitle': 'Filament bearbeiten', 'flm.sharedNote': 'Änderungen gelten für alle Spulen dieses Filaments.', 'flm.secBasic': 'Basisdaten', 'flm.secPrint': 'Druck und Hardware', 'flm.name': 'Name', 'flm.vendor': 'Hersteller', 'flm.material': 'Material', 'flm.article': 'Artikelnummer', 'flm.colorName': 'Farbname', 'flm.colorHex': 'Farbe (Hex)', 'flm.multi': 'Mehrfarbig?', 'flm.direction': 'Ausrichtung', 'flm.longitudinal': 'Längsstreifen', 'flm.radial': 'Radial', 'flm.addColor': '+ Farbe', 'flm.price': 'Preis (EUR)', 'flm.weight': 'Netto-Gewicht (g)', 'flm.spoolWeight': 'Leerspule (g)', 'flm.diameter': 'Durchmesser (mm)', 'flm.density': 'Dichte (g/cm3)', 'flm.extTemp': 'Düsentemperatur (°C)', 'flm.bedTempFull': 'Betttemperatur (°C)', 'flm.saveErr': 'Speichern fehlgeschlagen: ',
     'exp.title': 'Erfahrung', 'exp.note': 'Gilt für das Filament (alle Spulen dieses Typs).', 'exp.nozzle': 'Düse (mm)', 'exp.layer': 'Schichthöhe (mm)', 'exp.plate': 'Druckplatte', 'exp.adhesive': 'Haftmittel', 'exp.brim': 'Brim', 'exp.drying': 'Trocknen/Tempern', 'exp.overhang': 'Max. Überhang (°)', 'exp.bridge': 'Max. Brücke (mm)', 'exp.rating': 'Bewertung', 'exp.tags': 'Tags (Komma)', 'exp.text': 'Notiz', 'exp.add': 'Eintrag speichern', 'exp.empty': 'Noch keine Erfahrungswerte.', 'exp.saved': 'Erfahrung gespeichert', 'exp.fill': 'Mindestens ein Feld ausfüllen',
     'sd.title': 'Spule bearbeiten',
     'sd.thisSpool': 'Diese Spule',
@@ -1965,6 +2018,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Redesigned filament dialog: wide layout, header with Save/Cancel, collapsible sections, master data and stock cards.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>New: Filaments menu item with card view (brand, material, stock from your spools, temperatures, experience, rating), search and filters.</li><li>New: dedicated filament dialog (basics, print and hardware, experience). The spool dialog now only shows spool data and opens the filament dialog via a button.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Offline printers: now shown as &ldquo;offline&rdquo; instead of &ldquo;available&rdquo;, with no expired model image, no false &ldquo;Printer approx. 0 g&rdquo; warning and no stale active slot.</li><li>Printed products: multi-colour prints show consumption per spool (colour dot, spool, grams). The print row now stores the total of all spools instead of only the largest one.</li><li>Every usage booking now carries the Anycubic cloud print ID; existing data was matched automatically, ambiguous cases were left untouched.</li></ul>
       <h4>v1.11.0 &ndash; 2026-10-30</h4><ul><li>Storage locations: device cards can be resized with the mouse (handle bottom right, snaps at 33 / 50 / 100 %, double-click = reset). The card itself gets narrower, so several dryboxes/printers fit side by side. Cards can be collapsed. The setting is stored on the server and applies on all devices.</li></ul><h4>v1.10.0 &ndash; 2026-10-30</h4>
@@ -2042,7 +2096,7 @@ const I18N = {
     'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
     'assign.title': 'Assign slot',
     'assign.clear': 'Clear',
-    'flm.spool1': 'spool', 'flm.nav': 'Filaments', 'flm.title': 'Filaments', 'flm.hint': 'Filament types with stock and experience. Editing affects all spools of this filament.', 'flm.search': 'Search (brand, name, material)', 'flm.allMat': 'All materials', 'flm.sortName': 'Name', 'flm.sortVendor': 'Brand', 'flm.sortStock': 'Stock', 'flm.inStock': 'Only in stock', 'flm.spools': 'spools', 'flm.rest': 'left', 'flm.nozzleTemp': 'Nozzle', 'flm.bedTemp': 'Bed', 'flm.noExp': 'No experience yet', 'flm.expCount': 'entries', 'flm.edit': 'Edit', 'flm.empty': 'No filaments found.', 'flm.editTitle': 'Edit filament', 'flm.sharedNote': 'Changes apply to all spools of this filament.', 'flm.secBasic': 'Basics', 'flm.secPrint': 'Print and hardware', 'flm.name': 'Name', 'flm.vendor': 'Brand', 'flm.material': 'Material', 'flm.article': 'Article no.', 'flm.colorName': 'Color name', 'flm.colorHex': 'Color (hex)', 'flm.multi': 'Multicolor?', 'flm.direction': 'Direction', 'flm.longitudinal': 'Lengthwise stripes', 'flm.radial': 'Radial', 'flm.addColor': '+ Color', 'flm.price': 'Price (EUR)', 'flm.weight': 'Net weight (g)', 'flm.spoolWeight': 'Empty spool (g)', 'flm.diameter': 'Diameter (mm)', 'flm.density': 'Density (g/cm3)', 'flm.extTemp': 'Nozzle temperature (°C)', 'flm.bedTempFull': 'Bed temperature (°C)', 'flm.saveErr': 'Save failed: ',
+    'flm.spool1': 'spool', 'flm.master': 'Master data', 'flm.stockTitle': 'Stock and rating', 'flm.stockPct': 'Stock', 'flm.spoolsLbl': 'Spools', 'flm.restLbl': 'Left (g)', 'flm.ratingLbl': 'Rating', 'flm.stockAvail': 'Available', 'flm.stockEmpty': 'Empty', 'flm.autoTitle': 'Slicer values', 'flm.autoInfo': 'Temperatures and flow will come from the slicer import. Until then, maintain them here.', 'flm.printParams': 'Print parameters', 'flm.filamentParams': 'Filament', 'flm.nav': 'Filaments', 'flm.title': 'Filaments', 'flm.hint': 'Filament types with stock and experience. Editing affects all spools of this filament.', 'flm.search': 'Search (brand, name, material)', 'flm.allMat': 'All materials', 'flm.sortName': 'Name', 'flm.sortVendor': 'Brand', 'flm.sortStock': 'Stock', 'flm.inStock': 'Only in stock', 'flm.spools': 'spools', 'flm.rest': 'left', 'flm.nozzleTemp': 'Nozzle', 'flm.bedTemp': 'Bed', 'flm.noExp': 'No experience yet', 'flm.expCount': 'entries', 'flm.edit': 'Edit', 'flm.empty': 'No filaments found.', 'flm.editTitle': 'Edit filament', 'flm.sharedNote': 'Changes apply to all spools of this filament.', 'flm.secBasic': 'Basics', 'flm.secPrint': 'Print and hardware', 'flm.name': 'Name', 'flm.vendor': 'Brand', 'flm.material': 'Material', 'flm.article': 'Article no.', 'flm.colorName': 'Color name', 'flm.colorHex': 'Color (hex)', 'flm.multi': 'Multicolor?', 'flm.direction': 'Direction', 'flm.longitudinal': 'Lengthwise stripes', 'flm.radial': 'Radial', 'flm.addColor': '+ Color', 'flm.price': 'Price (EUR)', 'flm.weight': 'Net weight (g)', 'flm.spoolWeight': 'Empty spool (g)', 'flm.diameter': 'Diameter (mm)', 'flm.density': 'Density (g/cm3)', 'flm.extTemp': 'Nozzle temperature (°C)', 'flm.bedTempFull': 'Bed temperature (°C)', 'flm.saveErr': 'Save failed: ',
     'exp.title': 'Experience', 'exp.note': 'Applies to the filament (all spools of this type).', 'exp.nozzle': 'Nozzle (mm)', 'exp.layer': 'Layer height (mm)', 'exp.plate': 'Build plate', 'exp.adhesive': 'Adhesive', 'exp.brim': 'Brim', 'exp.drying': 'Drying/annealing', 'exp.overhang': 'Max. overhang (°)', 'exp.bridge': 'Max. bridge (mm)', 'exp.rating': 'Rating', 'exp.tags': 'Tags (comma)', 'exp.text': 'Note', 'exp.add': 'Save entry', 'exp.empty': 'No experience entries yet.', 'exp.saved': 'Experience saved', 'exp.fill': 'Fill in at least one field',
     'sd.title': 'Edit spool',
     'sd.thisSpool': 'This spool',
@@ -6964,6 +7018,44 @@ document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.targe
 var flmCur=null;
 function fdg(i){return document.getElementById(i);}
 async function flmOpen(fid){
+  await flmOpen0(fid);
+  try{ await flmHeadExtras(fid); }catch(e){ console.warn('flmHeadExtras',e); }
+}
+var _fdSwatchBound=false;
+function flmSwatch(){
+  var sw=document.getElementById('fd-swatch'); if(!sw) return;
+  var hx=[]; try{ hx=collectMcHexes('fd')||[]; }catch(e){}
+  var one=(document.getElementById('fd-fil-color').value||'').replace('#','').trim();
+  if(hx.length>=2){ try{ sw.style.background=multiColorGradient(hx,'longitudinal'); return; }catch(e){} }
+  sw.style.background= one ? '#'+one : '#888';
+}
+async function flmHeadExtras(fid){
+  var f=flmCur||{};
+  var g=function(i){return document.getElementById(i);};
+  var vsel=g('fd-fil-vendor');
+  var vname=(vsel.selectedIndex>=0 && vsel.value) ? vsel.options[vsel.selectedIndex].text : '';
+  g('fd-head-chip').textContent=[vname,(f.material||'')].filter(Boolean).join(' / ');
+  if(!_fdSwatchBound){ g('fd-fil-color').addEventListener('input',flmSwatch); _fdSwatchBound=true; }
+  flmSwatch();
+  var sp=[]; try{ sp=await api(SP+'/spool'); }catch(e){}
+  var mine=(sp||[]).filter(function(s){ return s.filament && String(s.filament.id)===String(fid) && !s.archived; });
+  var rem=0, init=0;
+  mine.forEach(function(s){ rem+=Number(s.remaining_weight||0); init+=Number(s.initial_weight||f.weight||0); });
+  var pct= init>0 ? Math.max(0,Math.min(100,Math.round(rem/init*100))) : 0;
+  g('fd-stock-pct').textContent=pct+'%';
+  g('fd-stock-bar').style.width=pct+'%';
+  g('fd-stock-spools').textContent=String(mine.length);
+  g('fd-stock-rem').textContent=String(Math.round(rem));
+  var st=g('fd-stock-state');
+  var ok=mine.length>0 && rem>0;
+  st.className='fd-state'+(ok?'':' empty');
+  st.textContent=t(ok?'flm.stockAvail':'flm.stockEmpty');
+  var ex=[]; try{ ex=await api(ST+'/filaments/'+fid+'/experience'); }catch(e){}
+  var rs=(ex||[]).map(function(e){return Number(e.rating||0);}).filter(function(x){return x>0;});
+  g('fd-rating-avg').textContent= rs.length ? (rs.reduce(function(a,b){return a+b;},0)/rs.length).toFixed(1)+' '+String.fromCharCode(9733) : '-';
+}
+
+async function flmOpen0(fid){
   var f,vs;
   try{f=await api(SP+'/filament/'+fid);vs=await api(SP+'/vendor');}catch(e){toast(t('sd.loadError')+e.message,'err');return;}
   flmCur=f;

@@ -761,6 +761,28 @@ def add_experience(fid: int, e: ExperienceIn):
         return {"id": cur.lastrowid}
 
 
+@app.get("/experience/summary")
+def experience_summary():
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM filament_experience ORDER BY id DESC").fetchall()
+    out = {}
+    for r in rows:
+        d = dict(r)
+        e = out.setdefault(d["filament_id"], {"count": 0, "rsum": 0, "rn": 0, "latest": d, "tags": []})
+        e["count"] += 1
+        if d.get("rating"):
+            e["rsum"] += d["rating"]
+            e["rn"] += 1
+        for t in (d.get("tags") or "").split(","):
+            t = t.strip()
+            if t and t not in e["tags"]:
+                e["tags"].append(t)
+    res = {}
+    for fid, e in out.items():
+        res[str(fid)] = {"count": e["count"], "rating": (round(e["rsum"] / e["rn"], 1) if e["rn"] else None), "latest": e["latest"], "tags": e["tags"][:6]}
+    return res
+
+
 @app.delete("/experience/{eid}")
 def delete_experience(eid: int):
     with db() as conn:

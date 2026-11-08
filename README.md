@@ -119,6 +119,7 @@ Die Datenbank (Spulen/Filamente, Lagerplaetze, Label-Vorlagen) startet leer und 
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.15.0 (2026-11-08)**: Neu: Menüpunkt 'Filamente' mit Filament-Karten (Suche, Material-Filter, Sortierung, Bestand aus den Spulen) und eigenem Filament-Dialog (Basisdaten, Druck, Erfahrung). Filament- und Spulen-Dialog sind getrennt; im Spulen-Dialog führt ein Knopf zum Filament-Dialog.
 - **v1.14.0 (2026-11-08)**: Neu: Abschnitt Erfahrung im Spulen-Dialog (Düse, Schichthöhe, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. Überhang/Brücke, Bewertung, Tags), gilt für alle Spulen eines Filaments. Neue Tabelle filament_experience im Storage-Service.
 - **v1.13.0 (2026-11-08)**: Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Datei `VERSION`, einmal taeglich direkt vom Browser abgefragt; abschaltbar mit `localStorage.setItem("lager_no_update_check","1")` in der Browser-Konsole). Gilt erst ab dieser Version: aeltere Installationen einmal manuell aktualisieren.
 - **v1.12.0 (2026-11-07)**: Offline-Drucker werden als offline angezeigt (kein veraltetes Modellbild, keine falschen Warnungen); Gedruckte Produkte zeigt bei Mehrfarbdrucken den Verbrauch pro Spule; jede Verbrauchsbuchung traegt die Druck-ID der Anycubic-Cloud (neue DB-Spalte wird beim Start automatisch ergaenzt); Rueckfrage-Dialog fuer Verbrauch ohne bekannten Slot. Update: git pull, docker compose up -d --build.

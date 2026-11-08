@@ -481,6 +481,31 @@ main>.panel.active{display:block;}
 @media (min-width:1500px){.device-grid{grid-template-columns:minmax(700px,52%) 1fr}.dev-col-printers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}.dev-col-printers>.dev-col-title{grid-column:1/-1}}
 @media (max-width:900px){.device-grid{grid-template-columns:1fr}.dev-col-printers{position:static;max-height:none;overflow:visible}}
 </style>
+<style id="flm-style">
+.flm-toolbar{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:.6rem 0 1rem}
+.flm-toolbar input[type=text]{min-width:220px;flex:1 1 220px}
+.flm-toolbar select{width:auto;min-width:140px}
+.flm-toolbar input[type=checkbox]{width:auto}
+.flm-chk{display:flex;align-items:center;gap:.35rem;font-size:.85rem;color:var(--muted)}
+.flm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:.9rem}
+.flm-card{background:#111827;border:1px solid var(--border);border-radius:12px;padding:.85rem;display:flex;flex-direction:column;gap:.45rem;border-top:3px solid var(--flm-c,#6b7280)}
+.flm-head{display:flex;gap:.6rem;align-items:center}
+.flm-dot{width:34px;height:34px;border-radius:50%;flex:none;border:2px solid rgba(255,255,255,.25)}
+.flm-vendor{font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.flm-name{font-weight:600;font-size:.98rem;line-height:1.2}
+.flm-mat{margin-left:auto;font-size:.7rem;border:1px solid var(--border);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.flm-row{display:flex;justify-content:space-between;gap:.5rem;font-size:.8rem;color:var(--muted)}
+.flm-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden}
+.flm-bar i{display:block;height:100%;background:#22c55e}
+.flm-bar i.low{background:#f59e0b}
+.flm-sub{font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;color:#f59e0b;margin-top:.2rem}
+.flm-chips{display:flex;flex-wrap:wrap;gap:.3rem}
+.flm-chip{font-size:.72rem;border:1px solid var(--border);border-radius:999px;padding:1px 8px}
+.flm-stars{color:#f59e0b;font-size:.85rem}
+.flm-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:.4rem}
+.fd-sec{font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);border-bottom:1px solid var(--border);margin:1rem 0 .6rem;padding-bottom:.25rem}
+#sd-filament-toggle,#sd-filament-fields,#spool-detail-overlay .section-note.warn{display:none!important}
+</style>
 </head>
 <body>
 <div id="conn-banner" style="display:none;position:sticky;top:0;z-index:9000;background:#7f1d1d;color:#fff;text-align:center;padding:.5rem 1rem;font-size:.9rem"></div>
@@ -511,6 +536,7 @@ main>.panel.active{display:block;}
     <button class="nav-item" data-nav-target="units" type="button"><span class="nav-icon">&#128230;</span><span class="nav-label">Lagerplaetze</span></button>
     <button class="nav-item" data-nav-target="printers" type="button"><span class="nav-icon">&#128424;</span><span class="nav-label">Drucker</span></button>
     <button class="nav-item" data-nav-target="spools" type="button"><span class="nav-icon">&#9850;</span><span class="nav-label">Spulen</span></button>
+    <button class="nav-item" data-nav-target="filaments" type="button"><span class="nav-icon">&#127912;</span><span class="nav-label">Filamente</span></button>
     <button class="nav-item" data-nav-target="new-spool" type="button"><span class="nav-icon">&#10024;</span><span class="nav-label">Neue Spule</span></button>
     <button class="nav-item" data-nav-target="shopping" type="button"><span class="nav-icon">&#128722;</span><span class="nav-label">Einkaufsliste</span></button>
     <button class="nav-item" data-nav-target="labels" type="button"><span class="nav-icon">&#127991;</span><span class="nav-label">Label-Designer</span></button>
@@ -541,6 +567,18 @@ main>.panel.active{display:block;}
 <button class="btn" id="new-spool-btn" type="button" data-i18n="ns.newSpoolBtn">+ Neue Spule</button>
 </div>
 </div>
+</div>
+
+<div class="panel" data-panel="filaments">
+<h2 data-i18n="flm.title">Filamente</h2>
+<p class="hint" data-i18n="flm.hint">Filament-Typen mit Bestand und Erfahrungswerten.</p>
+<div class="flm-toolbar">
+<input type="text" id="flm-search">
+<select id="flm-material"></select>
+<select id="flm-sort"><option value="name" data-i18n="flm.sortName">Name</option><option value="vendor" data-i18n="flm.sortVendor">Hersteller</option><option value="stock" data-i18n="flm.sortStock">Bestand</option></select>
+<label class="flm-chk"><input type="checkbox" id="flm-instock"> <span data-i18n="flm.inStock">Nur mit Bestand</span></label>
+</div>
+<div id="flm-grid" class="flm-grid"></div>
 </div>
 
 <div class="panel" data-panel="spools">
@@ -1291,7 +1329,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.14.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1318,6 +1356,55 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
       <button class="btn" id="spool-assign-save" data-i18n="common.save">Speichern</button>
     </div>
   </div>
+</div>
+
+<div class="assign-overlay" id="flm-dialog-overlay">
+<div class="assign-box wide scrollable">
+<h3 id="fd-title" data-i18n="flm.editTitle">Filament bearbeiten</h3>
+<p class="slot-label" id="fd-subtitle"></p>
+<p class="section-note warn" data-i18n="flm.sharedNote">Aenderungen gelten fuer alle Spulen dieses Filaments.</p>
+<div class="fd-sec" data-i18n="flm.secBasic">Basisdaten</div>
+<div class="field-grid">
+<div><label data-i18n="flm.name">Name</label><input type="text" id="fd-fil-name"></div>
+<div><label data-i18n="flm.vendor">Hersteller</label><select id="fd-fil-vendor"></select></div>
+<div><label data-i18n="flm.material">Material</label><input type="text" id="fd-fil-material"></div>
+<div><label data-i18n="flm.article">Artikelnummer</label><input type="text" id="fd-fil-article"></div>
+<div><label data-i18n="flm.colorName">Farbname</label><input type="text" id="fd-fil-colorname"></div>
+<div><label data-i18n="flm.colorHex">Farbe (Hex)</label><input type="text" id="fd-fil-color"></div>
+<div class="full"><button type="button" class="new-spool-toggle" id="fd-color-mode-toggle" data-mode="single" data-i18n="flm.multi">Mehrfarbig?</button>
+<div id="fd-multicolor-block" style="display:none"><label data-i18n="flm.direction">Ausrichtung</label>
+<select id="fd-fil-multi-direction"><option value="longitudinal" data-i18n="flm.longitudinal">Laengsstreifen</option><option value="coaxial" data-i18n="flm.radial">Radial</option></select>
+<div id="fd-multicolor-rows"></div>
+<button type="button" class="new-spool-toggle" id="fd-multicolor-add" data-i18n="flm.addColor">+ Farbe</button></div></div>
+<div><label data-i18n="flm.price">Preis (EUR)</label><input type="number" step="0.01" id="fd-fil-price"></div>
+<div><label data-i18n="flm.weight">Netto-Gewicht (g)</label><input type="number" step="1" id="fd-fil-weight"></div>
+<div><label data-i18n="flm.spoolWeight">Leerspule (g)</label><input type="number" step="1" id="fd-fil-spoolweight"></div>
+</div>
+<div class="fd-sec" data-i18n="flm.secPrint">Druck und Hardware</div>
+<div class="field-grid">
+<div><label data-i18n="flm.diameter">Durchmesser (mm)</label><input type="number" step="0.01" id="fd-fil-diameter"></div>
+<div><label data-i18n="flm.density">Dichte (g/cm3)</label><input type="number" step="0.01" id="fd-fil-density"></div>
+<div><label data-i18n="flm.extTemp">Duesentemperatur</label><input type="number" step="1" id="fd-fil-ext"></div>
+<div><label data-i18n="flm.bedTempFull">Betttemperatur</label><input type="number" step="1" id="fd-fil-bed"></div>
+</div>
+<div class="fd-sec" data-i18n="exp.title">Erfahrung</div>
+<div id="fd-exp-list"></div>
+<div class="field-grid" id="fd-exp-form">
+<div><label data-i18n="exp.nozzle">Duese (mm)</label><input type="number" id="fd-exp-nozzle" step="0.1" placeholder="0.4"></div>
+<div><label data-i18n="exp.layer">Schichthoehe (mm)</label><input type="number" id="fd-exp-layer" step="0.04" placeholder="0.2"></div>
+<div><label data-i18n="exp.plate">Druckplatte</label><input type="text" id="fd-exp-plate"></div>
+<div><label data-i18n="exp.adhesive">Haftmittel</label><input type="text" id="fd-exp-adhesive"></div>
+<div><label data-i18n="exp.brim">Brim</label><input type="text" id="fd-exp-brim" placeholder="5 mm"></div>
+<div><label data-i18n="exp.drying">Trocknen/Tempern</label><input type="text" id="fd-exp-drying" placeholder="4 h / 50 &deg;C"></div>
+<div><label data-i18n="exp.overhang">Max. Ueberhang</label><input type="number" id="fd-exp-overhang" step="1"></div>
+<div><label data-i18n="exp.bridge">Max. Bruecke (mm)</label><input type="number" id="fd-exp-bridge" step="1"></div>
+<div><label data-i18n="exp.rating">Bewertung</label><select id="fd-exp-rating"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+<div><label data-i18n="exp.tags">Tags (Komma)</label><input type="text" id="fd-exp-tags"></div>
+<div class="full"><label data-i18n="exp.text">Notiz</label><input type="text" id="fd-exp-text"></div>
+</div>
+<div class="row-actions"><button type="button" class="btn secondary" id="fd-exp-add" data-i18n="exp.add">Eintrag speichern</button></div>
+<div class="row-actions"><button class="btn secondary" id="fd-cancel" data-i18n="common.cancel">Abbrechen</button><button class="btn" id="fd-save" data-i18n="common.save">Speichern</button></div>
+</div>
 </div>
 
 <div class="assign-overlay" id="spool-detail-overlay">
@@ -1558,7 +1645,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
+      <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>Neu: Men&uuml;punkt Filamente mit Kartenansicht (Marke, Material, Bestand aus den Spulen, Temperaturen, Erfahrungswerte, Bewertung), Suche und Filter.</li><li>Neu: eigener Filament-Dialog (Basisdaten, Druck und Hardware, Erfahrung). Der Spulen-Dialog zeigt nur noch Spulendaten und &ouml;ffnet den Filament-Dialog per Knopf.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Drucker offline: Offline-Drucker zeigen jetzt &bdquo;offline&ldquo; statt &bdquo;available&ldquo;, ohne Modellbild mit abgelaufenem Link, ohne falsche &bdquo;Drucker ca. 0 g&ldquo;-Warnung und ohne veralteten aktiven Slot.</li><li>Gedruckte Produkte: Bei Mehrfarbdrucken wird der Verbrauch pro Spule angezeigt (Farbpunkt, Spule, Gramm). Die Druckzeile speichert jetzt die Summe aller Spulen statt nur der gr&ouml;&szlig;ten.</li><li>Jede Verbrauchsbuchung tr&auml;gt jetzt die Druck-ID der Anycubic-Cloud; Altdaten wurden automatisch zugeordnet, mehrdeutige F&auml;lle bleiben unver&auml;ndert.</li></ul>
       <h4>v1.11.0 &ndash; 30.10.2026</h4><ul><li>Lagerpl&auml;tze: Ger&auml;te-Karten per Maus skalierbar (Griff unten rechts, rastet bei 33 / 50 / 100 % ein, Doppelklick = zur&uuml;cksetzen). Die Karte selbst wird schmaler, mehrere Dryboxen/Drucker passen nebeneinander. Karten lassen sich ein-/ausklappen. Die Einstellung wird serverseitig gespeichert und gilt auf allen Ger&auml;ten.</li></ul><h4>v1.10.0 &ndash; 30.10.2026</h4>
       <p>Spoolman wird nicht mehr ben&ouml;tigt: Spulen- und Filamentverwaltung sind jetzt eingebaut (Filament-Datenbank: SpoolmanDB). QR-Pr&auml;fix <code>WEB+FILASTORAG:</code> (alte Etiketten bleiben lesbar). Drybox: dickere Ebenen-Trenner, bis zu 60 Pl&auml;tze pro Ebene, Hinweis zu Reihen. Spoolman-Links entfernt.</p>
@@ -1635,6 +1722,7 @@ const I18N = {
     'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
     'assign.title': 'Platz zuweisen',
     'assign.clear': 'Freimachen',
+    'flm.spool1': 'Spule', 'flm.nav': 'Filamente', 'flm.title': 'Filamente', 'flm.hint': 'Filament-Typen mit Bestand und Erfahrungswerten. Bearbeiten wirkt auf alle Spulen dieses Filaments.', 'flm.search': 'Suche (Marke, Name, Material)', 'flm.allMat': 'Alle Materialien', 'flm.sortName': 'Name', 'flm.sortVendor': 'Hersteller', 'flm.sortStock': 'Bestand', 'flm.inStock': 'Nur mit Bestand', 'flm.spools': 'Spulen', 'flm.rest': 'Rest', 'flm.nozzleTemp': 'Düse', 'flm.bedTemp': 'Bett', 'flm.noExp': 'Noch keine Erfahrung', 'flm.expCount': 'Einträge', 'flm.edit': 'Bearbeiten', 'flm.empty': 'Keine Filamente gefunden.', 'flm.editTitle': 'Filament bearbeiten', 'flm.sharedNote': 'Änderungen gelten für alle Spulen dieses Filaments.', 'flm.secBasic': 'Basisdaten', 'flm.secPrint': 'Druck und Hardware', 'flm.name': 'Name', 'flm.vendor': 'Hersteller', 'flm.material': 'Material', 'flm.article': 'Artikelnummer', 'flm.colorName': 'Farbname', 'flm.colorHex': 'Farbe (Hex)', 'flm.multi': 'Mehrfarbig?', 'flm.direction': 'Ausrichtung', 'flm.longitudinal': 'Längsstreifen', 'flm.radial': 'Radial', 'flm.addColor': '+ Farbe', 'flm.price': 'Preis (EUR)', 'flm.weight': 'Netto-Gewicht (g)', 'flm.spoolWeight': 'Leerspule (g)', 'flm.diameter': 'Durchmesser (mm)', 'flm.density': 'Dichte (g/cm3)', 'flm.extTemp': 'Düsentemperatur (°C)', 'flm.bedTempFull': 'Betttemperatur (°C)', 'flm.saveErr': 'Speichern fehlgeschlagen: ',
     'exp.title': 'Erfahrung', 'exp.note': 'Gilt für das Filament (alle Spulen dieses Typs).', 'exp.nozzle': 'Düse (mm)', 'exp.layer': 'Schichthöhe (mm)', 'exp.plate': 'Druckplatte', 'exp.adhesive': 'Haftmittel', 'exp.brim': 'Brim', 'exp.drying': 'Trocknen/Tempern', 'exp.overhang': 'Max. Überhang (°)', 'exp.bridge': 'Max. Brücke (mm)', 'exp.rating': 'Bewertung', 'exp.tags': 'Tags (Komma)', 'exp.text': 'Notiz', 'exp.add': 'Eintrag speichern', 'exp.empty': 'Noch keine Erfahrungswerte.', 'exp.saved': 'Erfahrung gespeichert', 'exp.fill': 'Mindestens ein Feld ausfüllen',
     'sd.title': 'Spule bearbeiten',
     'sd.thisSpool': 'Diese Spule',
@@ -1877,7 +1965,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
+      <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>New: Filaments menu item with card view (brand, material, stock from your spools, temperatures, experience, rating), search and filters.</li><li>New: dedicated filament dialog (basics, print and hardware, experience). The spool dialog now only shows spool data and opens the filament dialog via a button.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Offline printers: now shown as &ldquo;offline&rdquo; instead of &ldquo;available&rdquo;, with no expired model image, no false &ldquo;Printer approx. 0 g&rdquo; warning and no stale active slot.</li><li>Printed products: multi-colour prints show consumption per spool (colour dot, spool, grams). The print row now stores the total of all spools instead of only the largest one.</li><li>Every usage booking now carries the Anycubic cloud print ID; existing data was matched automatically, ambiguous cases were left untouched.</li></ul>
       <h4>v1.11.0 &ndash; 2026-10-30</h4><ul><li>Storage locations: device cards can be resized with the mouse (handle bottom right, snaps at 33 / 50 / 100 %, double-click = reset). The card itself gets narrower, so several dryboxes/printers fit side by side. Cards can be collapsed. The setting is stored on the server and applies on all devices.</li></ul><h4>v1.10.0 &ndash; 2026-10-30</h4>
       <p>Spoolman is no longer required: spool and filament management is now built in (filament database: SpoolmanDB). QR prefix <code>WEB+FILASTORAG:</code> (old labels remain readable). Drybox: thicker level dividers, up to 60 slots per level, hint about rows. Spoolman links removed.</p>
@@ -1954,6 +2042,7 @@ const I18N = {
     'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
     'assign.title': 'Assign slot',
     'assign.clear': 'Clear',
+    'flm.spool1': 'spool', 'flm.nav': 'Filaments', 'flm.title': 'Filaments', 'flm.hint': 'Filament types with stock and experience. Editing affects all spools of this filament.', 'flm.search': 'Search (brand, name, material)', 'flm.allMat': 'All materials', 'flm.sortName': 'Name', 'flm.sortVendor': 'Brand', 'flm.sortStock': 'Stock', 'flm.inStock': 'Only in stock', 'flm.spools': 'spools', 'flm.rest': 'left', 'flm.nozzleTemp': 'Nozzle', 'flm.bedTemp': 'Bed', 'flm.noExp': 'No experience yet', 'flm.expCount': 'entries', 'flm.edit': 'Edit', 'flm.empty': 'No filaments found.', 'flm.editTitle': 'Edit filament', 'flm.sharedNote': 'Changes apply to all spools of this filament.', 'flm.secBasic': 'Basics', 'flm.secPrint': 'Print and hardware', 'flm.name': 'Name', 'flm.vendor': 'Brand', 'flm.material': 'Material', 'flm.article': 'Article no.', 'flm.colorName': 'Color name', 'flm.colorHex': 'Color (hex)', 'flm.multi': 'Multicolor?', 'flm.direction': 'Direction', 'flm.longitudinal': 'Lengthwise stripes', 'flm.radial': 'Radial', 'flm.addColor': '+ Color', 'flm.price': 'Price (EUR)', 'flm.weight': 'Net weight (g)', 'flm.spoolWeight': 'Empty spool (g)', 'flm.diameter': 'Diameter (mm)', 'flm.density': 'Density (g/cm3)', 'flm.extTemp': 'Nozzle temperature (°C)', 'flm.bedTempFull': 'Bed temperature (°C)', 'flm.saveErr': 'Save failed: ',
     'exp.title': 'Experience', 'exp.note': 'Applies to the filament (all spools of this type).', 'exp.nozzle': 'Nozzle (mm)', 'exp.layer': 'Layer height (mm)', 'exp.plate': 'Build plate', 'exp.adhesive': 'Adhesive', 'exp.brim': 'Brim', 'exp.drying': 'Drying/annealing', 'exp.overhang': 'Max. overhang (°)', 'exp.bridge': 'Max. bridge (mm)', 'exp.rating': 'Rating', 'exp.tags': 'Tags (comma)', 'exp.text': 'Note', 'exp.add': 'Save entry', 'exp.empty': 'No experience entries yet.', 'exp.saved': 'Experience saved', 'exp.fill': 'Fill in at least one field',
     'sd.title': 'Edit spool',
     'sd.thisSpool': 'This spool',
@@ -6798,6 +6887,155 @@ document.addEventListener('click',async function(ev){
     }catch(e){toast(e.message,'err');}
   }
 });
+</script>
+
+<script id="flm-script">
+var flmFils=[],flmSpools=[],flmSumm={};
+function flmHexes(f){return f.multi_color_hexes?String(f.multi_color_hexes).split(',').map(function(x){return x.trim().replace(/^#/,'');}).filter(Boolean):[];}
+function flmColor(f){var h=flmHexes(f);if(h.length>=2){return multiColorGradient(h);}return f.color_hex?'#'+String(f.color_hex).replace(/^#/,''):'#6b7280';}
+function flmStock(fid){var n=0,rem=0,ini=0;flmSpools.forEach(function(s){if(s.archived||!s.filament||s.filament.id!==fid)return;n++;rem+=(s.remaining_weight||0);ini+=(s.initial_weight||s.filament.weight||0);});return {n:n,rem:rem,ini:ini};}
+async function flmLoad(){
+  var l=document.querySelector('[data-nav-target="filaments"] .nav-label');if(l){l.textContent=t('flm.nav');}
+  try{var r=await Promise.all([api(SP+'/filament'),api(SP+'/spool'),api(ST+'/experience/summary')]);flmFils=r[0]||[];flmSpools=r[1]||[];flmSumm=r[2]||{};}
+  catch(e){toast(t('sd.loadError')+e.message,'err');return;}
+  flmFillMat();flmRender();
+}
+function flmFillMat(){
+  var sel=document.getElementById('flm-material');var cur=sel.value;var mats=[];
+  flmFils.forEach(function(f){if(f.material&&mats.indexOf(f.material)<0)mats.push(f.material);});mats.sort();
+  sel.innerHTML='<option value="">'+_xe(t('flm.allMat'))+'</option>'+mats.map(function(m){return '<option>'+_xe(m)+'</option>';}).join('');
+  sel.value=cur;document.getElementById('flm-search').placeholder=t('flm.search');
+}
+function flmRender(){
+  var q=document.getElementById('flm-search').value.trim().toLowerCase();
+  var mat=document.getElementById('flm-material').value;
+  var sort=document.getElementById('flm-sort').value;
+  var only=document.getElementById('flm-instock').checked;
+  var rows=flmFils.map(function(f){return {f:f,s:flmStock(f.id)};}).filter(function(x){
+    var f=x.f;var hay=((f.vendor&&f.vendor.name)||'')+' '+(f.name||'')+' '+(f.material||'')+' '+(f.article_number||'');
+    if(q&&hay.toLowerCase().indexOf(q)<0)return false;
+    if(mat&&f.material!==mat)return false;
+    if(only&&x.s.n===0)return false;
+    return true;});
+  rows.sort(function(a,b){
+    if(sort==='stock')return b.s.rem-a.s.rem;
+    if(sort==='vendor')return String((a.f.vendor&&a.f.vendor.name)||'').localeCompare(String((b.f.vendor&&b.f.vendor.name)||''));
+    return String(a.f.name||'').localeCompare(String(b.f.name||''));});
+  document.getElementById('flm-grid').innerHTML=rows.length?rows.map(flmCard).join(''):'<p class="hint">'+_xe(t('flm.empty'))+'</p>';
+}
+function flmChip(txt){return '<span class="flm-chip">'+_xe(txt)+'</span>';}
+function flmCard(x){
+  var f=x.f,s=x.s,e=flmSumm[String(f.id)];var col=flmColor(f);
+  var pct=s.ini>0?Math.max(0,Math.min(100,Math.round(s.rem/s.ini*100))):0;
+  var h='<div class="flm-card" style="--flm-c:'+(col.indexOf('#')===0?col:'#6b7280')+'">';
+  h+='<div class="flm-head"><div class="flm-dot" style="background:'+col+'"></div><div><div class="flm-vendor">'+_xe((f.vendor&&f.vendor.name)||'')+'</div><div class="flm-name">'+_xe(f.name||'')+'</div></div><span class="flm-mat">'+_xe(f.material||'')+'</span></div>';
+  h+='<div class="flm-row"><span>'+s.n+' '+_xe(t(s.n==1?'flm.spool1':'flm.spools'))+' &middot; '+Math.round(s.rem)+' g '+_xe(t('flm.rest'))+'</span><span>'+pct+'%</span></div>';
+  h+='<div class="flm-bar"><i class="'+(pct<20?'low':'')+'" style="width:'+pct+'%"></i></div>';
+  var tp=[];
+  if(f.settings_extruder_temp!=null)tp.push(_xe(t('flm.nozzleTemp'))+' '+f.settings_extruder_temp+'&deg;C');
+  if(f.settings_bed_temp!=null)tp.push(_xe(t('flm.bedTemp'))+' '+f.settings_bed_temp+'&deg;C');
+  if(f.diameter)tp.push(f.diameter+' mm');
+  h+='<div class="flm-row"><span>'+tp.join(' &middot; ')+'</span></div>';
+  h+='<div class="flm-sub">'+_xe(t('exp.title'))+'</div>';
+  var stars='';
+  if(e){
+    var l=e.latest||{};var c=[];
+    if(l.nozzle_mm!=null||l.layer_mm!=null)c.push(flmChip((l.nozzle_mm!=null?l.nozzle_mm:'-')+' / '+(l.layer_mm!=null?l.layer_mm:'-')+' mm'));
+    if(l.plate)c.push(flmChip(l.plate));
+    if(l.adhesive)c.push(flmChip(l.adhesive));
+    if(l.brim)c.push(flmChip('Brim '+l.brim));
+    if(l.drying)c.push(flmChip(l.drying));
+    if(l.max_overhang!=null)c.push('<span class="flm-chip">'+_xe(l.max_overhang)+'&deg;</span>');
+    (e.tags||[]).forEach(function(tg){c.push(flmChip('#'+tg));});
+    h+='<div class="flm-chips">'+c.join('')+'</div>';
+    if(e.rating){var rr=Math.round(e.rating);stars='&#9733;'.repeat(rr)+'&#9734;'.repeat(5-rr)+' '+e.rating;}
+    stars+=' <span class="flm-row" style="display:inline">('+e.count+' '+_xe(t('flm.expCount'))+')</span>';
+  }else{h+='<div class="flm-row"><span>'+_xe(t('flm.noExp'))+'</span></div>';}
+  h+='<div class="flm-foot"><span class="flm-stars">'+stars+'</span><button type="button" class="btn secondary" data-flm-edit="'+f.id+'">'+_xe(t('flm.edit'))+'</button></div></div>';
+  return h;
+}
+['flm-search','flm-material','flm-sort','flm-instock'].forEach(function(id){var el=document.getElementById(id);if(el){el.addEventListener('input',flmRender);el.addEventListener('change',flmRender);}});
+(function(){var nb=document.querySelector('[data-nav-target="filaments"]');if(nb){nb.addEventListener('click',flmLoad);var l=nb.querySelector('.nav-label');if(l){l.textContent=t('flm.nav');}}
+  if(document.querySelector('.panel.active[data-panel="filaments"]')){flmLoad();}})();
+document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-flm-edit]');if(b){flmOpen(parseInt(b.getAttribute('data-flm-edit'),10));}});
+</script>
+
+<script id="flm-script2">
+var flmCur=null;
+function fdg(i){return document.getElementById(i);}
+async function flmOpen(fid){
+  var f,vs;
+  try{f=await api(SP+'/filament/'+fid);vs=await api(SP+'/vendor');}catch(e){toast(t('sd.loadError')+e.message,'err');return;}
+  flmCur=f;
+  fdg('fd-subtitle').textContent='#'+f.id;
+  fdg('fd-fil-name').value=f.name||'';
+  fdg('fd-fil-vendor').innerHTML='<option value="">-</option>'+(vs||[]).map(function(v){return '<option value="'+v.id+'">'+_xe(v.name)+'</option>';}).join('');
+  fdg('fd-fil-vendor').value=f.vendor?String(f.vendor.id):'';
+  fdg('fd-fil-material').value=f.material||'';
+  fdg('fd-fil-article').value=f.article_number||'';
+  fdg('fd-fil-colorname').value=cnGet(f);
+  fdg('fd-fil-color').value=f.color_hex||'';
+  var hx=flmHexes(f);
+  if(hx.length>=2){renderMcRows('fd',hx);fdg('fd-fil-multi-direction').value=f.multi_color_direction||'longitudinal';setColorMode('fd','multi');}
+  else{renderMcRows('fd',[]);fdg('fd-fil-multi-direction').value='longitudinal';setColorMode('fd','single');}
+  var nv=function(i,v){fdg(i).value=(v==null?'':v);};
+  nv('fd-fil-price',f.price);nv('fd-fil-weight',f.weight);nv('fd-fil-spoolweight',f.spool_weight);nv('fd-fil-diameter',f.diameter);nv('fd-fil-density',f.density);nv('fd-fil-ext',f.settings_extruder_temp);nv('fd-fil-bed',f.settings_bed_temp);
+  fdg('flm-dialog-overlay').classList.add('show');
+  flmExpLoad();
+}
+function flmClose(){fdg('flm-dialog-overlay').classList.remove('show');flmCur=null;flmLoad();}
+async function flmSave(){
+  if(!flmCur)return;
+  var num=function(i,isInt){var v=fdg(i).value.trim();if(v==='')return null;return isInt?parseInt(v,10):parseFloat(v);};
+  var multi=fdg('fd-color-mode-toggle').dataset.mode==='multi';var hx=multi?collectMcHexes('fd'):[];var mm=(multi&&hx.length>=2);
+  var body={name:fdg('fd-fil-name').value.trim()||null,material:fdg('fd-fil-material').value.trim()||null,article_number:fdg('fd-fil-article').value.trim()||null,
+    extra:cnExtra(flmCur,fdg('fd-fil-colorname').value),color_hex:mm?null:(fdg('fd-fil-color').value||null),
+    multi_color_hexes:mm?hx.join(','):null,multi_color_direction:mm?fdg('fd-fil-multi-direction').value:null,
+    price:num('fd-fil-price'),weight:num('fd-fil-weight'),spool_weight:num('fd-fil-spoolweight'),settings_extruder_temp:num('fd-fil-ext',true),settings_bed_temp:num('fd-fil-bed',true)};
+  var d=num('fd-fil-diameter');if(d!==null)body.diameter=d;
+  var de=num('fd-fil-density');if(de!==null)body.density=de;
+  var vid=fdg('fd-fil-vendor').value;var cur=flmCur.vendor?String(flmCur.vendor.id):'';
+  if(vid!==''&&vid!==cur)body.vendor_id=parseInt(vid,10);
+  try{await api(SP+'/filament/'+flmCur.id,{method:'PATCH',body:JSON.stringify(body)});toast(t('common.saved'),'ok');flmClose();if(typeof loadSpools==='function')loadSpools();}
+  catch(e){toast(t('flm.saveErr')+e.message,'err');}
+}
+async function flmExpLoad(){
+  fdg('fd-exp-list').innerHTML='';if(!flmCur)return;
+  try{flmExpRender(await api(ST+'/filaments/'+flmCur.id+'/experience')||[]);}catch(e){toast(t('sd.loadError')+e.message,'err');}
+}
+function flmExpRender(rows){
+  var box=fdg('fd-exp-list');
+  if(rows.length===0){box.innerHTML='<p class="section-note">'+_xe(t('exp.empty'))+'</p>';return;}
+  box.innerHTML=rows.map(function(r){
+    var c=[];
+    if(r.nozzle_mm!=null)c.push(_xe(t('exp.nozzle').replace(' (mm)',''))+' '+r.nozzle_mm);
+    if(r.layer_mm!=null)c.push(r.layer_mm+' mm');
+    ['plate','adhesive','drying'].forEach(function(k){if(r[k])c.push(_xe(r[k]));});
+    if(r.brim)c.push('Brim '+_xe(r.brim));
+    if(r.max_overhang!=null)c.push(r.max_overhang+'&deg;');
+    if(r.max_bridge!=null)c.push(r.max_bridge+' mm');
+    if(r.tags)r.tags.split(',').forEach(function(x){x=x.trim();if(x)c.push('#'+_xe(x));});
+    var st=r.rating?'&#9733;'.repeat(r.rating)+'&#9734;'.repeat(5-r.rating)+' ':'';
+    return '<div class="pr-parts" style="align-items:center;margin:.3rem 0">'+(st?'<span>'+st+'</span>':'')+c.map(function(x){return '<span class="pr-chip">'+x+'</span>';}).join('')+(r.note?'<span>'+_xe(r.note)+'</span>':'')+'<button type="button" class="new-spool-toggle" data-fd-del="'+r.id+'">&times;</button></div>';
+  }).join('');
+}
+async function flmExpAdd(){
+  if(!flmCur)return;
+  var g=function(i){return fdg('fd-exp-'+i).value.trim();};var n=function(i){var v=g(i);return v===''?null:Number(v);};
+  var body={nozzle_mm:n('nozzle'),layer_mm:n('layer'),plate:g('plate')||null,adhesive:g('adhesive')||null,brim:g('brim')||null,drying:g('drying')||null,max_overhang:n('overhang'),max_bridge:n('bridge'),rating:n('rating'),tags:g('tags')||null,note:g('text')||null};
+  if(!Object.values(body).some(function(v){return v!==null;})){toast(t('exp.fill'),'err');return;}
+  try{await api(ST+'/filaments/'+flmCur.id+'/experience',{method:'POST',body:JSON.stringify(body)});
+    ['nozzle','layer','plate','adhesive','brim','drying','overhang','bridge','rating','tags','text'].forEach(function(i){fdg('fd-exp-'+i).value='';});
+    toast(t('exp.saved'));flmExpLoad();}catch(e){toast(e.message,'err');}
+}
+fdg('fd-save').addEventListener('click',flmSave);
+fdg('fd-cancel').addEventListener('click',flmClose);
+fdg('fd-exp-add').addEventListener('click',flmExpAdd);
+fdg('fd-color-mode-toggle').addEventListener('click',function(){var m=this.dataset.mode==='multi'?'single':'multi';setColorMode('fd',m);if(m==='multi'&&collectMcHexes('fd').length<2){renderMcRows('fd',['','']);}});
+fdg('fd-multicolor-add').addEventListener('click',function(){var b=fdg('fd-multicolor-rows');b.insertAdjacentHTML('beforeend',mcRowHtml(''));wireMcRows(b);});
+document.addEventListener('click',async function(ev){var d=ev.target.closest&&ev.target.closest('[data-fd-del]');if(d){try{await api(ST+'/experience/'+d.dataset.fdDel,{method:'DELETE'});flmExpLoad();}catch(e){toast(e.message,'err');}}});
+(function(){var tg=fdg('sd-filament-toggle');if(!tg)return;var b=document.createElement('button');b.type='button';b.className='new-spool-toggle';b.id='sd-open-flm';b.textContent=t('flm.editTitle');
+  b.addEventListener('click',function(){var f=sdCurrentSpool&&sdCurrentSpool.filament;if(f){closeSpoolDetail();flmOpen(f.id);}});tg.parentNode.insertBefore(b,tg);})();
 </script>
 
 </body>

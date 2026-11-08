@@ -119,6 +119,7 @@ Die Datenbank (Spulen/Filamente, Lagerplaetze, Label-Vorlagen) startet leer und 
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.15.2 (2026-11-08)**: Neue-Spule-Dialog neu gestaltet (Kopfzeile mit Anlegen/Abbrechen, Karten für Filament und Spule).
 - **v1.15.1 (2026-11-08)**: Filament-Dialog neu gestaltet (breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten für Stammdaten und Bestand).
 - **v1.15.0 (2026-11-08)**: Neu: Menüpunkt 'Filamente' mit Filament-Karten (Suche, Material-Filter, Sortierung, Bestand aus den Spulen) und eigenem Filament-Dialog (Basisdaten, Druck, Erfahrung). Filament- und Spulen-Dialog sind getrennt; im Spulen-Dialog führt ein Knopf zum Filament-Dialog.
 - **v1.14.0 (2026-11-08)**: Neu: Abschnitt Erfahrung im Spulen-Dialog (Düse, Schichthöhe, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. Überhang/Brücke, Bewertung, Tags), gilt für alle Spulen eines Filaments. Neue Tabelle filament_experience im Storage-Service.

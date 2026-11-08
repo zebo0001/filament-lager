@@ -119,6 +119,7 @@ The database (spools/filaments, storage locations, label templates) starts out e
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.15.2 (2026-11-08)**: Redesigned new-spool dialog (header with Create/Cancel, filament and spool cards).
 - **v1.15.1 (2026-11-08)**: Redesigned filament dialog (wide layout, header with Save/Cancel, collapsible sections, master data and stock cards).
 - **v1.15.0 (2026-11-08)**: New: 'Filaments' menu item with filament cards (search, material filter, sorting, stock from spools) and a dedicated filament dialog (basics, print, experience). Filament and spool dialogs are now separate; the spool dialog has a button leading to the filament dialog.
 - **v1.14.0 (2026-11-08)**: New: Experience section in the spool dialog (nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang/bridge, rating, tags), shared by all spools of a filament. New table filament_experience in the storage service.

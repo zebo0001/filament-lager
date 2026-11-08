@@ -481,6 +481,14 @@ main>.panel.active{display:block;}
 @media (min-width:1500px){.device-grid{grid-template-columns:minmax(700px,52%) 1fr}.dev-col-printers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start}.dev-col-printers>.dev-col-title{grid-column:1/-1}}
 @media (max-width:900px){.device-grid{grid-template-columns:1fr}.dev-col-printers{position:static;max-height:none;overflow:visible}}
 </style>
+<style id="ns-style">
+#new-spool-overlay .assign-box{max-width:960px;width:96vw;padding:0}
+#new-spool-save{background:#3ecf8e;color:#04210f;font-weight:700;border:0}
+.fd-sub-text{font-size:.82rem;color:#94a3b8}
+.fd-sub .new-spool-toggle{margin:0}
+#new-spool-overlay .filament-pick-select{width:100%;border-radius:8px;margin-top:.5rem}
+#new-spool-overlay .fd-panel .section-label{display:none}
+</style>
 <style id="flm-style2">
 #flm-dialog-overlay .assign-box{max-width:1040px;width:96vw;padding:0}
 .fd-head{position:sticky;top:0;z-index:6;display:flex;gap:1rem;align-items:flex-start;justify-content:space-between;padding:1rem 1.25rem;background:#0f172a;border-bottom:1px solid rgba(148,163,184,.2);border-radius:14px 14px 0 0}
@@ -1369,7 +1377,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.1</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.2</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1530,35 +1538,29 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 
 <div class="assign-overlay" id="new-spool-overlay">
 <div class="assign-box wide scrollable">
+<div class="fd-head">
+<div class="fd-head-l">
 <h3 data-i18n="ns.title">Neue Spule</h3>
-<p class="slot-label" data-i18n="ns.subtitle">Bestehenden Filament-Typ w&auml;hlen oder einen neuen anlegen.</p>
-
-<button type="button" class="new-spool-toggle" id="ns-mode-toggle" data-i18n="ns.newFilamentTypeBtn">Neuen Filament-Typ anlegen</button>
-
-<div id="ns-existing-block">
+<div class="fd-sub"><span class="fd-sub-text" data-i18n="ns.subtitle">Bestehenden Filament-Typ waehlen oder einen neuen anlegen.</span><button type="button" class="new-spool-toggle" id="ns-mode-toggle" data-i18n="ns.newFilamentTypeBtn">Neuen Filament-Typ anlegen</button></div>
+</div>
+<div class="row-actions"><button class="btn secondary" id="new-spool-cancel" data-i18n="common.cancel">Abbrechen</button><button class="btn" id="new-spool-save" data-i18n="ns.createSpool">Spule anlegen</button></div>
+</div>
+<div class="fd-body">
+<details class="fd-card" open>
+<summary><span>&#127912;</span><span data-i18n="flm.filamentParams">Filament</span><span class="fd-chev">&#9660;</span></summary>
+<div class="fd-card-body">
+<div id="ns-existing-block" class="fd-panel">
 <div class="section-label" data-i18n="ns.chooseFilamentType">Filament-Typ w&auml;hlen</div>
 <input type="text" class="filament-pick-search" id="ns-filament-search" data-i18n-placeholder="ns.searchPlaceholder" placeholder="Suche nach Hersteller, Material, Name&hellip;">
 <select id="ns-filament-select" class="filament-pick-select" size="6"></select>
 </div>
-
 <div id="ns-new-block" style="display:none">
-<div class="section-label" data-i18n="ns.newFilamentTypeLabel">Neuer Filament-Typ</div>
-<div class="filament-pick-search">
-<input type="text" id="ns-db-search" data-i18n-placeholder="ns.dbSearchPlaceholder" placeholder="SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA+&hellip;)">
-<div id="ns-db-results" class="db-results" style="display:none"></div>
-</div>
-<div class="field-grid">
-<div><label for="ns-fil-name" data-i18n="fil.name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div><div><label for="ns-fil-colorname" id="cn-lbl-ns">Farbname</label><input type="text" id="ns-fil-colorname" placeholder="z.B. Hellblau"></div>
-<div><label for="ns-fil-material" data-i18n="fil.material">Material</label><input type="text" id="ns-fil-material" placeholder="z.B. PLA"></div>
-<div>
+<div class="fd-panel amber" style="margin-bottom:1rem"><div class="fd-panel-title" data-i18n="ns.newFilamentTypeLabel">Neuer Filament-Typ</div><input type="text" id="ns-db-search" data-i18n-placeholder="ns.dbSearchPlaceholder" placeholder="SpoolmanDB durchsuchen (z.B. Prusament, eSun PLA+&hellip;)"><div id="ns-db-results" class="db-results" style="display:none"></div></div>
+<div class="fd-cols">
+<div class="fd-panel"><div class="fd-panel-title" data-i18n="flm.master">Stammdaten</div><div class="field-grid"><div><label for="ns-fil-name" data-i18n="fil.name">Name</label><input type="text" id="ns-fil-name" placeholder="z.B. Basic Black"></div><div><label for="ns-fil-colorname" id="cn-lbl-ns">Farbname</label><input type="text" id="ns-fil-colorname" placeholder="z.B. Hellblau"></div><div><label for="ns-fil-material" data-i18n="fil.material">Material</label><input type="text" id="ns-fil-material" placeholder="z.B. PLA"></div><div>
 <label for="ns-fil-vendor-select" data-i18n="fil.vendor">Hersteller</label>
 <select id="ns-fil-vendor-select"></select>
-</div>
-<div id="ns-fil-vendor-new-wrap" style="display:none"><label for="ns-fil-vendor-new" data-i18n="fil.vendorNew">Neuer Hersteller</label><input type="text" id="ns-fil-vendor-new" placeholder="Name"></div>
-<div><label for="ns-fil-color" data-i18n="fil.colorHexNoHash">Farbe (Hex, ohne #)</label><input type="text" id="ns-fil-color" placeholder="z.B. FF0000"></div><div><label for="ns-fil-article" data-i18n="fil.articleNr">Hersteller-Artikelnr.</label><input type="text" id="ns-fil-article" placeholder="z.B. 03560422A"></div>
-<div class="full">
-<button type="button" class="new-spool-toggle" id="ns-color-mode-toggle" data-mode="single" data-i18n="fil.multicolor">Mehrfarbig?</button>
-<div id="ns-multicolor-block" style="display:none">
+</div><div id="ns-fil-vendor-new-wrap" style="display:none"><label for="ns-fil-vendor-new" data-i18n="fil.vendorNew">Neuer Hersteller</label><input type="text" id="ns-fil-vendor-new" placeholder="Name"></div><div><label for="ns-fil-color" data-i18n="fil.colorHexNoHash">Farbe (Hex, ohne #)</label><input type="text" id="ns-fil-color" placeholder="z.B. FF0000"></div><div><label for="ns-fil-article" data-i18n="fil.articleNr">Hersteller-Artikelnr.</label><input type="text" id="ns-fil-article" placeholder="z.B. 03560422A"></div></div><div style="margin-top:.6rem"><button type="button" class="new-spool-toggle" id="ns-color-mode-toggle" data-mode="single" data-i18n="fil.multicolor">Mehrfarbig?</button><div id="ns-multicolor-block" style="display:none">
 <label for="ns-fil-multi-direction" data-i18n="fil.direction">Ausrichtung</label>
 <select id="ns-fil-multi-direction">
 <option value="longitudinal" data-i18n="fil.longitudinal">L&auml;ngsstreifen (nebeneinander)</option>
@@ -1566,32 +1568,23 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 </select>
 <div id="ns-multicolor-rows"></div>
 <button type="button" class="new-spool-toggle" id="ns-multicolor-add" data-i18n="fil.addColor">+ Farbe hinzuf&uuml;gen</button>
+</div></div></div>
+<div class="fd-panel green"><div class="fd-panel-title" data-i18n="flm.printParams">Druckparameter</div><div class="field-grid"><div><label for="ns-fil-diameter" data-i18n="fil.diameter">Durchmesser (mm)</label><input type="number" id="ns-fil-diameter" step="0.01" value="1.75"></div><div><label for="ns-fil-density" data-i18n="fil.density">Dichte (g/cm&sup3;)</label><input type="number" id="ns-fil-density" step="0.01" placeholder="z.B. 1.24"></div><div><label for="ns-fil-extruder-temp" data-i18n="fil.extruderTemp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-extruder-temp" step="1"></div><div><label for="ns-fil-bed-temp" data-i18n="fil.bedTemp">Betttemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-bed-temp" step="1"></div></div></div>
 </div>
 </div>
-<div><label for="ns-fil-diameter" data-i18n="fil.diameter">Durchmesser (mm)</label><input type="number" id="ns-fil-diameter" step="0.01" value="1.75"></div>
-<div><label for="ns-fil-density" data-i18n="fil.density">Dichte (g/cm&sup3;)</label><input type="number" id="ns-fil-density" step="0.01" placeholder="z.B. 1.24"></div>
-<div><label for="ns-fil-extruder-temp" data-i18n="fil.extruderTemp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-extruder-temp" step="1"></div>
-<div><label for="ns-fil-bed-temp" data-i18n="fil.bedTemp">Betttemperatur Standard (&deg;C)</label><input type="number" id="ns-fil-bed-temp" step="1"></div>
 </div>
-</div>
-
-<div class="section-label" data-i18n="sd.thisSpool">Diese Spule</div>
-<div class="field-grid">
-<div><label for="ns-price" data-i18n="sd.price">Preis (&euro;)</label><input type="number" id="ns-price" step="0.01" min="0"></div>
-<div><label for="ns-initial-weight" data-i18n="sd.initialWeight">Anfangsgewicht (g)</label><input type="number" id="ns-initial-weight" step="1" min="0" value="1000"></div>
-<div><label for="ns-spool-weight" data-i18n="sd.spoolWeight">Leerspulengewicht (g)</label><input type="number" id="ns-spool-weight" step="1" min="0"></div>
-<div><label for="ns-lot-nr" data-i18n="sd.lotNr">Lot-Nr.</label><input type="text" id="ns-lot-nr"></div>
-<div><label for="ns-count" data-i18n="ns.count">Anzahl Spulen</label><input type="number" id="ns-count" min="1" max="20" step="1" value="1"></div>
-<div><label for="ns-gross" data-i18n="ns.gross">Gewogen inkl. Spule (g, optional, nur bei Anzahl 1)</label><input type="number" id="ns-gross" min="0" step="1"></div>
-</div>
+</details>
+<details class="fd-card" open>
+<summary><span>&#128230;</span><span data-i18n="sd.thisSpool">Diese Spule</span><span class="fd-chev">&#9660;</span></summary>
+<div class="fd-card-body"><div class="fd-panel green">
+<div class="field-grid"><div><label for="ns-price" data-i18n="sd.price">Preis (&euro;)</label><input type="number" id="ns-price" step="0.01" min="0"></div><div><label for="ns-initial-weight" data-i18n="sd.initialWeight">Anfangsgewicht (g)</label><input type="number" id="ns-initial-weight" step="1" min="0" value="1000"></div><div><label for="ns-spool-weight" data-i18n="sd.spoolWeight">Leerspulengewicht (g)</label><input type="number" id="ns-spool-weight" step="1" min="0"></div><div><label for="ns-lot-nr" data-i18n="sd.lotNr">Lot-Nr.</label><input type="text" id="ns-lot-nr"></div><div><label for="ns-count" data-i18n="ns.count">Anzahl Spulen</label><input type="number" id="ns-count" min="1" max="20" step="1" value="1"></div><div><label for="ns-gross" data-i18n="ns.gross">Gewogen inkl. Spule (g, optional, nur bei Anzahl 1)</label><input type="number" id="ns-gross" min="0" step="1"></div></div>
 <div id="ns-extra-fields"></div>
+</div></div>
+</details>
+</div>
+</div>
+</div>
 
-<div class="row-actions">
-<button class="btn secondary" id="new-spool-cancel" data-i18n="common.cancel">Abbrechen</button>
-<button class="btn" id="new-spool-save" data-i18n="ns.createSpool">Spule anlegen</button>
-</div>
-</div>
-</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -1697,6 +1690,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>Neue-Spule-Dialog neu gestaltet: Kopfzeile mit Anlegen/Abbrechen, Karten f&uuml;r Filament und Spule.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Filament-Dialog neu gestaltet: breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten f&uuml;r Stammdaten und Bestand.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>Neu: Men&uuml;punkt Filamente mit Kartenansicht (Marke, Material, Bestand aus den Spulen, Temperaturen, Erfahrungswerte, Bewertung), Suche und Filter.</li><li>Neu: eigener Filament-Dialog (Basisdaten, Druck und Hardware, Erfahrung). Der Spulen-Dialog zeigt nur noch Spulendaten und &ouml;ffnet den Filament-Dialog per Knopf.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Drucker offline: Offline-Drucker zeigen jetzt &bdquo;offline&ldquo; statt &bdquo;available&ldquo;, ohne Modellbild mit abgelaufenem Link, ohne falsche &bdquo;Drucker ca. 0 g&ldquo;-Warnung und ohne veralteten aktiven Slot.</li><li>Gedruckte Produkte: Bei Mehrfarbdrucken wird der Verbrauch pro Spule angezeigt (Farbpunkt, Spule, Gramm). Die Druckzeile speichert jetzt die Summe aller Spulen statt nur der gr&ouml;&szlig;ten.</li><li>Jede Verbrauchsbuchung tr&auml;gt jetzt die Druck-ID der Anycubic-Cloud; Altdaten wurden automatisch zugeordnet, mehrdeutige F&auml;lle bleiben unver&auml;ndert.</li></ul>
@@ -2018,6 +2012,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>New spool dialog redesigned: header with Create/Cancel, filament and spool cards.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Redesigned filament dialog: wide layout, header with Save/Cancel, collapsible sections, master data and stock cards.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>New: Filaments menu item with card view (brand, material, stock from your spools, temperatures, experience, rating), search and filters.</li><li>New: dedicated filament dialog (basics, print and hardware, experience). The spool dialog now only shows spool data and opens the filament dialog via a button.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Offline printers: now shown as &ldquo;offline&rdquo; instead of &ldquo;available&rdquo;, with no expired model image, no false &ldquo;Printer approx. 0 g&rdquo; warning and no stale active slot.</li><li>Printed products: multi-colour prints show consumption per spool (colour dot, spool, grams). The print row now stores the total of all spools instead of only the largest one.</li><li>Every usage booking now carries the Anycubic cloud print ID; existing data was matched automatically, ambiguous cases were left untouched.</li></ul>

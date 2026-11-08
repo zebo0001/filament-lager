@@ -119,6 +119,7 @@ The database (spools/filaments, storage locations, label templates) starts out e
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.14.0 (2026-11-08)**: New: Experience section in the spool dialog (nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang/bridge, rating, tags), shared by all spools of a filament. New table filament_experience in the storage service.
 - **v1.13.0 (2026-11-08)**: Update notice: the version badge in the footer shows when a newer version is available on GitHub (file `VERSION`, fetched once a day directly from the browser; can be disabled with `localStorage.setItem("lager_no_update_check","1")` in the browser console). Only available from this version on: update older installations manually once.
 - **v1.12.0 (2026-11-07)**: Offline printers are shown as offline (no stale model image, no false warnings); Printed products shows consumption per spool for multi-colour prints; every usage booking carries the Anycubic cloud print ID (new DB column is added automatically on start); prompt dialog for usage without a known slot. Update: git pull, docker compose up -d --build.
 - **v1.10.0 (2026-10-29)**: Spoolman is no longer required - spool/filament management is built into the storage service (Spoolman v1 API at `/spoolman-v1`, filament database fetched daily from SpoolmanDB). QR prefix is now `WEB+FILASTORAG:` (old prefix remains readable). Migration: see section Structure. Compose without a Spoolman container.

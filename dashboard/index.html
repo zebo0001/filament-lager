@@ -1291,7 +1291,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.13.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.14.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1362,6 +1362,25 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div><label for="sd-fil-extruder-temp" data-i18n="fil.extruderTemp">Drucktemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-extruder-temp" step="1" disabled></div>
 <div><label for="sd-fil-bed-temp" data-i18n="fil.bedTemp">Betttemperatur Standard (&deg;C)</label><input type="number" id="sd-fil-bed-temp" step="1" disabled></div>
 </div>
+
+<details id="sd-exp-box" class="exp-box"><summary class="section-label" data-i18n="exp.title">Erfahrung</summary>
+<p class="section-note" data-i18n="exp.note">Gilt f&uuml;r das Filament (alle Spulen dieses Typs).</p>
+<div id="sd-exp-list"></div>
+<div class="field-grid" id="sd-exp-form">
+<div><label data-i18n="exp.nozzle">D&uuml;se (mm)</label><input type="number" id="sd-exp-nozzle" step="0.1" placeholder="0.4"></div>
+<div><label data-i18n="exp.layer">Schichth&ouml;he (mm)</label><input type="number" id="sd-exp-layer" step="0.04" placeholder="0.2"></div>
+<div><label data-i18n="exp.plate">Druckplatte</label><input type="text" id="sd-exp-plate"></div>
+<div><label data-i18n="exp.adhesive">Haftmittel</label><input type="text" id="sd-exp-adhesive"></div>
+<div><label data-i18n="exp.brim">Brim</label><input type="text" id="sd-exp-brim" placeholder="5 mm"></div>
+<div><label data-i18n="exp.drying">Trocknen/Tempern</label><input type="text" id="sd-exp-drying" placeholder="4 h / 50 &deg;C"></div>
+<div><label data-i18n="exp.overhang">Max. &Uuml;berhang (&deg;)</label><input type="number" id="sd-exp-overhang" step="1"></div>
+<div><label data-i18n="exp.bridge">Max. Br&uuml;cke (mm)</label><input type="number" id="sd-exp-bridge" step="1"></div>
+<div><label data-i18n="exp.rating">Bewertung</label><select id="sd-exp-rating"><option value="">-</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div>
+<div><label data-i18n="exp.tags">Tags (Komma)</label><input type="text" id="sd-exp-tags"></div>
+<div class="full"><label data-i18n="exp.text">Notiz</label><input type="text" id="sd-exp-text"></div>
+</div>
+<div class="row-actions"><button type="button" class="btn secondary" id="sd-exp-add" data-i18n="exp.add">Eintrag speichern</button></div>
+</details>
 
 <div class="row-actions">
 <button class="btn secondary" id="spool-detail-cancel" data-i18n="common.cancel">Abbrechen</button>
@@ -1539,7 +1558,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
+      <h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Drucker offline: Offline-Drucker zeigen jetzt &bdquo;offline&ldquo; statt &bdquo;available&ldquo;, ohne Modellbild mit abgelaufenem Link, ohne falsche &bdquo;Drucker ca. 0 g&ldquo;-Warnung und ohne veralteten aktiven Slot.</li><li>Gedruckte Produkte: Bei Mehrfarbdrucken wird der Verbrauch pro Spule angezeigt (Farbpunkt, Spule, Gramm). Die Druckzeile speichert jetzt die Summe aller Spulen statt nur der gr&ouml;&szlig;ten.</li><li>Jede Verbrauchsbuchung tr&auml;gt jetzt die Druck-ID der Anycubic-Cloud; Altdaten wurden automatisch zugeordnet, mehrdeutige F&auml;lle bleiben unver&auml;ndert.</li></ul>
       <h4>v1.11.0 &ndash; 30.10.2026</h4><ul><li>Lagerpl&auml;tze: Ger&auml;te-Karten per Maus skalierbar (Griff unten rechts, rastet bei 33 / 50 / 100 % ein, Doppelklick = zur&uuml;cksetzen). Die Karte selbst wird schmaler, mehrere Dryboxen/Drucker passen nebeneinander. Karten lassen sich ein-/ausklappen. Die Einstellung wird serverseitig gespeichert und gilt auf allen Ger&auml;ten.</li></ul><h4>v1.10.0 &ndash; 30.10.2026</h4>
       <p>Spoolman wird nicht mehr ben&ouml;tigt: Spulen- und Filamentverwaltung sind jetzt eingebaut (Filament-Datenbank: SpoolmanDB). QR-Pr&auml;fix <code>WEB+FILASTORAG:</code> (alte Etiketten bleiben lesbar). Drybox: dickere Ebenen-Trenner, bis zu 60 Pl&auml;tze pro Ebene, Hinweis zu Reihen. Spoolman-Links entfernt.</p>
@@ -1616,6 +1635,7 @@ const I18N = {
     'ld.description': 'Eigene Layouts für Plastikkarten (z.B. 85x55mm) frei gestalten, speichern und für den Kartendruck exportieren.',
     'assign.title': 'Platz zuweisen',
     'assign.clear': 'Freimachen',
+    'exp.title': 'Erfahrung', 'exp.note': 'Gilt für das Filament (alle Spulen dieses Typs).', 'exp.nozzle': 'Düse (mm)', 'exp.layer': 'Schichthöhe (mm)', 'exp.plate': 'Druckplatte', 'exp.adhesive': 'Haftmittel', 'exp.brim': 'Brim', 'exp.drying': 'Trocknen/Tempern', 'exp.overhang': 'Max. Überhang (°)', 'exp.bridge': 'Max. Brücke (mm)', 'exp.rating': 'Bewertung', 'exp.tags': 'Tags (Komma)', 'exp.text': 'Notiz', 'exp.add': 'Eintrag speichern', 'exp.empty': 'Noch keine Erfahrungswerte.', 'exp.saved': 'Erfahrung gespeichert', 'exp.fill': 'Mindestens ein Feld ausfüllen',
     'sd.title': 'Spule bearbeiten',
     'sd.thisSpool': 'Diese Spule',
     'sd.price': 'Preis (€)',
@@ -1857,7 +1877,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
+      <h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Offline printers: now shown as &ldquo;offline&rdquo; instead of &ldquo;available&rdquo;, with no expired model image, no false &ldquo;Printer approx. 0 g&rdquo; warning and no stale active slot.</li><li>Printed products: multi-colour prints show consumption per spool (colour dot, spool, grams). The print row now stores the total of all spools instead of only the largest one.</li><li>Every usage booking now carries the Anycubic cloud print ID; existing data was matched automatically, ambiguous cases were left untouched.</li></ul>
       <h4>v1.11.0 &ndash; 2026-10-30</h4><ul><li>Storage locations: device cards can be resized with the mouse (handle bottom right, snaps at 33 / 50 / 100 %, double-click = reset). The card itself gets narrower, so several dryboxes/printers fit side by side. Cards can be collapsed. The setting is stored on the server and applies on all devices.</li></ul><h4>v1.10.0 &ndash; 2026-10-30</h4>
       <p>Spoolman is no longer required: spool and filament management is now built in (filament database: SpoolmanDB). QR prefix <code>WEB+FILASTORAG:</code> (old labels remain readable). Drybox: thicker level dividers, up to 60 slots per level, hint about rows. Spoolman links removed.</p>
@@ -1934,6 +1954,7 @@ const I18N = {
     'ld.description': 'Design, save and export your own layouts for plastic cards (e.g. 85x55mm) for card printing.',
     'assign.title': 'Assign slot',
     'assign.clear': 'Clear',
+    'exp.title': 'Experience', 'exp.note': 'Applies to the filament (all spools of this type).', 'exp.nozzle': 'Nozzle (mm)', 'exp.layer': 'Layer height (mm)', 'exp.plate': 'Build plate', 'exp.adhesive': 'Adhesive', 'exp.brim': 'Brim', 'exp.drying': 'Drying/annealing', 'exp.overhang': 'Max. overhang (°)', 'exp.bridge': 'Max. bridge (mm)', 'exp.rating': 'Rating', 'exp.tags': 'Tags (comma)', 'exp.text': 'Note', 'exp.add': 'Save entry', 'exp.empty': 'No experience entries yet.', 'exp.saved': 'Experience saved', 'exp.fill': 'Fill in at least one field',
     'sd.title': 'Edit spool',
     'sd.thisSpool': 'This spool',
     'sd.price': 'Price (€)',
@@ -3439,7 +3460,7 @@ async function openSpoolDetail(spoolId) {
     return;
   }
   sdCurrentSpool = spool;
-  const f = spool.filament || {};
+  const f = spool.filament || {}; sdLoadExp(f.id);
   document.getElementById('spool-detail-title').textContent = spoolLabel(spool);
   document.getElementById('spool-detail-subtitle').textContent = 'Spule #' + spool.id + (spool.archived ? ' · ' + t('sd.archivedSuffix') : '');
 
@@ -6730,6 +6751,55 @@ setInterval(function(){if(root.offsetParent!==null){if(!st.opened)open();}else{s
   setInterval(uaPoll, 30000);
 })();
 </script>
+<script>
+function _xe(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+let sdExpFid=null;
+async function sdLoadExp(fid){
+  sdExpFid=fid||null;
+  const box=document.getElementById('sd-exp-list');
+  if(box){box.innerHTML='';}
+  if(sdExpFid==null){return;}
+  try{
+    const rows=await api(ST+'/filaments/'+sdExpFid+'/experience');
+    sdRenderExp(rows||[]);
+  }catch(e){toast(t('sd.loadError')+e.message,'err');}
+}
+function sdRenderExp(rows){
+  const box=document.getElementById('sd-exp-list');
+  if(rows.length===0){box.innerHTML='<p class="section-note">'+_xe(t('exp.empty'))+'</p>';return;}
+  box.innerHTML=rows.map(function(r){
+    const c=[];
+    if(r.nozzle_mm!=null)c.push(t('exp.nozzle').replace(' (mm)','')+' '+r.nozzle_mm);
+    if(r.layer_mm!=null)c.push(r.layer_mm+' mm');
+    if(r.plate)c.push(r.plate);
+    if(r.adhesive)c.push(r.adhesive);
+    if(r.brim)c.push('Brim '+r.brim);
+    if(r.drying)c.push(r.drying);
+    if(r.max_overhang!=null)c.push(r.max_overhang+'\u00b0');
+    if(r.max_bridge!=null)c.push(r.max_bridge+' mm');
+    if(r.tags)r.tags.split(',').forEach(function(x){x=x.trim();if(x)c.push('#'+x);});
+    const st=r.rating?'\u2605'.repeat(r.rating)+'\u2606'.repeat(5-r.rating)+' ':'';
+    return '<div class="pr-parts" style="align-items:center;margin:.3rem 0">'+(st?'<span>'+st+'</span>':'')+c.map(function(x){return '<span class="pr-chip">'+_xe(x)+'</span>';}).join('')+(r.note?'<span>'+_xe(r.note)+'</span>':'')+'<button type="button" class="new-spool-toggle" data-exp-del="'+r.id+'">\u00d7</button></div>';
+  }).join('');
+}
+document.addEventListener('click',async function(ev){
+  const d=ev.target.closest&&ev.target.closest('[data-exp-del]');
+  if(d){try{await api(ST+'/experience/'+d.dataset.expDel,{method:'DELETE'});sdLoadExp(sdExpFid);}catch(e){toast(e.message,'err');}return;}
+  if(ev.target&&ev.target.id==='sd-exp-add'){
+    if(sdExpFid==null)return;
+    const g=function(i){return document.getElementById('sd-exp-'+i).value.trim();};
+    const n=function(i){const v=g(i);return v===''?null:Number(v);};
+    const body={nozzle_mm:n('nozzle'),layer_mm:n('layer'),plate:g('plate')||null,adhesive:g('adhesive')||null,brim:g('brim')||null,drying:g('drying')||null,max_overhang:n('overhang'),max_bridge:n('bridge'),rating:n('rating'),tags:g('tags')||null,note:g('text')||null};
+    if(!Object.values(body).some(function(v){return v!==null;})){toast(t('exp.fill'),'err');return;}
+    try{
+      await api(ST+'/filaments/'+sdExpFid+'/experience',{method:'POST',body:JSON.stringify(body)});
+      ['nozzle','layer','plate','adhesive','brim','drying','overhang','bridge','rating','tags','text'].forEach(function(i){document.getElementById('sd-exp-'+i).value='';});
+      toast(t('exp.saved'));sdLoadExp(sdExpFid);
+    }catch(e){toast(e.message,'err');}
+  }
+});
+</script>
+
 </body>
 </html>
 

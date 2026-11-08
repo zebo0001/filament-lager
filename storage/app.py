@@ -713,6 +713,61 @@ def delete_shopping_item(item_id: int):
         return {"ok": True}
 
 
+with db() as _c:
+    _c.execute("""CREATE TABLE IF NOT EXISTS filament_experience (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filament_id INTEGER NOT NULL,
+        nozzle_mm REAL, layer_mm REAL, plate TEXT, adhesive TEXT, brim TEXT,
+        drying TEXT, max_overhang INTEGER, max_bridge INTEGER, rating INTEGER,
+        tags TEXT, note TEXT, created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+    _c.execute("CREATE INDEX IF NOT EXISTS idx_fexp_fil ON filament_experience(filament_id)")
+
+
+class ExperienceIn(BaseModel):
+    nozzle_mm: Optional[float] = None
+    layer_mm: Optional[float] = None
+    plate: Optional[str] = None
+    adhesive: Optional[str] = None
+    brim: Optional[str] = None
+    drying: Optional[str] = None
+    max_overhang: Optional[int] = None
+    max_bridge: Optional[int] = None
+    rating: Optional[int] = None
+    tags: Optional[str] = None
+    note: Optional[str] = None
+
+
+_EXP_COLS = ["nozzle_mm", "layer_mm", "plate", "adhesive", "brim", "drying", "max_overhang", "max_bridge", "rating", "tags", "note"]
+
+
+@app.get("/filaments/{fid}/experience")
+def list_experience(fid: int):
+    with db() as conn:
+        rows = conn.execute("SELECT * FROM filament_experience WHERE filament_id=? ORDER BY id DESC", (fid,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+@app.post("/filaments/{fid}/experience")
+def add_experience(fid: int, e: ExperienceIn):
+    d = e.dict()
+    if d.get("rating") is not None and not 1 <= d["rating"] <= 5:
+        raise HTTPException(400, "rating 1-5")
+    if not any(v not in (None, "") for v in d.values()):
+        raise HTTPException(400, "empty")
+    with db() as conn:
+        cur = conn.execute(
+            "INSERT INTO filament_experience (filament_id, " + ", ".join(_EXP_COLS) + ") VALUES (?" + ",?" * len(_EXP_COLS) + ")",
+            [fid] + [d[k] for k in _EXP_COLS])
+        return {"id": cur.lastrowid}
+
+
+@app.delete("/experience/{eid}")
+def delete_experience(eid: int):
+    with db() as conn:
+        conn.execute("DELETE FROM filament_experience WHERE id=?", (eid,))
+        return {"ok": True}
+
+
 class LayoutUpdate(BaseModel):
     order: List[str]
 

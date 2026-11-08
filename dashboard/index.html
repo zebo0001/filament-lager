@@ -1291,7 +1291,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.12.0</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.13.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1539,6 +1539,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Drucker offline: Offline-Drucker zeigen jetzt &bdquo;offline&ldquo; statt &bdquo;available&ldquo;, ohne Modellbild mit abgelaufenem Link, ohne falsche &bdquo;Drucker ca. 0 g&ldquo;-Warnung und ohne veralteten aktiven Slot.</li><li>Gedruckte Produkte: Bei Mehrfarbdrucken wird der Verbrauch pro Spule angezeigt (Farbpunkt, Spule, Gramm). Die Druckzeile speichert jetzt die Summe aller Spulen statt nur der gr&ouml;&szlig;ten.</li><li>Jede Verbrauchsbuchung tr&auml;gt jetzt die Druck-ID der Anycubic-Cloud; Altdaten wurden automatisch zugeordnet, mehrdeutige F&auml;lle bleiben unver&auml;ndert.</li></ul>
       <h4>v1.11.0 &ndash; 30.10.2026</h4><ul><li>Lagerpl&auml;tze: Ger&auml;te-Karten per Maus skalierbar (Griff unten rechts, rastet bei 33 / 50 / 100 % ein, Doppelklick = zur&uuml;cksetzen). Die Karte selbst wird schmaler, mehrere Dryboxen/Drucker passen nebeneinander. Karten lassen sich ein-/ausklappen. Die Einstellung wird serverseitig gespeichert und gilt auf allen Ger&auml;ten.</li></ul><h4>v1.10.0 &ndash; 30.10.2026</h4>
       <p>Spoolman wird nicht mehr ben&ouml;tigt: Spulen- und Filamentverwaltung sind jetzt eingebaut (Filament-Datenbank: SpoolmanDB). QR-Pr&auml;fix <code>WEB+FILASTORAG:</code> (alte Etiketten bleiben lesbar). Drybox: dickere Ebenen-Trenner, bis zu 60 Pl&auml;tze pro Ebene, Hinweis zu Reihen. Spoolman-Links entfernt.</p>
@@ -1856,6 +1857,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
       <h4>v1.12.0 &ndash; 07.11.2026</h4><ul><li>Offline printers: now shown as &ldquo;offline&rdquo; instead of &ldquo;available&rdquo;, with no expired model image, no false &ldquo;Printer approx. 0 g&rdquo; warning and no stale active slot.</li><li>Printed products: multi-colour prints show consumption per spool (colour dot, spool, grams). The print row now stores the total of all spools instead of only the largest one.</li><li>Every usage booking now carries the Anycubic cloud print ID; existing data was matched automatically, ambiguous cases were left untouched.</li></ul>
       <h4>v1.11.0 &ndash; 2026-10-30</h4><ul><li>Storage locations: device cards can be resized with the mouse (handle bottom right, snaps at 33 / 50 / 100 %, double-click = reset). The card itself gets narrower, so several dryboxes/printers fit side by side. Cards can be collapsed. The setting is stored on the server and applies on all devices.</li></ul><h4>v1.10.0 &ndash; 2026-10-30</h4>
       <p>Spoolman is no longer required: spool and filament management is now built in (filament database: SpoolmanDB). QR prefix <code>WEB+FILASTORAG:</code> (old labels remain readable). Drybox: thicker level dividers, up to 60 slots per level, hint about rows. Spoolman links removed.</p>
@@ -4494,6 +4496,29 @@ function openChangelogModal() {
 function closeChangelogModal() {
   document.getElementById('changelog-overlay').classList.remove('show');
 }
+(function checkForUpdate() {
+  try {
+    if (localStorage.getItem('lager_no_update_check') === '1') return;
+    var badge = document.getElementById('version-badge');
+    if (!badge) return;
+    var cur = (badge.textContent || '').replace(/^v/i, '').trim();
+    function tr(de, en) { return (typeof T === 'function') ? T(de, en) : en; }
+    function cmp(a, b) { var x = a.split('.').map(Number), y = b.split('.').map(Number); for (var i = 0; i < 3; i++) { var d = (x[i] || 0) - (y[i] || 0); if (d) return d; } return 0; }
+    function show(latest) {
+      if (cmp(latest, cur) <= 0) return;
+      badge.textContent = 'v' + cur + ' \u00b7 ' + tr('Update verf\u00fcgbar: v', 'Update available: v') + latest;
+      badge.style.color = 'var(--accent)';
+      badge.title = tr('Neue Version auf GitHub (zebo0001/filament-lager). Update: git pull && docker compose up -d --build', 'New version on GitHub (zebo0001/filament-lager). Update: git pull && docker compose up -d --build');
+    }
+    var cached = null;
+    try { cached = JSON.parse(localStorage.getItem('lager_update_cache') || 'null'); } catch (e) {}
+    if (cached && cached.v && (Date.now() - cached.t) < 86400000) { show(cached.v); return; }
+    fetch('https://raw.githubusercontent.com/zebo0001/filament-lager/main/VERSION', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+      .then(function (t) { t = (t || '').trim(); if (!/^\d+\.\d+\.\d+$/.test(t)) return; try { localStorage.setItem('lager_update_cache', JSON.stringify({ t: Date.now(), v: t })); } catch (e) {} show(t); })
+      .catch(function () {});
+  } catch (e) {}
+})();
 document.getElementById('version-badge').addEventListener('click', openChangelogModal);
 document.getElementById('changelog-close').addEventListener('click', closeChangelogModal);
 

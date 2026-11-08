@@ -119,6 +119,8 @@ Die Datenbank (Spulen/Filamente, Lagerplaetze, Label-Vorlagen) startet leer und 
 
 Die aktuelle Version steht im Footer des Dashboards (dort auch der Aenderungsverlauf).
 
+- **v1.13.0 (2026-11-08)**: Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Datei `VERSION`, einmal taeglich direkt vom Browser abgefragt; abschaltbar mit `localStorage.setItem("lager_no_update_check","1")` in der Browser-Konsole). Gilt erst ab dieser Version: aeltere Installationen einmal manuell aktualisieren.
+- **v1.12.0 (2026-11-07)**: Offline-Drucker werden als offline angezeigt (kein veraltetes Modellbild, keine falschen Warnungen); Gedruckte Produkte zeigt bei Mehrfarbdrucken den Verbrauch pro Spule; jede Verbrauchsbuchung traegt die Druck-ID der Anycubic-Cloud (neue DB-Spalte wird beim Start automatisch ergaenzt); Rueckfrage-Dialog fuer Verbrauch ohne bekannten Slot. Update: git pull, docker compose up -d --build.
 - **v1.10.0 (2026-10-29)**: Spoolman ist nicht mehr noetig - Spulen-/Filamentverwaltung ist in den Storage-Dienst eingebaut (Spoolman-v1-API unter `/spoolman-v1`, Filament-Datenbank taeglich von SpoolmanDB). QR-Praefix jetzt `WEB+FILASTORAG:` (alter Praefix bleibt lesbar). Umstieg: siehe Abschnitt Aufbau. Compose ohne Spoolman-Container.
 - **v1.9.0 (2026-10-29)**: Neu: Spulenrechner (Menuepunkt). Gewicht und Leerspulengewicht (Hersteller-Liste, Spoolman-Werte oder eigene Eintraege) ergeben den Fuellstand; Zuordnung zu einer Spule oder neue Spule anlegen. Spulennummer in den Mouseover-Texten.
 - **v1.8.1 (2026-10-29)**: Druckeransicht: aktive externe Spule der Kobra X wird in Karte und Schaubild markiert, Fuellstandsring zeigt den Spoolman-Wert statt des unzuverlaessigen Druckerwerts.

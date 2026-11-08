@@ -625,6 +625,7 @@ details.fd-card[open]>summary .fd-chev{transform:rotate(180deg)}
 <select id="flm-material"></select>
 <select id="flm-sort"><option value="name" data-i18n="flm.sortName">Name</option><option value="vendor" data-i18n="flm.sortVendor">Hersteller</option><option value="stock" data-i18n="flm.sortStock">Bestand</option></select>
 <label class="flm-chk"><input type="checkbox" id="flm-instock"> <span data-i18n="flm.inStock">Nur mit Bestand</span></label>
+<button class="btn secondary" id="imp-open">Slicer-Import</button>
 </div>
 <div id="flm-grid" class="flm-grid"></div>
 </div>
@@ -1377,7 +1378,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.15.2</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.16.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1404,6 +1405,43 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
       <button class="btn" id="spool-assign-save" data-i18n="common.save">Speichern</button>
     </div>
   </div>
+</div>
+
+<style id="imp-style">
+.imp-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.imp-tbl th{text-align:left;padding:6px 8px;opacity:.7;font-weight:600}
+.imp-tbl td{padding:6px 8px;border-top:1px solid rgba(255,255,255,.08);vertical-align:middle}
+.imp-tbl select{width:auto;max-width:260px}.imp-tbl input[type=checkbox]{width:auto}
+.imp-sub{font-size:11px;opacity:.6;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#imp-overlay .assign-box{max-width:1000px;width:94vw}
+.imp-tbl td b{white-space:nowrap}.imp-tbl td{white-space:nowrap}
+#imp-prev{overflow-x:auto}
+.imp-path{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.imp-path code{padding:4px 8px;border-radius:6px;background:rgba(255,255,255,.07);font-size:12px;word-break:break-all}
+</style>
+<div class="assign-overlay" id="imp-overlay">
+<div class="assign-box wide scrollable">
+<div class="fd-head">
+<div class="fd-head-l">
+<h3>Filamente aus Slicer importieren</h3>
+<div class="fd-sub"><span class="fd-chip" id="imp-count">0</span></div>
+</div>
+<div class="row-actions"><button class="btn secondary" id="imp-cancel">Schlie&szlig;en</button><button class="btn" id="imp-run" disabled>Importieren</button></div>
+</div>
+<div class="fd-body">
+<div class="fd-panel">
+<div class="fd-panel-title">1. Profildateien w&auml;hlen</div>
+<p class="hint">Anycubic Slicer / OrcaSlicer speichern Filament-Profile als <b>.json</b> (die <b>.info</b>-Dateien werden ignoriert). Ordner &ouml;ffnen, alle .json markieren (Strg+A) und hier ausw&auml;hlen:</p>
+<div class="imp-path"><code id="imp-path">%APPDATA%&#92;AnycubicSlicerNext&#92;user&#92;&lt;Konto-ID&gt;&#92;filament</code><button class="btn secondary" id="imp-copy">Pfad kopieren</button></div>
+<input type="file" id="imp-file" multiple accept=".json,.info">
+<label style="display:block;margin-top:8px"><input type="checkbox" id="imp-overwrite" style="width:auto"> Vorhandene Werte &uuml;berschreiben (sonst nur leere Felder f&uuml;llen)</label>
+</div>
+<div class="fd-panel green">
+<div class="fd-panel-title">2. Vorschau</div>
+<div id="imp-prev"></div>
+</div>
+</div>
+</div>
 </div>
 
 <div class="assign-overlay" id="flm-dialog-overlay">
@@ -1690,6 +1728,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
+      <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>Neu: Slicer-Import auf der Seite Filamente. Anycubic-Slicer-/OrcaSlicer-Filamentprofile (.json) hochladen, Vorschau pr&uuml;fen und Filamente anlegen oder bestehende erg&auml;nzen (Zuordnung &uuml;ber Artikelnummer).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>Neue-Spule-Dialog neu gestaltet: Kopfzeile mit Anlegen/Abbrechen, Karten f&uuml;r Filament und Spule.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Filament-Dialog neu gestaltet: breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten f&uuml;r Stammdaten und Bestand.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>Neu: Men&uuml;punkt Filamente mit Kartenansicht (Marke, Material, Bestand aus den Spulen, Temperaturen, Erfahrungswerte, Bewertung), Suche und Filter.</li><li>Neu: eigener Filament-Dialog (Basisdaten, Druck und Hardware, Erfahrung). Der Spulen-Dialog zeigt nur noch Spulendaten und &ouml;ffnet den Filament-Dialog per Knopf.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>Neu: Abschnitt Erfahrung im Spulen-Dialog (Erfahrungswerte zum Filament: D&uuml;se, Schichth&ouml;he, Druckplatte, Haftmittel, Brim, Trocknen/Tempern, max. &Uuml;berhang und Br&uuml;cke, Bewertung, Tags). Gilt f&uuml;r alle Spulen dieses Filaments.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update-Hinweis: Das Versions-Badge im Footer zeigt an, wenn auf GitHub eine neuere Version vorliegt (Abfrage der Datei VERSION einmal pro Tag direkt aus dem Browser). Abschalten: <code>localStorage.setItem("lager_no_update_check","1")</code> in der Browser-Konsole.</li></ul>
@@ -2012,6 +2051,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
+      <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>New: slicer import on the Filaments page. Upload Anycubic Slicer / OrcaSlicer filament presets (.json), review the preview and create filaments or complete existing ones (matched by article number).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>New spool dialog redesigned: header with Create/Cancel, filament and spool cards.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Redesigned filament dialog: wide layout, header with Save/Cancel, collapsible sections, master data and stock cards.</li></ul>
       <h4>v1.15.0 &ndash; 08.11.2026</h4><ul><li>New: Filaments menu item with card view (brand, material, stock from your spools, temperatures, experience, rating), search and filters.</li><li>New: dedicated filament dialog (basics, print and hardware, experience). The spool dialog now only shows spool data and opens the filament dialog via a button.</li></ul><h4>v1.14.0 &ndash; 08.11.2026</h4><ul><li>New: Experience section in the spool dialog (per-filament know-how: nozzle, layer height, build plate, adhesive, brim, drying/annealing, max. overhang and bridge, rating, tags). Applies to all spools of this filament.</li></ul><h4>v1.13.0 &ndash; 08.11.2026</h4><ul><li>Update notice: the version badge in the footer shows when a newer version is available on GitHub (the VERSION file is fetched once a day directly from the browser). To disable: <code>localStorage.setItem("lager_no_update_check","1")</code> in the browser console.</li></ul>
@@ -7007,6 +7047,103 @@ function flmCard(x){
 (function(){var nb=document.querySelector('[data-nav-target="filaments"]');if(nb){nb.addEventListener('click',flmLoad);var l=nb.querySelector('.nav-label');if(l){l.textContent=t('flm.nav');}}
   if(document.querySelector('.panel.active[data-panel="filaments"]')){flmLoad();}})();
 document.addEventListener('click',function(ev){var b=ev.target.closest&&ev.target.closest('[data-flm-edit]');if(b){flmOpen(parseInt(b.getAttribute('data-flm-edit'),10));}});
+/* ---- Slicer import v1.16.0 ---- */
+var impRows=[],impIgnored=0,impVendors=null,impFils=[];
+function impEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function impL(de,en){return (typeof currentLang!=='undefined'&&currentLang==='en')?en:de;}
+function impV(v){return Array.isArray(v)?v[0]:v;}
+function impNum(v){var n=parseFloat(impV(v));return isNaN(n)?null:n;}
+function impParse(txt,fname){
+  var d;try{d=JSON.parse(txt);}catch(e){return null;}
+  if(!d||typeof d!=='object'||(d.type!=='filament'&&!d.filament_settings_id&&!d.filament_type))return null;
+  var nm=String(d.name||impV(d.filament_settings_id)||fname.replace(/\.json$/i,''));
+  var base=nm.split(' @')[0].trim(),tk=base.split(/\s+/);
+  var last=tk[tk.length-1],code=(tk.length>2&&/^[A-Za-z0-9]+-\d+$/.test(last))?last:'';
+  return {key:String(d.filament_id||nm),preset:nm,base:base,code:code,name:code||base,
+    vendor:String(impV(d.filament_vendor)||tk[0]||''),material:String(impV(d.filament_type)||''),
+    ext:impNum(d.nozzle_temperature),bed:impNum(d.hot_plate_temp),dia:impNum(d.filament_diameter),
+    dens:impNum(d.filament_density),price:impNum(d.filament_cost),flow:impNum(d.filament_flow_ratio),
+    pa:impNum(d.pressure_advance),mvs:impNum(d.filament_max_volumetric_speed),
+    inherits:String(d.inherits||''),from:String(d.from||'')};
+}
+function impMatch(r,fils){
+  var i,f,c=r.code.toLowerCase();
+  for(i=0;i<fils.length;i++){f=fils[i];
+    if(c&&String(f.article_number||'').toLowerCase()===c)return f;
+    try{var sp=JSON.parse((f.extra||{}).slicer_preset||'null');if(sp&&JSON.parse(sp).id===r.key)return f;}catch(e){}
+  }
+  return null;
+}
+async function impLoadFiles(files){
+  var seen={},rows=[],ign=0,fils=[],i,r;
+  try{fils=await api(SP+'/filament')||[];}catch(e){}
+  for(i=0;i<files.length;i++){
+    var fl=files[i];
+    if(!/\.json$/i.test(fl.name)){ign++;continue;}
+    r=impParse(await fl.text(),fl.name);
+    if(!r){ign++;continue;}
+    if(seen[r.key]){ign++;continue;}
+    seen[r.key]=1;r.match=impMatch(r,fils);r.target=r.match?String(r.match.id):'new';
+    r.on=(r.from==='User'||!!r.match);rows.push(r);
+  }
+  impRows=rows;impIgnored=ign;impFils=fils;impRender();
+}
+function impRender(){
+  var h='<table class="imp-tbl"><tr><th></th><th>'+impL('Name / Code','Name / code')+'</th><th>Material</th><th>'+impL('D&uuml;se/Bett','Nozzle/bed')+'</th><th>'+impL('Preis','Price')+'</th><th>'+impL('Quelle','Source')+'</th><th>'+impL('Ziel','Target')+'</th></tr>';
+  impRows.forEach(function(r,i){
+    var opt='<option value="new">'+impL('Neu anlegen','Create new')+'</option>';
+    impFils.forEach(function(f){opt+='<option value="'+f.id+'"'+(String(f.id)===r.target?' selected':'')+'>'+impL('Aktualisieren: ','Update: ')+impEsc('#'+f.id+' '+((f.vendor&&f.vendor.name)||'')+' '+f.name)+'</option>';});
+    h+='<tr><td><input type="checkbox" data-imp-on="'+i+'"'+(r.on?' checked':'')+'></td><td><b>'+impEsc(r.name)+'</b><div class="imp-sub">'+impEsc(r.preset)+(r.inherits?' ('+impL('erbt von ','inherits ')+impEsc(r.inherits)+')':'')+'</div></td><td>'+impEsc(r.material)+'</td><td>'+(r.ext==null?'-':r.ext)+' / '+(r.bed==null?'-':r.bed)+' &deg;C</td><td>'+(r.price==null?'-':r.price)+'</td><td>'+impEsc(r.from||'?')+'</td><td><select data-imp-tg="'+i+'">'+opt+'</select></td></tr>';
+  });
+  h+='</table>';
+  fdg('imp-prev').innerHTML=impRows.length?h:'<p class="hint">'+impL('Keine Filament-Profile gefunden.','No filament presets found.')+'</p>';
+  fdg('imp-count').textContent=impRows.length+' '+impL('Profile','presets')+(impIgnored?' / '+impIgnored+' '+impL('ignoriert','ignored'):'');
+  fdg('imp-run').disabled=!impRows.length;
+}
+async function impVendorId(name){
+  if(!impVendors)impVendors=await api(SP+'/vendor')||[];
+  var l=name.toLowerCase(),v=impVendors.filter(function(x){return String(x.name).toLowerCase()===l;})[0];
+  if(!v){v=await api(SP+'/vendor',{method:'POST',body:JSON.stringify({name:name})});impVendors.push(v);}
+  return v.id;
+}
+async function impRun(){
+  var ow=fdg('imp-overwrite').checked,n=0,err=0,i,r,ex,body,f;
+  try{var defs=await api(SP+'/field/filament');
+    if(!(defs||[]).some(function(d){return d.key==='slicer_preset';}))await api(SP+'/field/filament/slicer_preset',{method:'POST',body:JSON.stringify({name:'Slicer-Preset',field_type:'text'})});}catch(e){}
+  for(i=0;i<impRows.length;i++){
+    r=impRows[i];if(!r.on)continue;
+    try{
+      f=r.target==='new'?null:impFils.filter(function(x){return String(x.id)===r.target;})[0];
+      body={};
+      var put=function(k,v){if(v==null)return;if(f&&!ow&&f[k]!=null&&f[k]!=='')return;body[k]=v;};
+      put('settings_extruder_temp',r.ext==null?null:Math.round(r.ext));put('settings_bed_temp',r.bed==null?null:Math.round(r.bed));
+      put('diameter',r.dia);put('density',r.dens);put('price',r.price>0?r.price:null);
+      if(r.code)put('article_number',r.code);
+      ex=Object.assign({},(f&&f.extra)||{});
+      ex.slicer_preset=JSON.stringify(JSON.stringify({id:r.key,name:r.preset,flow:r.flow,pa:r.pa,mvs:r.mvs}));
+      body.extra=ex;
+      if(f){await api(SP+'/filament/'+f.id,{method:'PATCH',body:JSON.stringify(body)});}
+      else{body.name=r.name;body.material=r.material||null;body.weight=1000;body.vendor_id=await impVendorId(r.vendor||'Anycubic');
+        await api(SP+'/filament',{method:'POST',body:JSON.stringify(body)});}
+      n++;
+    }catch(e){err++;console.warn('impRun',e);}
+  }
+  toast(n+' '+impL('Filamente importiert','filaments imported')+(err?' / '+err+' '+impL('Fehler','errors'):''),err?'err':'ok');
+  impVendors=null;fdg('imp-overlay').classList.remove('show');flmLoad();
+}
+document.addEventListener('click',function(ev){
+  var el=ev.target;if(!el||!el.id)return;
+  if(el.id==='imp-open'){impRows=[];impIgnored=0;fdg('imp-file').value='';impRender();fdg('imp-overlay').classList.add('show');}
+  else if(el.id==='imp-cancel')fdg('imp-overlay').classList.remove('show');
+  else if(el.id==='imp-run')impRun();
+  else if(el.id==='imp-copy'){try{navigator.clipboard.writeText(fdg('imp-path').textContent);toast(impL('Pfad kopiert','Path copied'),'ok');}catch(e){}}
+});
+document.addEventListener('change',function(ev){
+  var el=ev.target;if(!el)return;
+  if(el.id==='imp-file')impLoadFiles(el.files);
+  else if(el.getAttribute&&el.getAttribute('data-imp-on')!==null)impRows[+el.getAttribute('data-imp-on')].on=el.checked;
+  else if(el.getAttribute&&el.getAttribute('data-imp-tg')!==null)impRows[+el.getAttribute('data-imp-tg')].target=el.value;
+});
 </script>
 
 <script id="flm-script2">

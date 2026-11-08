@@ -1378,7 +1378,7 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 <div class="links">
 </div>
 
-<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.16.1</span></footer>
+<footer>Filament Storage &middot; <span class="version-badge" id="version-badge">v1.17.0</span></footer>
 
 <div class="toast" id="toast"></div>
 
@@ -1444,6 +1444,19 @@ window.addEventListener('load',function(){ var p=document.getElementById('mt-pan
 </div>
 </div>
 
+<style id="pw2-style">
+#pw2-overlay .assign-box{max-width:1100px;width:94vw}
+.pw2-grid{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:14px;align-items:start}
+@media(max-width:800px){.pw2-grid{grid-template-columns:1fr}}
+.pw2-type{display:flex;gap:8px;flex-wrap:wrap}
+.pw2-type .btn.active{background:var(--accent,#3b82f6);color:#fff;border-color:transparent}
+#pw2-overlay .field-grid{margin-top:8px}
+#pw2-overlay label{display:block;font-size:12px}
+#pw2-overlay [hidden]{display:none!important}
+.pw2-prev{min-height:120px}
+.pw2-prev .dev-settings-wrap,.pw2-prev .dev-delete,.pw2-prev .dev-collapse,.pw2-prev .unitLabelsPrintBtn{display:none!important}
+.pw2-prev .device-card{pointer-events:none;width:100%!important;max-width:none!important}
+</style>
 <div class="assign-overlay" id="flm-dialog-overlay">
 <div class="assign-box wide scrollable">
 <div class="fd-head">
@@ -1728,7 +1741,7 @@ const I18N = {
     `,
   'changelog.title': 'Änderungsverlauf',
   'changelog.html': `
-      <h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: Erfahrungsformular im Filament-Dialog wird beim &Ouml;ffnen geleert, Browser-Autovervollst&auml;ndigung deaktiviert (falsche Vorbelegung, z. B. bei Haftmittel).</li></ul>
+      <h4>v1.17.0 &ndash; 09.11.2026</h4><ul><li>Neu: Dialog "Ger&auml;t anlegen" als eine Seite mit Live-Vorschau im Look der echten Ger&auml;tekarten (Drucker mit ACE/AMS, Drybox).</li></ul><h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: Erfahrungsformular im Filament-Dialog wird beim &Ouml;ffnen geleert, Browser-Autovervollst&auml;ndigung deaktiviert (falsche Vorbelegung, z. B. bei Haftmittel).</li></ul>
       <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>Neu: Slicer-Import auf der Seite Filamente. Anycubic-Slicer-/OrcaSlicer-Filamentprofile (.json) hochladen, Vorschau pr&uuml;fen und Filamente anlegen oder bestehende erg&auml;nzen (Zuordnung &uuml;ber Artikelnummer).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>Neue-Spule-Dialog neu gestaltet: Kopfzeile mit Anlegen/Abbrechen, Karten f&uuml;r Filament und Spule.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Filament-Dialog neu gestaltet: breites Layout, Kopfzeile mit Speichern/Abbrechen, aufklappbare Abschnitte, Karten f&uuml;r Stammdaten und Bestand.</li></ul>
@@ -2052,7 +2065,7 @@ const I18N = {
     `,
   'changelog.title': 'Changelog',
   'changelog.html': `
-      <h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: experience form in the filament dialog is cleared on open, browser autofill disabled (wrong prefilled values, e.g. adhesive).</li></ul>
+      <h4>v1.17.0 &ndash; 09.11.2026</h4><ul><li>New: "Add device" dialog redesigned as a single page with a live preview that looks like the real device cards.</li></ul><h4>v1.16.1 &ndash; 08.11.2026</h4><ul><li>Fix: experience form in the filament dialog is cleared on open, browser autofill disabled (wrong prefilled values, e.g. adhesive).</li></ul>
       <h4>v1.16.0 &ndash; 08.11.2026</h4><ul><li>New: slicer import on the Filaments page. Upload Anycubic Slicer / OrcaSlicer filament presets (.json), review the preview and create filaments or complete existing ones (matched by article number).</li></ul>
       <h4>v1.15.2 &ndash; 08.11.2026</h4><ul><li>New spool dialog redesigned: header with Create/Cancel, filament and spool cards.</li></ul>
       <h4>v1.15.1 &ndash; 08.11.2026</h4><ul><li>Redesigned filament dialog: wide layout, header with Save/Cancel, collapsible sections, master data and stock cards.</li></ul>
@@ -7146,6 +7159,133 @@ document.addEventListener('change',function(ev){
   else if(el.getAttribute&&el.getAttribute('data-imp-on')!==null)impRows[+el.getAttribute('data-imp-on')].on=el.checked;
   else if(el.getAttribute&&el.getAttribute('data-imp-tg')!==null)impRows[+el.getAttribute('data-imp-tg')].target=el.value;
 });
+/* ---- Geraet anlegen v1.17.0 (Ein-Seiten-Dialog mit Live-Vorschau) ---- */
+(function(){
+  var st={type:'printer'};
+  function L(de,en){return (typeof currentLang!=='undefined'&&currentLang==='en')?en:de;}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+  function g(id){return document.getElementById(id);}
+  function clamp(v,a,b,d){var n=parseInt(v,10);if(isNaN(n))n=d;return Math.max(a,Math.min(b,n));}
+  function build(){
+    var ov=g('pw2-overlay');
+    if(!ov){ov=document.createElement('div');ov.className='assign-overlay';ov.id='pw2-overlay';document.body.appendChild(ov);}
+    ov.innerHTML=
+    '<div class="assign-box wide scrollable"><div class="fd-head"><div class="fd-head-l"><h3>'+L('Ger&auml;t anlegen','Add device')+'</h3>'+
+    '<div class="fd-sub"><span class="fd-chip" id="pw2-chip"></span></div></div>'+
+    '<div class="row-actions"><button class="btn secondary" id="pw2-cancel">'+L('Abbrechen','Cancel')+'</button><button class="btn" id="pw2-create">'+L('Anlegen','Create')+'</button></div></div>'+
+    '<div class="fd-body"><div class="pw2-grid"><div class="pw2-left">'+
+    '<div class="fd-panel"><div class="fd-panel-title">'+L('Typ','Type')+'</div><div class="pw2-type">'+
+    '<button type="button" class="btn secondary" data-pw2-t="printer">'+L('Drucker (mit ACE/AMS)','Printer (with ACE/AMS)')+'</button>'+
+    '<button type="button" class="btn secondary" data-pw2-t="drybox">'+L('Drybox / Regal','Drybox / shelf')+'</button></div></div>'+
+    '<div class="fd-panel green"><div class="fd-panel-title">'+L('Name &amp; Pl&auml;tze','Name &amp; slots')+'</div>'+
+    '<div class="field-grid"><label>'+L('Name','Name')+'<input type="text" id="pw2-name" autocomplete="off" maxlength="60"></label></div>'+
+    '<div class="field-grid" id="pw2-pf"><label>'+L('Eigene Spulenpl&auml;tze am Drucker','Own spool slots on the printer')+'<input type="number" id="pw2-pslots" min="1" max="8" value="1"></label></div>'+
+    '<div class="field-grid" id="pw2-df"><label>'+L('Ebenen','Levels')+'<input type="number" id="pw2-dlv" min="1" max="10" value="1"></label>'+
+    '<label>'+L('Pl&auml;tze pro Ebene','Slots per level')+'<input type="number" id="pw2-dsl" min="1" max="60" value="4"></label>'+
+    '<label>'+L('Reihen pro Ebene','Rows per level')+'<input type="number" id="pw2-drw" min="1" max="4" value="1"></label></div></div>'+
+    '<div class="fd-panel amber" id="pw2-af"><div class="fd-panel-title">ACE / AMS</div>'+
+    '<div class="field-grid"><label>'+L('Anzahl ACE/AMS-Einheiten','Number of ACE/AMS units')+'<input type="number" id="pw2-ace" min="0" max="4" value="1"></label></div>'+
+    '<div id="pw2-acel"></div></div>'+
+    '<div id="pw2-err" class="hint" style="color:#f87171"></div></div>'+
+    '<div class="fd-panel"><div class="fd-panel-title">'+L('Vorschau','Preview')+'</div><div class="pw2-prev" id="pw2-prev"></div></div>'+
+    '</div></div></div>';
+  }
+  function aceRows(){
+    var n=clamp(g('pw2-ace').value,0,4,1),box=g('pw2-acel'),old=[],i;
+    box.querySelectorAll('input').forEach(function(x){old.push(x.value);});
+    var h='';
+    for(i=0;i<n;i++)h+='<div class="field-grid"><label>ACE/AMS '+(i+1)+' &ndash; '+L('Slots','Slots')+'<input type="number" class="pw2-as" min="1" max="8" value="'+(old[i]||4)+'"></label></div>';
+    box.innerHTML=h;
+  }
+  function aces(){
+    var out=[];
+    g('pw2-acel').querySelectorAll('.pw2-as').forEach(function(x,i){out.push({name:'ACE/AMS '+(i+1),slots:clamp(x.value,1,8,4)});});
+    return out;
+  }
+  function vals(){
+    var nm=g('pw2-name').value.trim();
+    return {type:st.type,name:nm,
+      pslots:clamp(g('pw2-pslots').value,1,8,1),
+      lv:clamp(g('pw2-dlv').value,1,10,1),sl:clamp(g('pw2-dsl').value,1,60,4),rw:clamp(g('pw2-drw').value,1,4,1),
+      aces:st.type==='printer'?aces():[]};
+  }
+  function mk(id,name,type,n,lv,rows){
+    var s=[],l,p;
+    for(l=0;l<lv;l++)for(p=0;p<n;p++)s.push({id:-(id*1000+l*100+p+1),level:l,position:p,spool_id:null});
+    return {id:-id,name:esc(name),type:type,levels:lv,slots_per_level:n,layout:'row',rows_per_level:rows,slots:s,ace_feed_slot:null};
+  }
+  function preview(){
+    var v=vals(),el=g('pw2-prev'),h;
+    g('pw2-chip').textContent=v.type==='printer'?L('Drucker','Printer'):'Drybox';
+    g('pw2-pf').hidden=v.type!=='printer';g('pw2-af').hidden=v.type!=='printer';g('pw2-df').hidden=v.type!=='drybox';
+    document.querySelectorAll('#pw2-overlay [data-pw2-t]').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-pw2-t')===v.type);});
+    try{
+      if(v.type==='drybox'){
+        h=renderDeviceCard(mk(1,v.name||'Drybox','drybox',v.sl,v.lv,v.rw));
+      }else{
+        h=renderDeviceCard(mk(1,v.name||L('Drucker','Printer'),'printer',v.pslots,1,1));
+        if(v.aces.length){
+          var w='<div class="pw-child-wrap"><div class="pw-child-label">ACE / AMS</div>';
+          v.aces.forEach(function(a,i){w+=renderDeviceCard(mk(10+i,a.name,'ace',a.slots,1,1));});
+          w+='</div>';
+          h=h.replace(/<\/div>\s*$/,w+'</div>');
+        }
+      }
+    }catch(e){h='<p class="hint">'+esc(e.message)+'</p>';}
+    el.innerHTML=h;
+  }
+  function open(){
+    st.type='printer';build();aceRows();preview();
+    g('pw2-overlay').classList.add('show');
+    try{g('pw2-name').focus();}catch(e){}
+  }
+  function close(){var o=g('pw2-overlay');if(o)o.classList.remove('show');}
+  function post(body){
+    return fetch('/api/storage/units',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){if(!r.ok)throw new Error(L('Anlegen fehlgeschlagen','Create failed')+' (HTTP '+r.status+')');return r.json();});
+  }
+  function create(){
+    var v=vals(),btn=g('pw2-create');
+    g('pw2-err').textContent='';
+    if(!v.name){g('pw2-err').textContent=L('Bitte einen Namen eingeben.','Please enter a name.');g('pw2-name').focus();return;}
+    btn.disabled=true;
+    var p;
+    if(v.type==='drybox'){
+      p=post({name:v.name,type:'drybox',levels:v.lv,slots_per_level:v.sl,layout:'row',rows_per_level:v.rw});
+    }else{
+      p=post({name:v.name,type:'printer',levels:1,slots_per_level:v.pslots,layout:'row',rows_per_level:1}).then(function(pr){
+        var chain=Promise.resolve();
+        v.aces.forEach(function(a){chain=chain.then(function(){return post({name:a.name,type:'ace',levels:1,slots_per_level:a.slots,layout:'row',rows_per_level:1,parent_unit_id:pr.id});});});
+        return chain;
+      });
+    }
+    p.then(function(){
+      close();
+      try{toast(v.type==='drybox'?L('Drybox angelegt','Drybox created'):L('Drucker angelegt','Printer created'),'ok');}catch(e){}
+      if(typeof window.loadDevices==='function'){try{window.loadDevices();return;}catch(e){}}
+      location.reload();
+    }).catch(function(e){g('pw2-err').textContent=e.message||'Error';btn.disabled=false;});
+  }
+  document.addEventListener('click',function(ev){
+    var el=ev.target;if(!el||!el.closest)return;
+    if(el.closest('#pwOpenBtn')){ev.stopImmediatePropagation();ev.preventDefault();open();return;}
+    var t=el.closest('[data-pw2-t]');
+    if(t){st.type=t.getAttribute('data-pw2-t');preview();return;}
+    if(el.closest('#pw2-cancel'))close();
+    else if(el.closest('#pw2-create'))create();
+    else if(el.id==='pw2-overlay')close();
+  },true);
+  document.addEventListener('input',function(ev){
+    var el=ev.target;if(!el||!el.id&&!(el.classList&&el.classList.contains('pw2-as')))return;
+    if(el.id==='pw2-ace')aceRows();
+    if((el.id&&el.id.indexOf('pw2-')===0)||el.classList.contains('pw2-as'))preview();
+  });
+  document.addEventListener('keydown',function(ev){
+    var o=g('pw2-overlay');if(!o||!o.classList.contains('show'))return;
+    if(ev.key==='Escape')close();
+    else if(ev.key==='Enter'&&ev.target&&ev.target.tagName==='INPUT'){ev.preventDefault();create();}
+  });
+})();
 </script>
 
 <script id="flm-script2">

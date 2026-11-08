@@ -119,6 +119,7 @@ The database (spools/filaments, storage locations, label templates) starts out e
 
 The current version is shown in the dashboard footer (including the changelog).
 
+- **v1.17.0 (2026-11-09)**: New: "Add device" dialog as a single page with a live preview that looks like the real device cards.
 - **v1.16.1 (2026-11-08)**: Fix: experience form in the filament dialog is cleared on open, browser autofill disabled.
 - **v1.16.0 (2026-11-08)**: New: slicer import on the Filaments page. Upload Anycubic Slicer / OrcaSlicer filament presets (.json), review the preview and create filaments or complete existing ones (matched by article number).
 - **v1.15.2 (2026-11-08)**: Redesigned new-spool dialog (header with Create/Cancel, filament and spool cards).
